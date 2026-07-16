@@ -1,0 +1,9 @@
+[game]
+name = "last-beacon"
+
+[launch]
+package = "last-beacon"
+
+[package]
+executable-name = "last-beacon"
+asset-roots = ["assets"]

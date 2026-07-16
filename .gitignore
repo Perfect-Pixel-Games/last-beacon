@@ -1,0 +1,5 @@
+/target/
+/game/target/
+/artifacts/
+/logs/
+*.pdb

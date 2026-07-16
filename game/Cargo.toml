@@ -1,0 +1,48 @@
+[package]
+name = "last-beacon"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "Reference game built on the Foundation engine"
+
+[lib]
+crate-type = ["rlib"]
+
+[features]
+default = ["dev-tools", "editor"]
+dev-tools = ["dep:linkme", "foundation-runtime-library/dev-tools"]
+editor = ["dep:foundation-editor-library"]
+
+[dependencies]
+bevy = { version = "0.19.0", features = [
+    "file_watcher",
+    "reflect_documentation",
+    "serialize",
+] }
+foundation-editor-library = { path = "../engine/crates/foundation-editor-library", optional = true }
+foundation-runtime-library = { path = "../engine/crates/foundation-runtime-library", default-features = false }
+linkme = { version = "0.3", optional = true }
+
+[workspace]
+
+[profile.dev]
+opt-level = 0
+
+[profile.dev.package."*"]
+opt-level = 0
+
+[profile.foundation-test]
+inherits = "release"
+debug = "line-tables-only"
+strip = "none"
+lto = "thin"
+
+[profile.foundation-shipping]
+inherits = "dev"
+opt-level = 3
+debug = false
+strip = "symbols"
+lto = "off"
+codegen-units = 16
+panic = "abort"
