@@ -1,16 +1,8 @@
-# Pi Rust Project Template
+# Last Beacon Pi Project Guide
 
-This repository is a blank Rust project template configured for Pi-assisted development.
+This repository contains the **Last Beacon** game and uses the **Foundation Engine** as the `engine/` Git submodule.
 
-It starts as a minimal Rust library crate:
-- `Cargo.toml` defines the placeholder package `pi-rust-template`.
-- `src/lib.rs` contains placeholder code only.
-- Real projects created from this template should rename the crate and replace the placeholder source.
-
-The template can be adapted into:
-- a library crate,
-- a binary crate by adding `src/main.rs`, or
-- a Cargo workspace by converting the root `Cargo.toml` to `[workspace]` and moving crates under `crates/`.
+Last Beacon work happens in the root repository. Foundation Engine work may happen too, but only inside the `engine/` submodule checkout and with the same Gitflow discipline used by the root repository.
 
 ## Model policy
 - Use `gpt-5.5` for planning.
@@ -18,11 +10,21 @@ The template can be adapted into:
 - Use `gpt-5.5` for review.
 - Never use Anthropic models.
 
+## Repository layout
+- `README.md` is the project vision and setup source of truth.
+- `game/` contains the Last Beacon Cargo package, game source, game manifest, and game-owned assets.
+- `game/assets/` contains Last Beacon assets.
+- `engine/` is the Foundation Engine Git submodule, checkout, junction, or symlink used by the game-facing scripts.
+- `scripts/` contains Last Beacon build, run, package, and validation wrappers.
+- `.pi/skills/` contains the project workflow skills that must be followed when their task descriptions apply.
+
+Foundation-owned source, reusable engine systems, engine assets, and engine validation belong under `engine/`. Do not duplicate or patch Foundation Engine code in the root repository outside the submodule.
+
 ## Required Pi project resources
 This repository expects Pi project resources to be available after cloning and trusting the project.
 
 ### Project-local skills
-The following skills are part of the repository and are mandatory when their matching task descriptions apply:
+The following skills are mandatory when their matching task descriptions apply:
 - `.pi/skills/feature-plan-docs/SKILL.md`
 - `.pi/skills/feature-review-handoff/SKILL.md`
 - `.pi/skills/feature-tracker-update/SKILL.md`
@@ -31,98 +33,118 @@ The following skills are part of the repository and are mandatory when their mat
 - `.pi/skills/rust-coding-standards/SKILL.md`
 - `.pi/skills/rust-workspace-dev/SKILL.md`
 
-Do not skip these skills when this file says they are required for a task. If a cloned checkout is missing one of these files, stop and report that the repository is incomplete.
+If a cloned checkout is missing one of these files, stop and report that the repository is incomplete.
 
-### Required Pi extensions and packages
-The project declares Pi package dependencies in `.pi/settings.json`. A Pi instance working in this project should honor those project package settings after cloning and trusting the repository.
-
-The current non-project Pi extensions shown by the Pi splash screen are also expected for this project:
+### Expected non-project Pi extensions
+The project expects these Pi extensions/packages when their tools or skills are needed:
 - `@tintinweb/pi-subagents:src`
 - `pi-hermes-memory:src`
 - `pi-web-access`
 
-These extensions may come from global Pi configuration or package installation rather than from files committed in this repository. On a freshly cloned machine, install or configure them before doing project work that depends on them. If an extension-provided tool, command, or resource is unavailable when needed, stop and tell the user to install or reload the required Pi extensions/packages rather than silently substituting another workflow.
+If an extension-provided tool, command, or resource is unavailable when needed, stop and tell the user to install or reload the required Pi extensions/packages rather than silently substituting another workflow.
 
-### Non-project skills currently expected when available
-The `librarian` skill may be provided by the global `pi-web-access` installation rather than by this repository. Use it when the task asks for evidence-backed open-source library research with GitHub permalinks. Because it is not vendored under `.pi/skills`, a fresh clone may not have it until the user's Pi environment installs `pi-web-access`; if it is missing, report that limitation instead of pretending the skill was used.
+The `librarian` skill may be provided by the global `pi-web-access` installation. Use it when the task asks for evidence-backed open-source library research with GitHub permalinks. If it is missing, report that limitation instead of pretending it was used.
 
-## Standard workflow
-When the user asks for Rust workspace, crate, module, test, build, lint, dependency, or template work:
+## Standard Rust workflow
+When the user asks for Rust workspace, crate, module, test, build, lint, dependency, or validation work:
 1. Read `.pi/skills/rust-workspace-dev/SKILL.md` first.
 2. Read `.pi/skills/rust-coding-standards/SKILL.md` before writing, refactoring, generating, or reviewing Rust code.
-3. Inspect `Cargo.toml` and relevant source/config/test files before proposing architecture or editing code.
-4. Remember this repository is intentionally blank/template-first unless the user has already added project-specific code.
+3. Inspect the relevant manifest before proposing architecture or editing code:
+   - `game/Cargo.toml` for Last Beacon game work.
+   - `engine/Cargo.toml` for Foundation Engine work.
+4. Inspect relevant source, asset, config, script, and test files before editing.
 5. Prefer idiomatic Rust, minimal dependencies, and the project's self-documenting code standards.
-6. Use `scripts/validate-env.cmd` when toolchain or manifest state needs validation.
-7. Use the standard validation wrappers unless the user says not to:
-   - `scripts/format-project.cmd`
-   - `scripts/lint-project.cmd`
-   - `scripts/test-project.cmd`
-   - `scripts/compile-project.cmd`
-   - `scripts/doc-project.cmd`
-   - `scripts/validate-project.cmd` for full validation when a single command is preferred
+6. Use game-facing validation from the root repository for Last Beacon work:
+   - `scripts/validate.cmd`
+   - focused `cargo` commands with `--manifest-path game/Cargo.toml` when appropriate.
+7. Use Foundation Engine validation from inside the submodule for engine work:
+   - `engine/scripts/format-project.cmd`
+   - `engine/scripts/lint-project.cmd`
+   - `engine/scripts/test-project.cmd`
+   - `engine/scripts/compile-project.cmd`
+   - `engine/scripts/doc-project.cmd`
+   - `engine/scripts/validate-project.cmd` when a full engine validation is needed.
 
-When adapting this template for a new Rust project:
-1. Rename the package in `Cargo.toml`.
-2. Update package metadata such as `description`, `license`, and `publish` as appropriate.
-3. Replace placeholder code in `src/lib.rs`.
-4. Add `src/main.rs` for binary projects, or convert to a Cargo workspace if multiple crates are needed.
-5. Keep Pi skills, prompts, scripts, and planning templates unless the user asks to remove them.
+## Foundation Engine submodule rule
+Foundation Engine changes are allowed, but they must be made inside `engine/`.
 
-When the user asks about Foundation runtime systems, Foundation editor tooling, Jackdaw editor windows, game settings, scene-stack behavior, reusable game components, or TemplateGame integration with Foundation crates:
+Rules:
+- Treat `engine/` as an independent Git repository.
+- Before editing engine files, inspect `engine/README.md`, `engine/AGENTS.md`, and relevant engine docs/source.
+- Use `git -C engine ...` for submodule Git status, branch, commit, and push operations.
+- Do not edit Foundation-owned files from the root repository path if they are not inside `engine/`.
+- When engine changes are committed in the submodule, update and commit the root repository's `engine` submodule pointer as part of the Last Beacon feature work.
+- If `FOUNDATION_ENGINE_PATH` is set to an alternate checkout, inspect that checkout before use, but do not modify it unless the user explicitly asks to work in that checkout and its Git state is safe.
+
+## Foundation architecture workflow
+When the user asks about Foundation runtime systems, Foundation engine launch behavior, Foundation editor tooling, game settings, scene-stack behavior, reusable game components, BSN scenes, Last Beacon integration with Foundation crates, or TemplateGame integration:
 1. Read `.pi/skills/foundation-architecture/SKILL.md` first.
-2. Keep runtime/game systems in `crates/foundation-runtime-library`.
-3. Keep Jackdaw editor extensions, dockable editor windows, editor operators, and editor-only UI in `crates/foundation-editor-library`.
-4. Keep concrete game assets and game-specific plugin glue in `games/template-game`.
-5. Do not add a full `jackdaw` dependency to `foundation-runtime-library` unless the user explicitly approves a major architecture change.
-6. When reflected component crate paths change, update `.jsn` serialized type paths in the same feature.
+2. Keep reusable Foundation Engine code inside `engine/`.
+3. Keep Last Beacon source, game manifests, game assets, and game-specific plugin glue inside `game/`.
+4. Do not vendor Foundation Engine crates into the root repository.
+5. Do not add game-specific behavior to generic Foundation Engine crates unless the plan clearly identifies it as reusable engine functionality.
+6. Do not add Jackdaw dependencies unless the user explicitly approves a major architecture change; the current Foundation direction is Bevy-only.
 
-When the user asks about Git workflow, branch strategy, merges, or commit message formatting:
+## Git workflow
+When the user asks about Git workflow, branch strategy, pull requests, commits, pushes, or submodule history:
 1. Read `.pi/skills/gitflow-workflow/SKILL.md` first.
-2. Treat that skill as the source of truth for this project's Git rules.
-3. If another Git workflow conflicts with that skill, follow the project skill instead.
+2. Treat that skill as the source of truth for both the root repository and the `engine/` submodule.
+3. Root repository work must happen on `feature/*` or `hotfix/*` branches from the correct base.
+4. Engine submodule work must also happen on `feature/*` or `hotfix/*` branches inside `engine/`, from the engine repository's correct base.
+5. Never work on engine code while `engine/` is on `main` or `dev`; switch or create a valid `feature/*` or `hotfix/*` branch first.
+6. Do not commit directly to `main` or `dev` in either repository.
+7. Do not merge directly into `main` or `dev` in either repository; all integration must go through pull requests for both game and engine.
+8. Push commits to `origin` when available so pull requests can be opened; record `N/A (local-only repository)` when no origin exists.
+9. Maintain the exact Foundation Engine commit hash that the game is bound to whenever the root `engine` submodule pointer changes.
 
+## Feature planning workflow
 When the user asks to plan a new feature:
 1. Read `.pi/skills/feature-plan-docs/SKILL.md` first.
 2. Use `gpt-5.5` for planning. Never use Anthropic models.
 3. Do not start implementation until both planning documents exist under `docs/plans/<new-feature>/` and the user has approved proceeding.
-4. Ensure the feature is associated with a dedicated `feature/*` branch from `dev`, following `.pi/skills/gitflow-workflow/SKILL.md`.
-5. Record that branch in both the plan and tracker documents.
-6. The plan and tracker must persist enough detail that implementation can continue with `gpt-5.4` later.
-7. Planning must stop after the plan and tracker are created or updated. Do not automatically begin implementation in the same turn.
-8. After planning, ask the user to review the plan and tracker and confirm whether to proceed.
-9. Treat natural approval phrasing such as `continue`, `carry on`, `go ahead`, `implement`, `proceed`, or equivalent affirmative review feedback as approval to begin implementation.
-10. Treat negative or revision-seeking feedback such as `no`, `not yet`, `needs more work`, `revise this`, or equivalent responses as planning iteration requests rather than implementation approval.
+4. Ensure the root feature is associated with a dedicated `feature/*` branch from root `dev`, following `.pi/skills/gitflow-workflow/SKILL.md`.
+5. If the feature includes Foundation Engine changes, also plan a dedicated engine submodule `feature/*` branch from engine `dev` and record it separately.
+6. Record root branch, engine branch when applicable, and submodule pointer expectations in both plan and tracker.
+7. Planning must stop after the plan and tracker are created or updated. Ask the user to review and confirm whether to proceed.
+8. Treat natural approval phrasing such as `continue`, `carry on`, `go ahead`, `implement`, `proceed`, or equivalent affirmative review feedback as approval to begin implementation.
+9. Treat negative or revision-seeking feedback such as `no`, `not yet`, `needs more work`, `revise this`, or equivalent responses as planning iteration requests rather than implementation approval.
 
+## Feature implementation workflow
 When the user asks to begin, continue, or update feature implementation:
 1. If approved planning documents do not exist yet, stop and follow `.pi/skills/feature-plan-docs/SKILL.md` first.
 2. If approved planning documents exist, read `.pi/skills/feature-tracker-update/SKILL.md` first, then read `.pi/skills/feature-plan-docs/SKILL.md`, `.pi/skills/rust-workspace-dev/SKILL.md`, `.pi/skills/rust-coding-standards/SKILL.md`, and `.pi/skills/gitflow-workflow/SKILL.md` as required context.
 3. Use `gpt-5.4` for implementation. Never use Anthropic models.
-4. Before making implementation edits, read the relevant `plan.md` and `tracker.md`, confirm the active branch matches the planned `feature/*` branch, verify the branch was created from `dev` when possible, record any uncertainty in the tracker, and update the tracker to record that implementation is starting or resuming.
-5. Keep the tracker updated with progress, validation state, issues found, postponements, and model handoff state.
-6. Do not mark tasks or phases complete until required Rust validation and documentation generation pass or a documented waiver exists.
-7. Commit each completed task and each completed phase, including the final phase.
-8. Push each commit/merge checkpoint to `origin` when available.
-9. If `origin` is not configured, record push status as `N/A (local-only repository)`.
-10. Include relevant `plan.md`/`tracker.md` updates in regular feature commits.
+4. Before implementation edits, read the relevant `plan.md` and `tracker.md`.
+5. Confirm the root branch matches the planned `feature/*` or `hotfix/*` branch and verify its base when possible.
+6. If engine work is planned, confirm the `engine/` submodule branch matches the planned engine `feature/*` or `hotfix/*` branch and verify its base when possible.
+7. Update the tracker before edits to record that implementation is starting or resuming.
+8. Keep the tracker updated with progress, validation state, issues found, postponements, model handoff state, root commit/push state, engine commit/push state, and submodule pointer state.
+9. Commit each completed task and phase, including tracker updates. For engine changes, commit inside `engine/` first, record the exact engine commit hash that the game is bound to, then commit the root submodule pointer update.
+10. Push each commit checkpoint to `origin` when available so pull requests can be opened. Do not merge branches directly; integration goes through pull requests.
 
+## Final review workflow
 When the user asks for a final sanity review of implemented feature work:
 1. Read `.pi/skills/feature-review-handoff/SKILL.md` first.
 2. Read `.pi/skills/rust-coding-standards/SKILL.md` before reviewing Rust code.
 3. Use `gpt-5.5` for review. Never use Anthropic models.
-4. Any review findings must be written to the tracker and presented to the user.
-5. The user must choose whether to accept the implementation as-is, defer the findings, or send the findings back for `gpt-5.4` fixes.
+4. Review both root and engine submodule changes when the feature touched both repositories.
+5. Any review findings must be written to the tracker and presented to the user.
+6. The user must choose whether to accept the implementation as-is, defer findings, or send findings back for `gpt-5.4` fixes.
 
-## Enforcement rule
+## Enforcement rules
 - For any feature planning request, the `feature-plan-docs` skill is mandatory.
 - For any feature implementation request, the `feature-plan-docs` and `feature-tracker-update` skills are mandatory.
 - For any optional final review request, the `feature-review-handoff` and `feature-tracker-update` skills are mandatory.
-- If planning documents do not exist yet, stop and create them before implementation.
+- For any Foundation Engine or Foundation integration request, the `foundation-architecture` skill is mandatory.
+- For any branch, commit, pull request, push, or submodule pointer update, the `gitflow-workflow` skill is mandatory.
+- If planning documents do not exist yet for feature implementation, stop and create them before implementation.
 
 ## Important notes
-- Treat `Cargo.toml` as the source of truth for crate/workspace structure.
-- The active workspace uses `crates/foundation-runtime-library` for reusable runtime/game systems and `crates/foundation-editor-library` for Jackdaw editor extensions and windows.
-- Treat `src/lib.rs` as placeholder template code until replaced by real project code.
-- Use `cargo metadata` or `scripts/show-config.cmd` to inspect workspace structure when needed.
-- Put generated outputs under `artifacts/` and logs under `logs/` if the project needs persistent generated files.
+- Treat `README.md` as the source of truth for Last Beacon vision, setup, and high-level layout.
+- Treat `game/Cargo.toml` as the source of truth for the Last Beacon game crate.
+- Treat `engine/Cargo.toml` as the source of truth for Foundation Engine workspace structure.
+- Use `scripts/build.cmd`, `scripts/run.cmd`, `scripts/package.cmd`, and `scripts/validate.cmd` for game-facing workflows.
+- Root plans and trackers live under `docs/plans/<feature>/`.
+- Engine plans and trackers, if created by engine-local work, live under `engine/docs/plans/<feature>/` unless the root feature plan intentionally tracks both repositories from root.
+- Put generated root outputs under `artifacts/` and logs under `logs/` if persistent generated files are needed.
 - Do not edit machine-local environment files unless the user explicitly asks.
