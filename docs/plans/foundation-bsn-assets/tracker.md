@@ -8,8 +8,8 @@
 - Engine branch: `feature/foundation-bsn-assets`
 - Root branch base verification: `Created from current root dev at afa88b96bc0bb46336620af08713347d6871d52b on 2026-07-17`
 - Engine branch base verification: `Created feature/foundation-bsn-assets from engine origin/dev at b4ff3107932e177a98ae1eee626578b1f05b2be9 on 2026-07-17`
-- Engine submodule pointer: `Updated to engine feature commit 49392f1f1a44662cc8d9a88572a70cfe86f84d22; root pointer commit pending`
-- Overall status: `Implementation in progress - runtime black-screen fixed; hardening review pending`
+- Engine submodule pointer: `Updated to engine hardening commit a44d4d21fca472f1d8ace1f7a7abe52ae9044d41; root pointer commit pending`
+- Overall status: `Implementation in progress - hardening pass implemented; commits pending`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
@@ -24,10 +24,10 @@
 - The exact engine commit hash bound to Last Beacon must be recorded before root completion.
 
 ## Repository State
-- Root commit/push state: `Implementation commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92 pushed to origin/feature/foundation-bsn-assets; final tracker status commit pending`
-- Engine commit/push state: `Engine fix commit 49392f1f1a44662cc8d9a88572a70cfe86f84d22 pushed to origin/feature/foundation-bsn-assets; previous implementation commit 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0 also on branch`
+- Root commit/push state: `Runtime startup fix commit c1db32468ddf5de5018f7c3112be60bd49d10476 pushed to origin/feature/foundation-bsn-assets; hardening root commit pending`
+- Engine commit/push state: `Engine hardening commit a44d4d21fca472f1d8ace1f7a7abe52ae9044d41 pushed to origin/feature/foundation-bsn-assets; previous runtime fix commit 49392f1f1a44662cc8d9a88572a70cfe86f84d22 also on branch`
 - Root game scene conversion state: `Converted current Rust bsn! macro scenes to .bsn assets in root commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92`
-- Root submodule pointer update: `Pending follow-up root commit; root working tree points to engine 49392f1f1a44662cc8d9a88572a70cfe86f84d22`
+- Root submodule pointer update: `Pending root hardening commit; root working tree points to engine a44d4d21fca472f1d8ace1f7a7abe52ae9044d41`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -226,4 +226,6 @@
 - `2026-07-17`: Applied loader fix in `foundation-runtime-library/src/dynamic_bsn.rs`: fully specified tuple-struct components can now materialize directly without `ReflectDefault`, and the missing-default error now reports the exact type path. Validation passed: game `cargo test --test bsn_asset_flow`, engine BSN tests, engine splash tests, and engine clippy. Short launch smoke no longer printed the dynamic BSN resolve errors before timeout.
 - `2026-07-17`: User log identified missing reflected default for `foundation_runtime_library::splash_screen::FoundationSplashUiRoot`. Added `#[reflect(Default)]` to Foundation `.bsn` authored components that already implement `Default` in `splash_screen.rs`, `menu.rs`, and `credits.rs`. Validation passed: game BSN asset-flow test, engine BSN tests, engine splash tests, and engine clippy. Short launch smoke again showed no BSN resolve errors before timeout.
 - `2026-07-17`: User confirmed the startup scene is working perfectly after the loader/default-reflection fixes. User asked for robustness assessment before treating the fix as final.
-- `2026-07-17`: Committed and pushed engine runtime startup fix as `49392f1f1a44662cc8d9a88572a70cfe86f84d22` on `origin/feature/foundation-bsn-assets`. Root submodule pointer/tracker commit pending.
+- `2026-07-17`: Committed and pushed engine runtime startup fix as `49392f1f1a44662cc8d9a88572a70cfe86f84d22` on `origin/feature/foundation-bsn-assets`. Root submodule pointer/tracker commit `c1db32468ddf5de5018f7c3112be60bd49d10476` pushed to `origin/feature/foundation-bsn-assets`.
+- `2026-07-17`: Started hardening pass with gpt-5.4 after user confirmed the working runtime fix should be checkpointed first.
+- `2026-07-17`: Hardening pass implemented: added engine tests proving pending BSN instances apply scene content and recursively propagate `SceneOwner`, added failed-resolve state to stop pending retry loops, added reflected-default regression coverage for Foundation-authored `.bsn` components, and added a game integration test proving Last Beacon's converted Pixel Perfect scene spawns authored text through the public Foundation bridge. Validation passed: engine format check, engine BSN tests, engine reflected-default test, engine clippy, engine docs, game format check, game BSN asset-flow/bridge tests, game clippy, and game docs. Engine hardening commit `a44d4d21fca472f1d8ace1f7a7abe52ae9044d41` pushed; root hardening commit pending.

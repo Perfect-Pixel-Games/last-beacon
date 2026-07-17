@@ -43,6 +43,46 @@ fn converted_bsn_scene_assets_load_as_scene_patches() {
     }
 }
 
+#[test]
+fn converted_pixel_perfect_scene_spawns_authored_text_through_foundation_bridge() {
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins);
+    app.add_plugins(bevy::asset::AssetPlugin {
+        file_path: asset_root().to_string_lossy().to_string(),
+        ..default()
+    });
+    app.add_plugins(bevy::scene::ScenePlugin);
+    app.add_message::<SceneLoadRequested>();
+    app.add_plugins(FoundationBsnAssetPlugin);
+    register_bsn_test_types(&mut app);
+
+    let scene_key = "last-beacon/splash_pixel_perfect";
+    app.world_mut()
+        .resource_mut::<FoundationBsnSceneRegistry>()
+        .register_scene(scene_key, "scenes/pixel_perfect_splash.bsn");
+    app.world_mut().write_message(SceneLoadRequested {
+        scene_id: SceneId(7),
+        source: SceneSource::bsn_scene(scene_key),
+    });
+
+    for _frame_number in 0..120 {
+        app.update();
+    }
+
+    let mut text_query = app.world_mut().query::<(&Text, Option<&SceneOwner>)>();
+    let texts = text_query
+        .iter(app.world())
+        .map(|(text, scene_owner)| (text.0.clone(), scene_owner.copied()))
+        .collect::<Vec<_>>();
+
+    assert!(
+        texts.iter().any(|(text, scene_owner)| {
+            text == "Pixel Perfect" && *scene_owner == Some(SceneOwner { scene_id: SceneId(7) })
+        }),
+        "the Foundation BSN bridge should spawn the authored Pixel Perfect text with scene ownership; found {texts:?}",
+    );
+}
+
 fn register_bsn_test_types(app: &mut App) {
     app.register_type::<Node>()
         .register_type::<Val>()
