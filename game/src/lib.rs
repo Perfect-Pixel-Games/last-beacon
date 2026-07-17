@@ -70,6 +70,7 @@ pub fn run() -> AppExit {
 fn last_beacon_default_plugins(asset_root: String) -> impl PluginGroup {
     DefaultPlugins
         .build()
+        .set(foundation_log_plugin())
         .disable::<GilrsPlugin>()
         .set(AssetPlugin {
             file_path: asset_root,
