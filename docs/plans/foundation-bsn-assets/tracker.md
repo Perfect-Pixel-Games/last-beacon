@@ -24,10 +24,10 @@
 - The exact engine commit hash bound to Last Beacon must be recorded before root completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 40ea542 pushed to origin/feature/foundation-bsn-assets; implementation tracker updates pending`
+- Root commit/push state: `Implementation commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92 pushed to origin/feature/foundation-bsn-assets; final tracker status commit pending`
 - Engine commit/push state: `Engine commit 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0 pushed to origin/feature/foundation-bsn-assets`
-- Root game scene conversion state: `Converted current Rust bsn! macro scenes to .bsn assets; root commit pending`
-- Root submodule pointer update: `Updated to 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0; root commit pending`
+- Root game scene conversion state: `Converted current Rust bsn! macro scenes to .bsn assets in root commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92`
+- Root submodule pointer update: `Committed in root commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92; root points to engine 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -151,7 +151,7 @@
 - User confirmation: `Not required until phase handoff unless conversion exposes scope changes`
 
 ## Phase 5: Documentation, Validation, Commits, And Root Pointer Update
-**Status:** Awaiting root commit
+**Status:** Complete
 **Goal:** Document the temporary BSN bridge, validate engine/root behavior, commit/push both repositories, and record exact pointer state.
 
 ### Tasks
@@ -175,16 +175,16 @@
   - Status: Complete
   - Repository: `root`
   - Notes: Passed `./scripts/validate.cmd`.
-- [ ] Commit and push root changes.
-  - Status: Pending
+- [x] Commit and push root changes.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Include plan/tracker updates, game `.bsn` assets, scene catalog changes, test, lockfile, and `engine` pointer.
+  - Notes: Root implementation commit `5e0eb27984d67edaac35f0459b0c31552d9f0d92` pushed to `origin/feature/foundation-bsn-assets`; final tracker status commit pending.
 
 ### Validation
 - Engine validation: `Passed ./engine/scripts/validate-project.cmd`
 - Game validation: `Passed ./scripts/validate.cmd`
 - Documentation generation: `Passed engine validate-project docs and root validate docs`
-- User confirmation: `Pending before final completion`
+- User confirmation: `Pending final user review/acceptance after implementation summary`
 
 ## Implementation / Review Handoff Notes
 - Use `gpt-5.4` for implementation.
@@ -216,3 +216,4 @@
 - `2026-07-17`: Implemented and pushed engine BSN asset bridge in commit `5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0`.
 - `2026-07-17`: Converted Last Beacon Rust `bsn!` macro scenes to `.bsn` assets and added asset loading test.
 - `2026-07-17`: Passed `./engine/scripts/validate-project.cmd` and `./scripts/validate.cmd`; root commit remains pending.
+- `2026-07-17`: Pushed root implementation commit `5e0eb27984d67edaac35f0459b0c31552d9f0d92` with Last Beacon `.bsn` scene conversion and engine submodule pointer update.
