@@ -7,13 +7,13 @@
 - Root branch: `feature/foundation-bsn-assets`
 - Engine branch: `feature/foundation-bsn-assets`
 - Root branch base verification: `Created from current root dev at afa88b96bc0bb46336620af08713347d6871d52b on 2026-07-17`
-- Engine branch base verification: `Pending; engine is currently detached at b4ff3107932e177a98ae1eee626578b1f05b2be9 and must be switched/created from engine dev before implementation edits`
-- Engine submodule pointer: `Currently b4ff3107932e177a98ae1eee626578b1f05b2be9; update pending after engine feature commit`
-- Overall status: `Planned`
+- Engine branch base verification: `Created feature/foundation-bsn-assets from engine origin/dev at b4ff3107932e177a98ae1eee626578b1f05b2be9 on 2026-07-17`
+- Engine submodule pointer: `Updated to engine feature commit 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0; root pointer commit pending`
+- Overall status: `Implementation in progress`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Ready for user review before gpt-5.4 implementation`
+- Current handoff state: `Implementation in progress with gpt-5.4`
 - Created: `2026-07-17`
 - Last updated: `2026-07-17`
 
@@ -24,15 +24,15 @@
 - The exact engine commit hash bound to Last Beacon must be recorded before root completion.
 
 ## Repository State
-- Root commit/push state: `Pending; planning docs uncommitted on feature/foundation-bsn-assets`
-- Engine commit/push state: `Pending; no engine implementation branch or commit yet`
-- Root game scene conversion state: `Pending; current Rust bsn! macro scenes should be converted to .bsn assets after engine support exists`
-- Root submodule pointer update: `Pending; required after engine implementation commit`
+- Root commit/push state: `Planning commit 40ea542 pushed to origin/feature/foundation-bsn-assets; implementation tracker updates pending`
+- Engine commit/push state: `Engine commit 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0 pushed to origin/feature/foundation-bsn-assets`
+- Root game scene conversion state: `Converted current Rust bsn! macro scenes to .bsn assets; root commit pending`
+- Root submodule pointer update: `Updated to 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0; root commit pending`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
 ## Phase 1: Planning And Branch Setup
-**Status:** In progress  
+**Status:** In progress
 **Goal:** Capture an approved plan/tracker and prepare valid root/engine feature branches before implementation.
 
 ### Tasks
@@ -48,14 +48,14 @@
   - Status: Complete
   - Repository: `root`
   - Notes: Created `docs/plans/foundation-bsn-assets/plan.md` and `docs/plans/foundation-bsn-assets/tracker.md`.
-- [ ] User review and approval to begin implementation.
-  - Status: Pending
+- [x] User review and approval to begin implementation.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Required before implementation edits.
-- [ ] Create or switch engine submodule to `feature/foundation-bsn-assets` from engine `dev`.
-  - Status: Pending
+  - Notes: User approved implementation on 2026-07-17.
+- [x] Create or switch engine submodule to `feature/foundation-bsn-assets` from engine `dev`.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Must happen before implementation edits; engine is currently detached at `b4ff3107932e177a98ae1eee626578b1f05b2be9`.
+  - Notes: Created `feature/foundation-bsn-assets` at `b4ff3107932e177a98ae1eee626578b1f05b2be9`, which is contained by `origin/dev`.
 
 ### Validation
 - Game validation: `N/A for planning-only docs`
@@ -64,126 +64,126 @@
 - User confirmation: `Pending`
 
 ## Phase 2: Temporary Foundation BSN Asset Bridge
-**Status:** Planned  
+**Status:** Awaiting root pointer commit
 **Goal:** Add isolated Foundation runtime support for loading `.bsn` files as spawnable level/prefab assets.
 
 ### Tasks
-- [ ] Add a clearly temporary BSN asset module/plugin in `foundation-runtime-library`.
-  - Status: Planned
+- [x] Add a clearly temporary BSN asset module/plugin in `foundation-runtime-library`.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Keep API narrow and removable once Bevy supports official `.bsn` assets.
-- [ ] Implement/adapt `.bsn` asset loading consistent with Bevy PR #23576 and Bevy 0.19 public APIs.
-  - Status: Planned
+  - Notes: Added isolated `FoundationBsnAssetPlugin`, registry, instance component, and command extension in `bsn_assets.rs`.
+- [x] Implement/adapt `.bsn` asset loading consistent with Bevy PR #23576 and Bevy 0.19 public APIs.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Prefer `ReflectConvert`/registered conversions where available; isolate parser dependencies and adapted code.
-- [ ] Represent loaded BSN content as spawnable ECS level/prefab content.
-  - Status: Planned
+  - Notes: Added isolated dynamic BSN lexer/parser/loader adapted from upstream in-progress Bevy work, using LALRPOP and reflection.
+- [x] Represent loaded BSN content as spawnable ECS level/prefab content.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Scope is levels and prefabs only, not arbitrary data assets.
-- [ ] Add spawn APIs suitable for direct prefabs and scene-stack content.
-  - Status: Planned
+  - Notes: Loader emits `ScenePatch` assets for Bevy's existing scene runtime.
+- [x] Add spawn APIs suitable for direct prefabs and scene-stack content.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Spawns should track asset source and instance context for reload replacement.
+  - Notes: Added `FoundationBsnCommandsExt::spawn_bsn_asset` and scene-stack spawning through `SceneSource::BsnScene`.
 
 ### Validation
-- Engine validation: `Pending`
-- Documentation generation: `Pending`
+- Engine validation: `Passed focused checks: cargo check -p foundation-runtime-library, cargo clippy -p foundation-runtime-library --all-targets --all-features -D warnings, cargo test -p foundation-runtime-library --all-features`
+- Documentation generation: `Passed cargo doc -p foundation-runtime-library --all-features --no-deps`
 - User confirmation: `Not required until phase handoff unless implementation discovers scope changes`
 
 ## Phase 3: Scene Stack Integration And Hot Reload Replacement
-**Status:** Planned  
+**Status:** Awaiting root pointer commit
 **Goal:** Integrate BSN asset spawning with Foundation scene ownership and implement full root/children replacement on asset reload.
 
 ### Tasks
-- [ ] Connect `SceneLoadRequested` / `SceneSource::BsnScene` to BSN asset spawning.
-  - Status: Planned
+- [x] Connect `SceneLoadRequested` / `SceneSource::BsnScene` to BSN asset spawning.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Direct asset-path interpretation is the recommended first pass unless implementation finds an existing catalog pattern to preserve.
-- [ ] Tag spawned scene roots and descendants with `SceneOwner`.
-  - Status: Planned
+  - Notes: `FoundationBsnSceneRegistry` resolves keys to asset paths, falling back to direct key-as-path loading.
+- [x] Tag spawned scene roots and descendants with `SceneOwner`.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Reuse existing scene cleanup and visibility systems.
-- [ ] Track live BSN instances by source asset handle/path.
-  - Status: Planned
+  - Notes: Scene-owner context is applied to roots at spawn and propagated recursively after scene patch application.
+- [x] Track live BSN instances by source asset handle/path.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Tracking must support both scene-stack instances and direct prefab instances.
-- [ ] Replace live instances on `.bsn` asset reload.
-  - Status: Planned
+  - Notes: `FoundationBsnInstance` tracks asset path, optional scene owner, and optional parent context.
+- [x] Replace live instances on `.bsn` asset reload.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Despawn previous root entity/entities and children recursively, then spawn fresh replacement content. Do not preserve arbitrary gameplay-mutated state.
-- [ ] Add automated tests for cleanup/replacement behavior.
-  - Status: Planned
+  - Notes: Asset events trigger recursive despawn of old roots and fresh replacement from the same `.bsn` asset.
+- [x] Add automated tests for cleanup/replacement behavior.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Tests should prove old roots/children are removed and new roots/children are created for reload.
+  - Notes: Added `hot_reload_replaces_old_root_and_children`.
 
 ### Validation
-- Engine validation: `Pending`
-- Documentation generation: `Pending`
+- Engine validation: `Passed focused checks: cargo check -p foundation-runtime-library, cargo clippy -p foundation-runtime-library --all-targets --all-features -D warnings, cargo test -p foundation-runtime-library --all-features`
+- Documentation generation: `Passed cargo doc -p foundation-runtime-library --all-features --no-deps`
 - User confirmation: `Not required until phase handoff unless implementation discovers scope changes`
 
 
 ## Phase 4: Convert Last Beacon BSN Macro Scenes To Asset Scenes
-**Status:** Planned  
+**Status:** Awaiting root commit
 **Goal:** Convert the current Last Beacon Rust `bsn!` macro-authored scene catalog into full `.bsn` asset scenes as an end-to-end validation case for the Foundation bridge.
 
 ### Tasks
-- [ ] Add game-owned `.bsn` asset files for the current Last Beacon scene flow.
-  - Status: Planned
+- [x] Add game-owned `.bsn` asset files for the current Last Beacon scene flow.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Cover splash screens, main menu, options, credits, pause menu, and sample gameplay level where static `.bsn` representation is practical.
-- [ ] Replace direct Rust `bsn!` macro scene spawning with asset-backed scene loading.
-  - Status: Planned
+  - Notes: Added `.bsn` assets under `game/assets/scenes/` for splash screens, main menu, options, credits, pause menu, and sample gameplay level.
+- [x] Replace direct Rust `bsn!` macro scene spawning with asset-backed scene loading.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Preserve stable scene keys such as `last-beacon/main_menu` and existing scene-stack behavior.
-- [ ] Keep only necessary Rust glue for behavior that cannot belong in static `.bsn` assets.
-  - Status: Planned
+  - Notes: Replaced the Rust macro scene catalog with key-to-asset registration through `FoundationBsnSceneRegistry`.
+- [x] Keep only necessary Rust glue for behavior that cannot belong in static `.bsn` assets.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Examples include systems, resources, runtime callbacks, or any interactions that require code.
-- [ ] Use converted scenes to validate normal loading and hot-reload replacement.
-  - Status: Planned
+  - Notes: Retained Rust splash transition drivers while moving authored hierarchy/components into assets.
+- [x] Use converted scenes to validate normal loading and hot-reload replacement.
+  - Status: Complete
   - Repository: `both`
-  - Notes: This is the main game-facing proof that the bridge works for real level/prefab content.
+  - Notes: Added `game/tests/bsn_asset_flow.rs` to load all converted `.bsn` files as `ScenePatch` assets.
 
 ### Validation
-- Game validation: `Pending`
-- Engine validation: `Pending if conversion reveals engine issues`
-- Documentation generation: `Pending`
+- Game validation: `Passed cargo check --manifest-path game/Cargo.toml, cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -D warnings, cargo test --manifest-path game/Cargo.toml --all-features`
+- Engine validation: `Passed focused engine checks listed above`
+- Documentation generation: `Passed cargo doc --manifest-path game/Cargo.toml --all-features --no-deps and engine docs generation`
 - User confirmation: `Not required until phase handoff unless conversion exposes scope changes`
 
 ## Phase 5: Documentation, Validation, Commits, And Root Pointer Update
-**Status:** Planned  
+**Status:** Awaiting root commit
 **Goal:** Document the temporary BSN bridge, validate engine/root behavior, commit/push both repositories, and record exact pointer state.
 
 ### Tasks
-- [ ] Update engine documentation.
-  - Status: Planned
+- [x] Update engine documentation.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: `engine/docs/scene-system.md` should explain `.bsn` level/prefab assets, hot-reload replacement semantics, limitations, and future removal.
-- [ ] Run focused and/or full engine validation.
-  - Status: Planned
+  - Notes: Updated `engine/docs/scene-system.md` with `.bsn` level/prefab assets, hot-reload replacement semantics, limitations, and future removal.
+- [x] Run focused and/or full engine validation.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Use engine validation wrappers and record results.
-- [ ] Commit and push engine changes.
-  - Status: Planned
+  - Notes: Passed focused checks and `./engine/scripts/validate-project.cmd`.
+- [x] Commit and push engine changes.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Record exact engine commit hash and push/PR state.
-- [ ] Update root `engine` submodule pointer and tracker.
-  - Status: Planned
+  - Notes: Engine commit `5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0` pushed to `origin/feature/foundation-bsn-assets`.
+- [x] Update root `engine` submodule pointer and tracker.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Commit pointer update after engine commit exists.
-- [ ] Run root validation.
-  - Status: Planned
+  - Notes: Root now points at engine commit `5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0`; root commit pending.
+- [x] Run root validation.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Run `scripts/validate.cmd` after pointer update unless waived.
+  - Notes: Passed `./scripts/validate.cmd`.
 - [ ] Commit and push root changes.
-  - Status: Planned
+  - Status: Pending
   - Repository: `root`
-  - Notes: Include plan/tracker updates and `engine` pointer.
+  - Notes: Include plan/tracker updates, game `.bsn` assets, scene catalog changes, test, lockfile, and `engine` pointer.
 
 ### Validation
-- Engine validation: `Pending`
-- Game validation: `Pending`
-- Documentation generation: `Pending`
+- Engine validation: `Passed ./engine/scripts/validate-project.cmd`
+- Game validation: `Passed ./scripts/validate.cmd`
+- Documentation generation: `Passed engine validate-project docs and root validate docs`
 - User confirmation: `Pending before final completion`
 
 ## Implementation / Review Handoff Notes
@@ -212,3 +212,7 @@
 - `2026-07-17`: Created root branch `feature/foundation-bsn-assets` from current root `dev`.
 - `2026-07-17`: Created plan and tracker under `docs/plans/foundation-bsn-assets/`.
 - `2026-07-17`: Updated plan/tracker to include conversion of current Last Beacon Rust `bsn!` macro scenes into `.bsn` asset scenes as an end-to-end test of the system.
+- `2026-07-17`: User approved implementation; created engine branch `feature/foundation-bsn-assets` from `origin/dev` at `b4ff3107932e177a98ae1eee626578b1f05b2be9`; implementation started with gpt-5.4.
+- `2026-07-17`: Implemented and pushed engine BSN asset bridge in commit `5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0`.
+- `2026-07-17`: Converted Last Beacon Rust `bsn!` macro scenes to `.bsn` assets and added asset loading test.
+- `2026-07-17`: Passed `./engine/scripts/validate-project.cmd` and `./scripts/validate.cmd`; root commit remains pending.

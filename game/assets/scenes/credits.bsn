@@ -1,0 +1,44 @@
+#LastBeaconCredits
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Percent(100.0),
+    position_type: bevy_ui::ui_node::PositionType::Absolute,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    overflow: bevy_ui::ui_node::Overflow {
+        x: bevy_ui::ui_node::OverflowAxis::Clip,
+        y: bevy_ui::ui_node::OverflowAxis::Clip,
+    },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.0,
+    green: 0.0,
+    blue: 0.0,
+    alpha: 1.0,
+}))
+foundation_runtime_library::menu::FoundationCloseOnEscape
+bevy_ecs::hierarchy::Children [
+    #LastBeaconCreditsRoll
+    bevy_ui::ui_node::Node {
+        width: bevy_ui::geometry::Val::Percent(100.0),
+        height: bevy_ui::geometry::Val::Percent(100.0),
+        flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+        align_items: bevy_ui::ui_node::AlignItems::Center,
+        justify_content: bevy_ui::ui_node::JustifyContent::Center,
+        row_gap: bevy_ui::geometry::Val::Px(18.0),
+    }
+    foundation_runtime_library::credits::FoundationCreditsRoll {
+        credits_path: "credits.json",
+        font_path: "fonts/NotoSans-Regular.ttf",
+        scroll_speed_pixels_per_second: 45.0,
+        start_offset_pixels: 720.0,
+        top_level_header_font_size: 48.0,
+        header_font_size_step: 6.0,
+        minimum_header_font_size: 24.0,
+        person_font_size: 18.0,
+        indentation_pixels_per_level: 32.0,
+        row_gap_pixels: 12.0,
+        group_top_margin_pixels: 0.0,
+        group_bottom_margin_pixels: 20.0,
+    }
+]

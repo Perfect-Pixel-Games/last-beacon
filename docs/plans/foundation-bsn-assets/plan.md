@@ -8,7 +8,7 @@
 - Root branch status: `Created from current root dev at afa88b96bc0bb46336620af08713347d6871d52b`
 - Engine branch: `feature/foundation-bsn-assets`
 - Engine branch status: `Required before implementation; engine submodule is currently detached at b4ff3107932e177a98ae1eee626578b1f05b2be9`
-- Engine submodule pointer: `Currently b4ff3107932e177a98ae1eee626578b1f05b2be9; root pointer update required after engine implementation commit`
+- Engine submodule pointer: `Updated to engine feature commit 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0`
 - Status: `Planned`
 - Planning model: `gpt-5.5`
 - Implementation model: `gpt-5.4`
@@ -103,8 +103,8 @@ This is explicitly temporary compatibility infrastructure. It should wrap or mir
 - Engine changes required: `yes`
 - Engine branch: `feature/foundation-bsn-assets`
 - Engine commit expectation: Commit the Foundation BSN asset bridge, tests, documentation, and validation results inside `engine/` first.
-- Bound engine commit hash: `Pending; record exact engine commit after engine implementation commit exists`
-- Root pointer update required: `yes, after the engine commit is created and pushed`
+- Bound engine commit hash: `5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0`
+- Root pointer update required: `yes; pending root commit`
 - Root game changes required: `yes, convert current Last Beacon Rust bsn! macro scenes into .bsn asset scenes after the engine bridge is available`
 
 ## Alternatives Considered

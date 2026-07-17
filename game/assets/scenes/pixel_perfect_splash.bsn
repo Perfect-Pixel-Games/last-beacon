@@ -1,0 +1,25 @@
+#LastBeaconPixelPerfectSplash
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Percent(100.0),
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.0,
+    green: 0.0,
+    blue: 0.0,
+    alpha: 1.0,
+}))
+foundation_runtime_library::splash_screen::FoundationSplashUiRoot
+bevy_ecs::hierarchy::Children [
+    bevy_ui::widget::text::Text("Pixel Perfect")
+    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(72.0) }
+    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 1.0,
+        green: 1.0,
+        blue: 1.0,
+        alpha: 0.0,
+    }))
+    foundation_runtime_library::splash_screen::FoundationSplashText
+]
