@@ -8,7 +8,7 @@
 - Engine branch: `feature/foundation-bsn-assets`
 - Root branch base verification: `Created from current root dev at afa88b96bc0bb46336620af08713347d6871d52b on 2026-07-17`
 - Engine branch base verification: `Created feature/foundation-bsn-assets from engine origin/dev at b4ff3107932e177a98ae1eee626578b1f05b2be9 on 2026-07-17`
-- Engine submodule pointer: `Updated to engine inline-log opt-in commit 71bf4c3d3acc6c8e34bec9fdbca0478468bbb967; committed in root a41a1cf15dbe8bc7c76ce40f11beebdce9dbf0f8`
+- Engine submodule pointer: `Updated to engine simplified log mode commit 8e66853b2f6750b6cec624e2e3ff69e05120cc08; root pointer commit pending`
 - Overall status: `Implementation in progress - logging visual polish requested on current feature branches`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
@@ -24,10 +24,10 @@
 - The exact engine commit hash bound to Last Beacon must be recorded before root completion.
 
 ## Repository State
-- Root commit/push state: `Root inline-log opt-in pointer/tracker commit a41a1cf15dbe8bc7c76ce40f11beebdce9dbf0f8 pushed to origin/feature/foundation-bsn-assets; previous logging visual polish pointer/tracker commit f952ef67fe03d91f3a4625b6847c06b5626ee0b6 also on branch`
-- Engine commit/push state: `Engine inline-log opt-in commit 71bf4c3d3acc6c8e34bec9fdbca0478468bbb967 pushed to origin/feature/foundation-bsn-assets; previous logging visual polish commit 89d40757b1a77e9e51cc62acb3778d31bb8b9133 also on branch`
+- Root commit/push state: `Root inline-log opt-in pointer/tracker commit a41a1cf15dbe8bc7c76ce40f11beebdce9dbf0f8 pushed to origin/feature/foundation-bsn-assets; simplified log mode pointer/tracker commit pending`
+- Engine commit/push state: `Engine simplified log mode commit 8e66853b2f6750b6cec624e2e3ff69e05120cc08 pushed to origin/feature/foundation-bsn-assets; previous inline-log opt-in commit 71bf4c3d3acc6c8e34bec9fdbca0478468bbb967 also on branch`
 - Root game scene conversion state: `Converted current Rust bsn! macro scenes to .bsn assets in root commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92`
-- Root submodule pointer update: `Committed in root a41a1cf15dbe8bc7c76ce40f11beebdce9dbf0f8; root points to engine 71bf4c3d3acc6c8e34bec9fdbca0478468bbb967`
+- Root submodule pointer update: `Pending root commit for engine simplified log mode commit 8e66853b2f6750b6cec624e2e3ff69e05120cc08`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -231,10 +231,14 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: User clarified that logs should not reuse the console that opened the game by default. Added `--log-inline` for current-terminal behavior and updated the Foundation launcher to forward it.
+- [x] Simplify log arguments and fix styling in the separate Windows log console.
+  - Status: Complete
+  - Repository: `engine`
+  - Notes: User requested `--log` for separate logs and standalone `--log-inline` for inline logs, without requiring both. Separate console output lacked colors/styling and formatting looked off, so the separate Windows console now enables virtual-terminal colors and the formatter uses safer aligned ASCII columns.
 
 ### Validation
 - Game validation: `Passed cargo check --manifest-path game/Cargo.toml --all-features`
-- Engine validation: `Passed cargo test --manifest-path engine/Cargo.toml -p foundation-runtime-library logging::tests --all-features; passed cargo test --manifest-path engine/Cargo.toml -p foundation parse_game_editor_and_log_arguments; passed cargo clippy --manifest-path engine/Cargo.toml -p foundation-runtime-library -p foundation --all-targets --all-features -- -D warnings`
+- Engine validation: `Passed cargo test --manifest-path engine/Cargo.toml -p foundation-runtime-library logging::tests --all-features; passed cargo test --manifest-path engine/Cargo.toml -p foundation parse --all-features; passed cargo clippy --manifest-path engine/Cargo.toml -p foundation-runtime-library -p foundation --all-targets --all-features -- -D warnings`
 - Documentation generation: `Passed cargo doc --manifest-path engine/Cargo.toml -p foundation-runtime-library -p foundation --all-features --no-deps`
 - User confirmation: `Pending`
 
@@ -248,6 +252,9 @@
 - `2026-07-17`: Implemented `--log-inline`, changed Windows `--log` behavior to detach from any parent console and allocate a separate log window by default, updated launcher forwarding/usage, and updated logging docs. Focused engine tests, clippy, docs, and root cargo check passed.
 - `2026-07-17`: Committed and pushed engine inline-log opt-in change as `71bf4c3d3acc6c8e34bec9fdbca0478468bbb967` on `origin/feature/foundation-bsn-assets`.
 - `2026-07-17`: Committed and pushed root inline-log opt-in pointer/tracker update as `a41a1cf15dbe8bc7c76ce40f11beebdce9dbf0f8` on `origin/feature/foundation-bsn-assets`.
+- `2026-07-17`: User requested simplifying visible logging to either `--log` or `--log-inline`, and reported that the separate `--log` console had no colors/styling and awkward formatting. Started follow-up to make `--log-inline` standalone and enable Windows virtual-terminal color processing for the separate console.
+- `2026-07-17`: Implemented standalone `--log-inline`, enabled Windows virtual-terminal colors after attaching/allocating the log console, changed visible log separator/target columns for more reliable console formatting, and updated docs. Focused engine tests, clippy, docs, and root cargo check passed.
+- `2026-07-17`: Committed and pushed engine simplified log mode change as `8e66853b2f6750b6cec624e2e3ff69e05120cc08` on `origin/feature/foundation-bsn-assets`.
 - `2026-07-17`: User approved planning for Foundation `.bsn` level/prefab asset support with full root/children replacement on hot reload.
 - `2026-07-17`: Created root branch `feature/foundation-bsn-assets` from current root `dev`.
 - `2026-07-17`: Created plan and tracker under `docs/plans/foundation-bsn-assets/`.
