@@ -8,7 +8,7 @@
 - Root branch status: `Created from current root dev at afa88b96bc0bb46336620af08713347d6871d52b`
 - Engine branch: `feature/foundation-bsn-assets`
 - Engine branch status: `Required before implementation; engine submodule is currently detached at b4ff3107932e177a98ae1eee626578b1f05b2be9`
-- Engine submodule pointer: `Updated to engine logging visual polish commit 89d40757b1a77e9e51cc62acb3778d31bb8b9133; root pointer commit pending`
+- Engine submodule pointer: `Updated to engine inline-log opt-in commit 71bf4c3d3acc6c8e34bec9fdbca0478468bbb967; root pointer commit pending`
 - Status: `Planned`
 - Planning model: `gpt-5.5`
 - Implementation model: `gpt-5.4`
@@ -157,6 +157,7 @@ This is explicitly temporary compatibility infrastructure. It should wrap or mir
 - Requested on `2026-07-17` for the current root and engine feature branches.
 - Improve Foundation's visible `--log` output with clearer layout, severity colors, and source categories.
 - Font and colors should come from the user's current PowerShell/terminal theme where possible. Foundation should not hard-code a GUI font; visible output should use terminal text and ANSI theme palette colors.
+- Follow-up clarification: `--log` should open a separate Foundation log window by default; `--log --log-inline` should opt into reusing the current parent terminal.
 - Categorize unmodified Bevy logs by mapping tracing target prefixes such as `bevy_*`, `wgpu`, and `naga` to a `Bevy` category inside Foundation's formatter.
 - Categorize Foundation and game targets such as `foundation-runtime-library`, `foundation`, and `last-beacon` as `Foundation Runtime`, `Foundation Engine`, and `Last Beacon`.
 - Keep file logs plain and machine-readable enough for support; reserve ANSI colors for visible terminal output.
