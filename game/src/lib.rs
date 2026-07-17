@@ -123,11 +123,18 @@ impl Plugin for LastBeaconPlugin {
             roots: vec![asset_root()],
         })
         .register_type::<SpinningCube>()
-        .add_systems(Startup, scenes::open_initial_scene)
+        .add_systems(
+            Startup,
+            (
+                scenes::register_last_beacon_bsn_scenes,
+                scenes::open_initial_scene,
+            )
+                .chain(),
+        )
         .add_systems(
             Update,
             (
-                scenes::spawn_requested_last_beacon_scenes,
+                scenes::spawn_requested_last_beacon_scene_drivers,
                 exit_game_on_foundation_exit_request,
                 spin_cube.run_if(foundation_is_not_paused),
             ),

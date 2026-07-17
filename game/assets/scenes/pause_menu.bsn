@@ -1,0 +1,116 @@
+#LastBeaconPauseMenu
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    row_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.02,
+    green: 0.02,
+    blue: 0.04,
+    alpha: 0.92,
+}))
+bevy_ecs::hierarchy::Children [
+    bevy_ui::widget::text::Text("Paused")
+    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(64.0) }
+    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 1.0,
+        green: 1.0,
+        blue: 1.0,
+        alpha: 1.0,
+    })),
+
+    bevy_ui::widget::button::Button
+    bevy_ui::ui_node::Node {
+        width: bevy_ui::geometry::Val::Px(260.0),
+        height: bevy_ui::geometry::Val::Px(56.0),
+        align_items: bevy_ui::ui_node::AlignItems::Center,
+        justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    }
+    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 0.15,
+        green: 0.15,
+        blue: 0.18,
+        alpha: 1.0,
+    }))
+    foundation_runtime_library::menu::FoundationMenuButton {
+        action: "resume",
+        scene_key: "",
+        stack_key: "",
+    }
+    bevy_ecs::hierarchy::Children [
+        bevy_ui::widget::text::Text("Resume")
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(28.0) }
+        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 1.0,
+            green: 1.0,
+            blue: 1.0,
+            alpha: 1.0,
+        }))
+    ],
+
+    bevy_ui::widget::button::Button
+    bevy_ui::ui_node::Node {
+        width: bevy_ui::geometry::Val::Px(260.0),
+        height: bevy_ui::geometry::Val::Px(56.0),
+        align_items: bevy_ui::ui_node::AlignItems::Center,
+        justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    }
+    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 0.15,
+        green: 0.15,
+        blue: 0.18,
+        alpha: 1.0,
+    }))
+    foundation_runtime_library::menu::FoundationMenuButton {
+        action: "open_overlay_scene",
+        scene_key: "last-beacon/options_menu",
+        stack_key: "options",
+    }
+    bevy_ecs::hierarchy::Children [
+        bevy_ui::widget::text::Text("Options")
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(28.0) }
+        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 1.0,
+            green: 1.0,
+            blue: 1.0,
+            alpha: 1.0,
+        }))
+    ],
+
+    bevy_ui::widget::button::Button
+    bevy_ui::ui_node::Node {
+        width: bevy_ui::geometry::Val::Px(260.0),
+        height: bevy_ui::geometry::Val::Px(56.0),
+        align_items: bevy_ui::ui_node::AlignItems::Center,
+        justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    }
+    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 0.15,
+        green: 0.15,
+        blue: 0.18,
+        alpha: 1.0,
+    }))
+    foundation_runtime_library::menu::FoundationMenuButton {
+        action: "clear_and_open_scene",
+        scene_key: "last-beacon/main_menu",
+        stack_key: "main-menu",
+    }
+    bevy_ecs::hierarchy::Children [
+        bevy_ui::widget::text::Text("Main Menu")
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(28.0) }
+        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 1.0,
+            green: 1.0,
+            blue: 1.0,
+            alpha: 1.0,
+        }))
+    ],
+
+    #PauseEscapeHandler
+    foundation_runtime_library::menu::FoundationCloseOnEscape
+    foundation_runtime_library::menu::FoundationResumeOnEscape
+]
