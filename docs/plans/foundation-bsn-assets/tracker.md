@@ -240,7 +240,7 @@
 - Game validation: `Passed cargo check --manifest-path game/Cargo.toml --all-features`
 - Engine validation: `Passed cargo test --manifest-path engine/Cargo.toml -p foundation-runtime-library logging::tests --all-features; passed cargo test --manifest-path engine/Cargo.toml -p foundation parse --all-features; passed cargo clippy --manifest-path engine/Cargo.toml -p foundation-runtime-library -p foundation --all-targets --all-features -- -D warnings`
 - Documentation generation: `Passed cargo doc --manifest-path engine/Cargo.toml -p foundation-runtime-library -p foundation --all-features --no-deps`
-- User confirmation: `Pending`
+- User confirmation: `User confirmed the separate log console is working perfectly and formatting is perfect on 2026-07-17`
 
 ## Review Findings
 - `2026-07-17` - gpt-5.5 sanity review
@@ -249,11 +249,12 @@
   - Engine submodule state: `Clean; branch feature/foundation-bsn-assets; engine commit 8e66853b2f6750b6cec624e2e3ff69e05120cc08 pushed to origin/feature/foundation-bsn-assets`
   - Must-fix: None found in the logging argument/styling follow-up.
   - Optional improvements:
-    - Add a manual smoke checklist/result for the real Windows `--log` path after the user visually confirms the separate console now renders ANSI colors and aligned columns correctly. Automated tests verify parsing/policy but cannot prove native console color rendering.
-    - Consider a future polish pass for console title/size/buffer defaults if the separate Windows log window still feels less readable than Windows Terminal.
-  - User decision: `Pending`
+    - Manual smoke confirmation received: user confirmed the real Windows `--log` path renders correctly and the formatting is perfect.
+    - Consider a future polish pass for console title/size/buffer defaults only if the separate Windows log window later needs more readability tuning.
+  - User decision: `Accept as-is`
 
 ## Progress Log
+- `2026-07-17`: User confirmed the latest separate `--log` console is working perfectly and the formatting is perfect; review decision recorded as accepted as-is.
 - `2026-07-17`: User requested visual logging polish on the current root and engine feature branches: better readability, theme-derived PowerShell font/colors, severity colors, and source categories including Bevy, Foundation Engine, Foundation Runtime, and Last Beacon.
 - `2026-07-17`: Implemented Foundation visible log formatter with ANSI theme colors, aligned category labels, target display, Bevy target wrapping, and logging documentation. Focused engine tests, clippy, and docs passed.
 - `2026-07-17`: Committed and pushed engine logging visual polish as `89d40757b1a77e9e51cc62acb3778d31bb8b9133` on `origin/feature/foundation-bsn-assets`.
