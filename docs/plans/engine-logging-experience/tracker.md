@@ -23,9 +23,9 @@
 - Never use Anthropic models.
 
 ## Repository State
-- Root commit/push state: `Pending on feature/engine-logging-experience`
+- Root commit/push state: `Committed 14cf03ff8adeeaf83809cb1fe00402a525e136b7 and pushed to origin/feature/engine-logging-experience on 2026-07-17`
 - Engine commit/push state: `Committed efd4d76041a90523eba8091203adede8f9e6c306 and pushed to origin/feature/engine-logging-experience on 2026-07-17`
-- Root submodule pointer update: `Pending root commit; root working tree points at engine commit efd4d76041a90523eba8091203adede8f9e6c306`
+- Root submodule pointer update: `Committed in root commit 14cf03ff8adeeaf83809cb1fe00402a525e136b7; root binds engine commit efd4d76041a90523eba8091203adede8f9e6c306`
 - Pre-existing local changes: `Root game/Cargo.lock is modified before this feature starts; protect it until ownership is verified`
 - Current engine checkout: `feature/engine-logging-experience at 7bfb91f7a7cfdc11f083352f5ce6b2a681a587e4`
 
@@ -58,28 +58,28 @@
 - User confirmation: `User approved implementation start on 2026-07-17`
 
 ## Phase 2: Foundation Logging Runtime Policy
-**Status:** Awaiting commit  
+**Status:** Complete  
 **Goal:** Add reusable engine-owned logging behavior for non-shipping file logs, `--log` visibility policy, and crash-log preservation.
 
 ### Tasks
 - [x] Add Foundation logging settings/API surface in `foundation-runtime-library`.
-  - Status: Awaiting commit
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Added `logging` module, `foundation_log_plugin()`, path/policy helpers, constants, `FoundationLoggingPaths`, Rustdoc, and prelude exports.
+  - Notes: Added `logging` module, `foundation_log_plugin()`, path/policy helpers, constants, `FoundationLoggingPaths`, Rustdoc, and prelude exports. Committed in engine `efd4d76041a90523eba8091203adede8f9e6c306`.
 - [x] Add non-shipping normal log file output under `<exe-dir>/saved/logs/` with overwrite-per-run behavior.
-  - Status: Awaiting commit
+  - Status: Complete
   - Repository: `engine`
   - Notes: Added non-shipping file layer that truncates `<exe-dir>/saved/logs/latest.log` at startup. Manual smoke confirmed marker text is overwritten on relaunch.
 - [x] Add panic/crash preservation that writes timestamped crash logs without overwriting earlier crash logs.
-  - Status: Awaiting commit
+  - Status: Complete
   - Repository: `engine`
   - Notes: Added panic hook that flushes/copies `latest.log` to `crash-<timestamp>.log`, with suffix fallback to avoid overwrites. Hard-abort limitations are documented.
 - [x] Add platform-specific visible log-window handling for `--log`, with shipping suppression.
-  - Status: Awaiting commit
+  - Status: Complete
   - Repository: `engine`
   - Notes: Non-shipping `--log` uses visible stderr formatting and allocates a Windows console when available; default/shipping use a sink formatter. Shipping smoke with `--log` produced zero visible log lines.
 - [x] Add unit tests for path policy, argument/policy decisions, normal/crash filename behavior, and shipping suppression where practical.
-  - Status: Awaiting commit
+  - Status: Complete
   - Repository: `engine`
   - Notes: Added Foundation runtime logging unit tests and focused launcher/build-tool regression coverage.
 
@@ -90,24 +90,24 @@
 - User confirmation: `Not required yet`
 
 ## Phase 3: Launcher, Build Tool, And Game Adoption
-**Status:** Awaiting commit  
+**Status:** Complete  
 **Goal:** Ensure `--log` flows through Foundation launch/build paths and Last Beacon consumes the engine-owned logging helper.
 
 ### Tasks
 - [x] Update `crates/foundation` launcher parsing, forwarding, and usage text for `--log`.
-  - Status: Awaiting commit
+  - Status: Complete
   - Repository: `engine`
   - Notes: Launcher now parses and forwards `--log`; usage text includes `[--log]`.
 - [x] Add/adjust `foundation-build` tests so runtime `--log` remains forwarded and shipping policy is represented.
-  - Status: Awaiting commit
+  - Status: Complete
   - Repository: `engine`
   - Notes: Updated runtime-argument preservation test to include `--log`; shipping feature policy remains covered by `shipping_game_disables_default_features`.
 - [x] Update Last Beacon to use the Foundation logging/default-plugin helper instead of local logging policy.
-  - Status: Awaiting root pointer commit
+  - Status: Complete
   - Repository: `root`
-  - Notes: Last Beacon `DefaultPlugins` now sets `foundation_log_plugin()`, and the Windows binary entry point uses the Windows subsystem so a console is not created by default.
+  - Notes: Last Beacon `DefaultPlugins` now sets `foundation_log_plugin()`, and the Windows binary entry point uses the Windows subsystem so a console is not created by default. Committed in root `14cf03ff8adeeaf83809cb1fe00402a525e136b7`.
 - [x] Update docs for launch/build usage, `--log`, log paths, crash logs, and shipping behavior.
-  - Status: Awaiting commit
+  - Status: Complete
   - Repository: `engine`
   - Notes: Added `docs/logging.md` and linked logging behavior from `docs/foundation-engine.md`.
 
@@ -118,7 +118,7 @@
 - User confirmation: `Not required yet`
 
 ## Phase 4: Validation, Commits, And Pointer Update
-**Status:** Awaiting root pointer commit  
+**Status:** Awaiting user acceptance  
 **Goal:** Validate the engine and root integration, commit/push engine first, then commit/push the root submodule pointer and tracker updates.
 
 ### Tasks
@@ -138,10 +138,10 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: Committed and pushed `efd4d76041a90523eba8091203adede8f9e6c306` to `origin/feature/engine-logging-experience`.
-- [ ] Update root `engine` submodule pointer, plan/tracker validation state, and commit/push root changes.
-  - Status: Awaiting root pointer commit
+- [x] Update root `engine` submodule pointer, plan/tracker validation state, and commit/push root changes.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Root commit must include `engine` pointer, Last Beacon adoption, Cargo.lock update, and plan/tracker updates.
+  - Notes: Root commit `14cf03ff8adeeaf83809cb1fe00402a525e136b7` includes `engine` pointer, Last Beacon adoption, Cargo.lock update, and plan/tracker updates; pushed to origin.
 
 ### Validation
 - Game validation: `Passed on 2026-07-17`
@@ -178,3 +178,4 @@
 - `2026-07-17`: Validation passed: `cargo test --manifest-path engine/Cargo.toml -p foundation-runtime-library`, `cargo test --manifest-path engine/Cargo.toml -p foundation`, `cargo test --manifest-path engine/Cargo.toml -p foundation-build`, `cargo check --manifest-path engine/Cargo.toml -p foundation-runtime-library --no-default-features`, focused engine clippy, engine format/lint/test/doc/compile wrappers, `cargo check --manifest-path game/Cargo.toml`, `cargo check --manifest-path game/Cargo.toml --no-default-features --profile foundation-shipping`, root clippy, root docs, shipping build, and `scripts/validate.cmd`.
 - `2026-07-17`: Manual smoke checks passed: non-shipping launch without `--log` produced zero visible log lines and created `saved/logs/latest.log`; non-shipping `--log` produced visible Bevy log output and created `latest.log`; relaunch overwrote a marker in `latest.log`; shipping `--log` produced zero visible log lines and no non-shipping latest log.
 - `2026-07-17`: Committed and pushed engine changes as `efd4d76041a90523eba8091203adede8f9e6c306` on `origin/feature/engine-logging-experience`.
+- `2026-07-17`: Committed and pushed root changes as `14cf03ff8adeeaf83809cb1fe00402a525e136b7` on `origin/feature/engine-logging-experience`, binding Last Beacon to engine commit `efd4d76041a90523eba8091203adede8f9e6c306`.
