@@ -8,8 +8,8 @@
 - Engine branch: `feature/foundation-bsn-assets`
 - Root branch base verification: `Created from current root dev at afa88b96bc0bb46336620af08713347d6871d52b on 2026-07-17`
 - Engine branch base verification: `Created feature/foundation-bsn-assets from engine origin/dev at b4ff3107932e177a98ae1eee626578b1f05b2be9 on 2026-07-17`
-- Engine submodule pointer: `Updated to engine hardening commit a44d4d21fca472f1d8ace1f7a7abe52ae9044d41; committed in root hardening commit 113be54a9c7e9378f666d9a22d3bbf8b2ed27c47`
-- Overall status: `Implementation in progress - hardening pass committed and pushed`
+- Engine submodule pointer: `Updated to engine logging visual polish commit 89d40757b1a77e9e51cc62acb3778d31bb8b9133; root pointer commit pending`
+- Overall status: `Implementation in progress - logging visual polish requested on current feature branches`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
@@ -24,10 +24,10 @@
 - The exact engine commit hash bound to Last Beacon must be recorded before root completion.
 
 ## Repository State
-- Root commit/push state: `Root hardening commit 113be54a9c7e9378f666d9a22d3bbf8b2ed27c47 pushed to origin/feature/foundation-bsn-assets; previous runtime startup fix commit c1db32468ddf5de5018f7c3112be60bd49d10476 also on branch`
-- Engine commit/push state: `Engine hardening commit a44d4d21fca472f1d8ace1f7a7abe52ae9044d41 pushed to origin/feature/foundation-bsn-assets; previous runtime fix commit 49392f1f1a44662cc8d9a88572a70cfe86f84d22 also on branch`
+- Root commit/push state: `Root hardening commit 113be54a9c7e9378f666d9a22d3bbf8b2ed27c47 pushed to origin/feature/foundation-bsn-assets; logging visual polish pointer/tracker commit pending`
+- Engine commit/push state: `Engine logging visual polish commit 89d40757b1a77e9e51cc62acb3778d31bb8b9133 pushed to origin/feature/foundation-bsn-assets; previous hardening commit a44d4d21fca472f1d8ace1f7a7abe52ae9044d41 also on branch`
 - Root game scene conversion state: `Converted current Rust bsn! macro scenes to .bsn assets in root commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92`
-- Root submodule pointer update: `Committed in root hardening commit 113be54a9c7e9378f666d9a22d3bbf8b2ed27c47; root points to engine a44d4d21fca472f1d8ace1f7a7abe52ae9044d41`
+- Root submodule pointer update: `Pending root commit for engine logging visual polish commit 89d40757b1a77e9e51cc62acb3778d31bb8b9133`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -210,7 +210,35 @@
 - Follow-up black-screen cause: scene-owned splash drivers could initialize before authored `.bsn` UI existed and permanently select the empty generated fallback UI. Scene-owned splashes now wait for authored `FoundationSplashUiRoot` and `FoundationSplashText` instead of using fallback UI.
 - User-provided runtime logs showed loader failures for both tuple components and bare Foundation marker components: `Dynamic BSN type does not reflect Default` followed by failed scene resolution. The loader now supports fully specified tuple-struct components without requiring `ReflectDefault`, and Foundation-authored `.bsn` component types with defaults now expose `ReflectDefault` through `#[reflect(Default)]`.
 
+## Phase 6: Logging Visual Polish Scope Expansion
+**Status:** In progress
+**Goal:** Improve Foundation visible log readability using the user's current PowerShell/terminal font and theme colors, with clearer severity and category labels.
+
+### Tasks
+- [x] Add readable Foundation log formatting for visible `--log` output.
+  - Status: Complete
+  - Repository: `engine`
+  - Notes: Added a custom visible formatter with aligned severity, category, target, separator, and message fields. Colors use ANSI terminal roles so PowerShell/Windows Terminal maps them through the active theme; on Windows, Foundation tries to attach to the parent terminal before allocating a fallback console. Foundation does not hard-code a GUI font.
+- [x] Categorize Bevy and Foundation targets without modifying Bevy.
+  - Status: Complete
+  - Repository: `engine`
+  - Notes: Added target-prefix categorization for Bevy, Foundation Engine, Foundation Runtime, Foundation Editor, Last Beacon, TemplateGame, Rust, and third-party targets.
+- [x] Update documentation and validation state.
+  - Status: Complete
+  - Repository: `both`
+  - Notes: Updated `engine/docs/logging.md` and this tracker to record that log font and colors come from the terminal/PowerShell theme where the process is launched.
+
+### Validation
+- Game validation: `Passed cargo check --manifest-path game/Cargo.toml --all-features`
+- Engine validation: `Passed cargo test --manifest-path engine/Cargo.toml -p foundation-runtime-library logging::tests --all-features; passed cargo clippy --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-targets --all-features -- -D warnings`
+- Documentation generation: `Passed cargo doc --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-features --no-deps`
+- User confirmation: `Pending`
+
 ## Progress Log
+- `2026-07-17`: User requested visual logging polish on the current root and engine feature branches: better readability, theme-derived PowerShell font/colors, severity colors, and source categories including Bevy, Foundation Engine, Foundation Runtime, and Last Beacon.
+- `2026-07-17`: Implemented Foundation visible log formatter with ANSI theme colors, aligned category labels, target display, Bevy target wrapping, and logging documentation. Focused engine tests, clippy, and docs passed.
+- `2026-07-17`: Committed and pushed engine logging visual polish as `89d40757b1a77e9e51cc62acb3778d31bb8b9133` on `origin/feature/foundation-bsn-assets`.
+- `2026-07-17`: Focused root compile check passed after updating the submodule pointer: `cargo check --manifest-path game/Cargo.toml --all-features`.
 - `2026-07-17`: User approved planning for Foundation `.bsn` level/prefab asset support with full root/children replacement on hot reload.
 - `2026-07-17`: Created root branch `feature/foundation-bsn-assets` from current root `dev`.
 - `2026-07-17`: Created plan and tracker under `docs/plans/foundation-bsn-assets/`.
