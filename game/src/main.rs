@@ -1,3 +1,5 @@
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+
 //! Thin binary wrapper for the LastBeacon library.
 //!
 //! Development should normally launch through Foundation:
