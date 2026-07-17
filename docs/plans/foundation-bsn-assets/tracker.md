@@ -8,7 +8,7 @@
 - Engine branch: `feature/foundation-bsn-assets`
 - Root branch base verification: `Created from current root dev at afa88b96bc0bb46336620af08713347d6871d52b on 2026-07-17`
 - Engine branch base verification: `Created feature/foundation-bsn-assets from engine origin/dev at b4ff3107932e177a98ae1eee626578b1f05b2be9 on 2026-07-17`
-- Engine submodule pointer: `Updated to engine simplified log mode commit 8e66853b2f6750b6cec624e2e3ff69e05120cc08; root pointer commit pending`
+- Engine submodule pointer: `Updated to engine simplified log mode commit 8e66853b2f6750b6cec624e2e3ff69e05120cc08; committed in root 217095562d24357f9f89c6ff3936eb6d451a0c98`
 - Overall status: `Implementation in progress - logging visual polish requested on current feature branches`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
@@ -24,10 +24,10 @@
 - The exact engine commit hash bound to Last Beacon must be recorded before root completion.
 
 ## Repository State
-- Root commit/push state: `Root inline-log opt-in pointer/tracker commit a41a1cf15dbe8bc7c76ce40f11beebdce9dbf0f8 pushed to origin/feature/foundation-bsn-assets; simplified log mode pointer/tracker commit pending`
+- Root commit/push state: `Root simplified log mode pointer/tracker commit 217095562d24357f9f89c6ff3936eb6d451a0c98 pushed to origin/feature/foundation-bsn-assets; previous inline-log opt-in pointer/tracker commit a41a1cf15dbe8bc7c76ce40f11beebdce9dbf0f8 also on branch`
 - Engine commit/push state: `Engine simplified log mode commit 8e66853b2f6750b6cec624e2e3ff69e05120cc08 pushed to origin/feature/foundation-bsn-assets; previous inline-log opt-in commit 71bf4c3d3acc6c8e34bec9fdbca0478468bbb967 also on branch`
 - Root game scene conversion state: `Converted current Rust bsn! macro scenes to .bsn assets in root commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92`
-- Root submodule pointer update: `Pending root commit for engine simplified log mode commit 8e66853b2f6750b6cec624e2e3ff69e05120cc08`
+- Root submodule pointer update: `Committed in root 217095562d24357f9f89c6ff3936eb6d451a0c98; root points to engine 8e66853b2f6750b6cec624e2e3ff69e05120cc08`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -255,6 +255,7 @@
 - `2026-07-17`: User requested simplifying visible logging to either `--log` or `--log-inline`, and reported that the separate `--log` console had no colors/styling and awkward formatting. Started follow-up to make `--log-inline` standalone and enable Windows virtual-terminal color processing for the separate console.
 - `2026-07-17`: Implemented standalone `--log-inline`, enabled Windows virtual-terminal colors after attaching/allocating the log console, changed visible log separator/target columns for more reliable console formatting, and updated docs. Focused engine tests, clippy, docs, and root cargo check passed.
 - `2026-07-17`: Committed and pushed engine simplified log mode change as `8e66853b2f6750b6cec624e2e3ff69e05120cc08` on `origin/feature/foundation-bsn-assets`.
+- `2026-07-17`: Committed and pushed root simplified log mode pointer/tracker update as `217095562d24357f9f89c6ff3936eb6d451a0c98` on `origin/feature/foundation-bsn-assets`.
 - `2026-07-17`: User approved planning for Foundation `.bsn` level/prefab asset support with full root/children replacement on hot reload.
 - `2026-07-17`: Created root branch `feature/foundation-bsn-assets` from current root `dev`.
 - `2026-07-17`: Created plan and tracker under `docs/plans/foundation-bsn-assets/`.
