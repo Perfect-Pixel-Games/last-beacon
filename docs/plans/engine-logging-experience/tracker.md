@@ -129,7 +129,7 @@
 - [x] Run root validation and relevant build/package smoke checks.
   - Status: Complete
   - Repository: `root`
-  - Notes: Passed root check, clippy, docs, `scripts/validate.cmd`, and shipping check/build on 2026-07-17. Full packaging smoke is not yet run.
+  - Notes: Passed root check, clippy, docs, `scripts/validate.cmd`, `scripts/build.cmd --platform windows-x64 --configuration test --target game`, shipping check/build, and `scripts/package.cmd --platform windows-x64 --configuration shipping --target game` on 2026-07-17.
 - [x] Perform manual smoke checks for no-log-window default, `--log` opt-in, normal log overwrite, crash log preservation, and shipping suppression.
   - Status: Complete
   - Repository: `both`
@@ -175,7 +175,7 @@
 - `2026-07-17`: Created plan and tracker under `docs/plans/engine-logging-experience/` and stopped before implementation pending user review.
 - `2026-07-17`: User approved the plan. Created root and engine feature branches, verified branch bases, and started implementation with `gpt-5.4`.
 - `2026-07-17`: Implemented Foundation logging runtime policy, launcher `--log` forwarding, build-tool regression coverage, docs, and Last Beacon adoption.
-- `2026-07-17`: Validation passed: `cargo test --manifest-path engine/Cargo.toml -p foundation-runtime-library`, `cargo test --manifest-path engine/Cargo.toml -p foundation`, `cargo test --manifest-path engine/Cargo.toml -p foundation-build`, `cargo check --manifest-path engine/Cargo.toml -p foundation-runtime-library --no-default-features`, focused engine clippy, engine format/lint/test/doc/compile wrappers, `cargo check --manifest-path game/Cargo.toml`, `cargo check --manifest-path game/Cargo.toml --no-default-features --profile foundation-shipping`, root clippy, root docs, shipping build, and `scripts/validate.cmd`.
+- `2026-07-17`: Validation passed: `cargo test --manifest-path engine/Cargo.toml -p foundation-runtime-library`, `cargo test --manifest-path engine/Cargo.toml -p foundation`, `cargo test --manifest-path engine/Cargo.toml -p foundation-build`, `cargo check --manifest-path engine/Cargo.toml -p foundation-runtime-library --no-default-features`, focused engine clippy, engine format/lint/test/doc/compile wrappers, `cargo check --manifest-path game/Cargo.toml`, `cargo check --manifest-path game/Cargo.toml --no-default-features --profile foundation-shipping`, root clippy, root docs, shipping build, `scripts/validate.cmd`, `scripts/build.cmd --platform windows-x64 --configuration test --target game`, and `scripts/package.cmd --platform windows-x64 --configuration shipping --target game`.
 - `2026-07-17`: Manual smoke checks passed: non-shipping launch without `--log` produced zero visible log lines and created `saved/logs/latest.log`; non-shipping `--log` produced visible Bevy log output and created `latest.log`; relaunch overwrote a marker in `latest.log`; shipping `--log` produced zero visible log lines and no non-shipping latest log.
 - `2026-07-17`: Committed and pushed engine changes as `efd4d76041a90523eba8091203adede8f9e6c306` on `origin/feature/engine-logging-experience`.
 - `2026-07-17`: Committed and pushed root changes as `14cf03ff8adeeaf83809cb1fe00402a525e136b7` on `origin/feature/engine-logging-experience`, binding Last Beacon to engine commit `efd4d76041a90523eba8091203adede8f9e6c306`.
