@@ -8,8 +8,8 @@
 - Engine branch: `feature/foundation-bsn-assets`
 - Root branch base verification: `Created from current root dev at afa88b96bc0bb46336620af08713347d6871d52b on 2026-07-17`
 - Engine branch base verification: `Created feature/foundation-bsn-assets from engine origin/dev at b4ff3107932e177a98ae1eee626578b1f05b2be9 on 2026-07-17`
-- Engine submodule pointer: `Updated to engine feature commit 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0; root pointer commit pending`
-- Overall status: `Implementation in progress`
+- Engine submodule pointer: `Updated to engine feature commit 49392f1f1a44662cc8d9a88572a70cfe86f84d22; root pointer commit pending`
+- Overall status: `Implementation in progress - runtime black-screen fixed; hardening review pending`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
@@ -25,9 +25,9 @@
 
 ## Repository State
 - Root commit/push state: `Implementation commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92 pushed to origin/feature/foundation-bsn-assets; final tracker status commit pending`
-- Engine commit/push state: `Engine commit 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0 pushed to origin/feature/foundation-bsn-assets`
+- Engine commit/push state: `Engine fix commit 49392f1f1a44662cc8d9a88572a70cfe86f84d22 pushed to origin/feature/foundation-bsn-assets; previous implementation commit 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0 also on branch`
 - Root game scene conversion state: `Converted current Rust bsn! macro scenes to .bsn assets in root commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92`
-- Root submodule pointer update: `Committed in root commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92; root points to engine 5fbbf2b4c1d93c7767cef9d12fd6481b7c1df0b0`
+- Root submodule pointer update: `Pending follow-up root commit; root working tree points to engine 49392f1f1a44662cc8d9a88572a70cfe86f84d22`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -206,6 +206,9 @@
 - Engine submodule is detached at planning time; branch setup is mandatory before implementation.
 - Upstream Bevy dynamic BSN support is not finalized, so adapted code must stay isolated and replaceable.
 - Reload replacement can invalidate entity references and reset gameplay state; this is expected and must be documented.
+- Runtime black-screen issue found after first implementation: `.bsn` assets loaded successfully, but the runtime bridge did not deterministically resolve/apply the loaded `ScenePatch` before scene-scoped UI systems needed it. The fix moves BSN application into Foundation's temporary bridge and propagates `SceneOwner` after authored roots/children exist.
+- Follow-up black-screen cause: scene-owned splash drivers could initialize before authored `.bsn` UI existed and permanently select the empty generated fallback UI. Scene-owned splashes now wait for authored `FoundationSplashUiRoot` and `FoundationSplashText` instead of using fallback UI.
+- User-provided runtime logs showed loader failures for both tuple components and bare Foundation marker components: `Dynamic BSN type does not reflect Default` followed by failed scene resolution. The loader now supports fully specified tuple-struct components without requiring `ReflectDefault`, and Foundation-authored `.bsn` component types with defaults now expose `ReflectDefault` through `#[reflect(Default)]`.
 
 ## Progress Log
 - `2026-07-17`: User approved planning for Foundation `.bsn` level/prefab asset support with full root/children replacement on hot reload.
@@ -217,3 +220,10 @@
 - `2026-07-17`: Converted Last Beacon Rust `bsn!` macro scenes to `.bsn` assets and added asset loading test.
 - `2026-07-17`: Passed `./engine/scripts/validate-project.cmd` and `./scripts/validate.cmd`; root commit remains pending.
 - `2026-07-17`: Pushed root implementation commit `5e0eb27984d67edaac35f0459b0c31552d9f0d92` with Last Beacon `.bsn` scene conversion and engine submodule pointer update.
+- `2026-07-17`: Reproduced black-screen startup symptom as a runtime scheduling issue: `ScenePatch` assets parse/load, but Foundation BSN owner propagation and splash initialization happen before Bevy scene content is ready. Resuming implementation with gpt-5.4 on root and engine `feature/foundation-bsn-assets` branches.
+- `2026-07-17`: Applied engine fix in `foundation-runtime-library/src/bsn_assets.rs`: Foundation now tracks the `ScenePatch` handle, resolves/applies pending BSN instances itself, and then propagates `SceneOwner` through authored roots/children. Validation passed: engine `cargo test -p foundation-runtime-library bsn_assets`, engine `cargo clippy -p foundation-runtime-library --all-targets --all-features -D warnings`, game `cargo test --test bsn_asset_flow`, and game `cargo clippy --all-targets --all-features -D warnings`. Manual launch smoke ran for 12 seconds without process errors, but visual confirmation is still needed.
+- `2026-07-17`: Applied second engine fix in `foundation-runtime-library/src/splash_screen.rs`: scene-owned splash screens now wait for authored BSN UI markers instead of permanently selecting blank generated fallback UI while assets are still applying. Validation passed: engine `cargo test -p foundation-runtime-library splash`, engine `cargo test -p foundation-runtime-library bsn_assets`, engine clippy, game BSN asset-flow test, and game clippy.
+- `2026-07-17`: Applied loader fix in `foundation-runtime-library/src/dynamic_bsn.rs`: fully specified tuple-struct components can now materialize directly without `ReflectDefault`, and the missing-default error now reports the exact type path. Validation passed: game `cargo test --test bsn_asset_flow`, engine BSN tests, engine splash tests, and engine clippy. Short launch smoke no longer printed the dynamic BSN resolve errors before timeout.
+- `2026-07-17`: User log identified missing reflected default for `foundation_runtime_library::splash_screen::FoundationSplashUiRoot`. Added `#[reflect(Default)]` to Foundation `.bsn` authored components that already implement `Default` in `splash_screen.rs`, `menu.rs`, and `credits.rs`. Validation passed: game BSN asset-flow test, engine BSN tests, engine splash tests, and engine clippy. Short launch smoke again showed no BSN resolve errors before timeout.
+- `2026-07-17`: User confirmed the startup scene is working perfectly after the loader/default-reflection fixes. User asked for robustness assessment before treating the fix as final.
+- `2026-07-17`: Committed and pushed engine runtime startup fix as `49392f1f1a44662cc8d9a88572a70cfe86f84d22` on `origin/feature/foundation-bsn-assets`. Root submodule pointer/tracker commit pending.
