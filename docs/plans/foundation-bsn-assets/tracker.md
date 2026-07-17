@@ -8,7 +8,7 @@
 - Engine branch: `feature/foundation-bsn-assets`
 - Root branch base verification: `Created from current root dev at afa88b96bc0bb46336620af08713347d6871d52b on 2026-07-17`
 - Engine branch base verification: `Created feature/foundation-bsn-assets from engine origin/dev at b4ff3107932e177a98ae1eee626578b1f05b2be9 on 2026-07-17`
-- Engine submodule pointer: `Updated to engine logging visual polish commit 89d40757b1a77e9e51cc62acb3778d31bb8b9133; root pointer commit pending`
+- Engine submodule pointer: `Updated to engine logging visual polish commit 89d40757b1a77e9e51cc62acb3778d31bb8b9133; committed in root f952ef67fe03d91f3a4625b6847c06b5626ee0b6`
 - Overall status: `Implementation in progress - logging visual polish requested on current feature branches`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
@@ -24,10 +24,10 @@
 - The exact engine commit hash bound to Last Beacon must be recorded before root completion.
 
 ## Repository State
-- Root commit/push state: `Root hardening commit 113be54a9c7e9378f666d9a22d3bbf8b2ed27c47 pushed to origin/feature/foundation-bsn-assets; logging visual polish pointer/tracker commit pending`
+- Root commit/push state: `Root logging visual polish pointer/tracker commit f952ef67fe03d91f3a4625b6847c06b5626ee0b6 pushed to origin/feature/foundation-bsn-assets; previous hardening commit 113be54a9c7e9378f666d9a22d3bbf8b2ed27c47 also on branch`
 - Engine commit/push state: `Engine logging visual polish commit 89d40757b1a77e9e51cc62acb3778d31bb8b9133 pushed to origin/feature/foundation-bsn-assets; previous hardening commit a44d4d21fca472f1d8ace1f7a7abe52ae9044d41 also on branch`
 - Root game scene conversion state: `Converted current Rust bsn! macro scenes to .bsn assets in root commit 5e0eb27984d67edaac35f0459b0c31552d9f0d92`
-- Root submodule pointer update: `Pending root commit for engine logging visual polish commit 89d40757b1a77e9e51cc62acb3778d31bb8b9133`
+- Root submodule pointer update: `Committed in root f952ef67fe03d91f3a4625b6847c06b5626ee0b6; root points to engine 89d40757b1a77e9e51cc62acb3778d31bb8b9133`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -239,6 +239,7 @@
 - `2026-07-17`: Implemented Foundation visible log formatter with ANSI theme colors, aligned category labels, target display, Bevy target wrapping, and logging documentation. Focused engine tests, clippy, and docs passed.
 - `2026-07-17`: Committed and pushed engine logging visual polish as `89d40757b1a77e9e51cc62acb3778d31bb8b9133` on `origin/feature/foundation-bsn-assets`.
 - `2026-07-17`: Focused root compile check passed after updating the submodule pointer: `cargo check --manifest-path game/Cargo.toml --all-features`.
+- `2026-07-17`: Committed and pushed root logging visual polish pointer/tracker update as `f952ef67fe03d91f3a4625b6847c06b5626ee0b6` on `origin/feature/foundation-bsn-assets`.
 - `2026-07-17`: User approved planning for Foundation `.bsn` level/prefab asset support with full root/children replacement on hot reload.
 - `2026-07-17`: Created root branch `feature/foundation-bsn-assets` from current root `dev`.
 - `2026-07-17`: Created plan and tracker under `docs/plans/foundation-bsn-assets/`.
