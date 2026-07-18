@@ -9,7 +9,7 @@
 - Root branch base verification: `Verified: created from root dev; origin/dev is an ancestor of HEAD on 2026-07-18`
 - Engine branch base verification: `Verified: created from engine dev; origin/dev is an ancestor of HEAD on 2026-07-18`
 - Engine submodule pointer: `d3c5b89587c2dc54f9edd06f31d528dda854f79d` bound for implementation; root pointer update pending commit
-- Overall status: `Implementation complete; root integration commit pending push`
+- Overall status: `Implementation complete; root and engine branches pushed`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
@@ -24,9 +24,9 @@
 - Shipping behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 7006fda pushed; integration commit pending push`
+- Root commit/push state: `Planning commit 7006fda pushed; integration commit 9f52687 pushed; final tracker push status update pending commit`
 - Engine commit/push state: `Committed d3c5b89587c2dc54f9edd06f31d528dda854f79d and pushed to origin/feature/launch-scene-stack-overrides`
-- Root submodule pointer update: `Committed in root integration this root integration commit; root points at engine d3c5b89587c2dc54f9edd06f31d528dda854f79d`
+- Root submodule pointer update: `Committed and pushed in root integration commit 9f52687; root points at engine d3c5b89587c2dc54f9edd06f31d528dda854f79d`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -145,7 +145,7 @@
 - User confirmation: `Not required until phase completion unless behavior changes`
 
 ## Phase 5: Final Validation, Commits, And Handoff
-**Status:** Awaiting root commit  
+**Status:** Complete  
 **Goal:** Prove the feature works, commit/push all required changes, and prepare PR-ready handoff.
 
 ### Tasks
@@ -166,9 +166,9 @@
   - Repository: `engine`
   - Notes: Engine commit `d3c5b89587c2dc54f9edd06f31d528dda854f79d` pushed to `origin/feature/launch-scene-stack-overrides`.
 - [x] Commit and push root changes, including the submodule pointer, plan, and tracker.
-  - Status: Awaiting push
+  - Status: Complete
   - Repository: `root`
-  - Notes: This root integration commit includes the `engine` pointer update, Last Beacon integration, and tracker updates; push pending.
+  - Notes: Root integration commit `9f52687` includes the `engine` pointer update, Last Beacon integration, and tracker updates, and was pushed to origin.
 
 ### Validation
 - Game validation: `Passed scripts/validate.cmd and focused checks`
@@ -206,4 +206,4 @@
 - `2026-07-18`: Committed and pushed engine commit `d3c5b89587c2dc54f9edd06f31d528dda854f79d`; root submodule pointer commit remains pending.
 - `2026-07-18`: Full validation passed: `scripts/validate.cmd`, `engine/scripts/validate-project.cmd`, `scripts/build.cmd --platform windows-x64 --configuration test --target game`, plus focused no-default-features and smoke checks.
 - `2026-07-18`: Smoke runs confirmed registered-key, direct-path, and bracketed-list startup override launches stay alive until timeout termination.
-- `2026-07-18`: Created this root integration commit with Last Beacon integration, engine submodule pointer update, and tracker updates; push pending.
+- `2026-07-18`: Created and pushed root integration commit `9f52687` with Last Beacon integration, engine submodule pointer update, and tracker updates.
