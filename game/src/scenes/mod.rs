@@ -38,16 +38,32 @@ pub fn register_last_beacon_bsn_scenes(mut registry: ResMut<FoundationBsnSceneRe
 
 /// Opens the first LastBeacon scene-stack entry.
 pub fn open_initial_scene(mut scene_commands: MessageWriter<SceneCommand>) {
+    let startup_scene_commands = startup_scene_commands_or_default(
+        std::env::args().skip(1),
+        default_startup_scene_commands(),
+    )
+    .unwrap_or_else(|startup_scene_error| {
+        error!(
+            "Failed to parse startup scene override; using default startup scene: {startup_scene_error}"
+        );
+        default_startup_scene_commands()
+    });
+
+    for startup_scene_command in startup_scene_commands {
+        scene_commands.write(startup_scene_command);
+    }
+}
+
+fn default_startup_scene_commands() -> Vec<SceneCommand> {
     let startup_scene_source = SceneSource::bsn_scene(PIXEL_PERFECT_SPLASH_SCENE);
     let startup_scene_options = OpenSceneOptions::default()
         .with_key("startup-splash")
         .with_presentation(ScenePresentation::FULLSCREEN);
 
-    scene_commands.write(SceneCommand::Clear);
-    scene_commands.write(SceneCommand::open_with_options(
-        startup_scene_source,
-        startup_scene_options,
-    ));
+    vec![
+        SceneCommand::Clear,
+        SceneCommand::open_with_options(startup_scene_source, startup_scene_options),
+    ]
 }
 
 /// Spawns LastBeacon runtime scene drivers that cannot live in static `.bsn` files.
@@ -132,6 +148,24 @@ mod tests {
         assert_eq!(CREDITS_SCENE, "last-beacon/credits");
         assert_eq!(GAMEPLAY_LEVEL_SCENE, "last-beacon/gameplay_level");
         assert_eq!(PAUSE_MENU_SCENE, "last-beacon/pause_menu");
+    }
+
+    #[test]
+    fn default_startup_scene_opens_pixel_perfect_splash() {
+        let startup_commands = default_startup_scene_commands();
+
+        assert_eq!(
+            startup_commands,
+            vec![
+                SceneCommand::Clear,
+                SceneCommand::open_with_options(
+                    SceneSource::bsn_scene(PIXEL_PERFECT_SPLASH_SCENE),
+                    OpenSceneOptions::default()
+                        .with_key("startup-splash")
+                        .with_presentation(ScenePresentation::FULLSCREEN),
+                ),
+            ]
+        );
     }
 
     #[test]
