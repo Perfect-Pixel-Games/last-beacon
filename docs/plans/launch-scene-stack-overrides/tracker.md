@@ -8,7 +8,7 @@
 - Engine branch: `feature/launch-scene-stack-overrides`
 - Root branch base verification: `Verified: created from root dev; origin/dev is an ancestor of HEAD on 2026-07-18`
 - Engine branch base verification: `Verified: created from engine dev; origin/dev is an ancestor of HEAD on 2026-07-18`
-- Engine submodule pointer: `d3c5b89587c2dc54f9edd06f31d528dda854f79d` bound for implementation; root pointer update pending commit
+- Engine submodule pointer: `d3c5b89587c2dc54f9edd06f31d528dda854f79d` bound for implementation and committed in root
 - Overall status: `Implementation complete; root and engine branches pushed`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
@@ -24,7 +24,7 @@
 - Shipping behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 7006fda pushed; integration commit 9f52687 pushed; final tracker push status update pending commit`
+- Root commit/push state: `Planning commit 7006fda pushed; integration commit 9f52687 pushed; tracker status commit 40b5aa8 pushed`
 - Engine commit/push state: `Committed d3c5b89587c2dc54f9edd06f31d528dda854f79d and pushed to origin/feature/launch-scene-stack-overrides`
 - Root submodule pointer update: `Committed and pushed in root integration commit 9f52687; root points at engine d3c5b89587c2dc54f9edd06f31d528dda854f79d`
 - Root pull request state: `Pending`
@@ -203,7 +203,8 @@
 - `2026-07-18`: Created engine branch `feature/launch-scene-stack-overrides` from engine dev and verified `origin/dev` ancestry.
 - `2026-07-18`: Implemented Foundation startup scene override parsing/helper, launcher forwarding, docs, and Last Beacon integration.
 - `2026-07-18`: Focused validation passed: engine runtime startup_scene tests with all features and no default features, foundation launcher tests, Last Beacon default startup test, no-default-features game check, clippy for changed engine/game packages, and cargo doc for changed engine/game packages.
-- `2026-07-18`: Committed and pushed engine commit `d3c5b89587c2dc54f9edd06f31d528dda854f79d`; root submodule pointer commit remains pending.
+- `2026-07-18`: Committed and pushed engine commit `d3c5b89587c2dc54f9edd06f31d528dda854f79d` before committing the root submodule pointer update.
 - `2026-07-18`: Full validation passed: `scripts/validate.cmd`, `engine/scripts/validate-project.cmd`, `scripts/build.cmd --platform windows-x64 --configuration test --target game`, plus focused no-default-features and smoke checks.
 - `2026-07-18`: Smoke runs confirmed registered-key, direct-path, and bracketed-list startup override launches stay alive until timeout termination.
 - `2026-07-18`: Created and pushed root integration commit `9f52687` with Last Beacon integration, engine submodule pointer update, and tracker updates.
+- `2026-07-18`: Created and pushed tracker status commit `40b5aa8`.
