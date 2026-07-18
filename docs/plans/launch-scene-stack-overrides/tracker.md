@@ -9,7 +9,7 @@
 - Root branch base verification: `Verified: created from root dev; origin/dev is an ancestor of HEAD on 2026-07-18`
 - Engine branch base verification: `Verified: created from engine dev; origin/dev is an ancestor of HEAD on 2026-07-18`
 - Engine submodule pointer: `d3c5b89587c2dc54f9edd06f31d528dda854f79d` bound for implementation and committed in root
-- Overall status: `Implementation complete; root and engine branches pushed`
+- Overall status: `Implementation complete; README argument documentation updated`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
@@ -24,7 +24,7 @@
 - Shipping behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 7006fda pushed; integration commit 9f52687 pushed; tracker status commit 40b5aa8 pushed`
+- Root commit/push state: `Planning commit 7006fda pushed; integration commit 9f52687 pushed; tracker status commits pushed; README documentation update pending commit`
 - Engine commit/push state: `Committed d3c5b89587c2dc54f9edd06f31d528dda854f79d and pushed to origin/feature/launch-scene-stack-overrides`
 - Root submodule pointer update: `Committed and pushed in root integration commit 9f52687; root points at engine d3c5b89587c2dc54f9edd06f31d528dda854f79d`
 - Root pull request state: `Pending`
@@ -169,6 +169,10 @@
   - Status: Complete
   - Repository: `root`
   - Notes: Root integration commit `9f52687` includes the `engine` pointer update, Last Beacon integration, and tracker updates, and was pushed to origin.
+- [x] Document script and runtime arguments in the root README.
+  - Status: Complete
+  - Repository: `root`
+  - Notes: Added tables for common script arguments and runtime arguments, including logging and scene override examples.
 
 ### Validation
 - Game validation: `Passed scripts/validate.cmd and focused checks`
@@ -208,3 +212,5 @@
 - `2026-07-18`: Smoke runs confirmed registered-key, direct-path, and bracketed-list startup override launches stay alive until timeout termination.
 - `2026-07-18`: Created and pushed root integration commit `9f52687` with Last Beacon integration, engine submodule pointer update, and tracker updates.
 - `2026-07-18`: Created and pushed tracker status commit `40b5aa8`.
+- `2026-07-18`: User confirmed the feature works and requested README argument documentation, including logging arguments.
+- `2026-07-18`: Updated README with script/runtime argument tables and examples.
