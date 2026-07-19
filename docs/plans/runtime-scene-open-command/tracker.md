@@ -9,7 +9,7 @@
 - Root branch base verification: `Verified: created from root dev; origin/dev is an ancestor of HEAD on 2026-07-19`
 - Engine branch base verification: `Verified: created from engine dev; origin/dev is an ancestor of HEAD on 2026-07-19`
 - Engine submodule pointer: `de6265a543d91d0561761df5437544b2373dd2b5` bound for implementation after engine commit
-- Overall status: `Implementation in progress`
+- Overall status: `Implementation complete; interactive smoke verification pending`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
@@ -24,9 +24,9 @@
 - Shipping/no-dev-tools behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 78da598 pushed to origin/feature/runtime-scene-open-command; root pointer/tracker commit pending after validation`
+- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; final tracker status commit pending`
 - Engine commit/push state: `Committed de6265a543d91d0561761df5437544b2373dd2b5 and pushed to origin/feature/runtime-scene-open-command`
-- Root submodule pointer update: `Pending root commit; working tree points at engine de6265a543d91d0561761df5437544b2373dd2b5`
+- Root submodule pointer update: `Committed and pushed in root commit 0f388dd; root points at engine de6265a543d91d0561761df5437544b2373dd2b5`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -137,10 +137,10 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: Passed `engine/scripts/validate-project.cmd`.
-- [ ] Update root submodule pointer after engine commit.
-  - Status: Awaiting root commit
+- [x] Update root submodule pointer after engine commit.
+  - Status: Complete
   - Repository: `both`
-  - Notes: Engine commit `de6265a543d91d0561761df5437544b2373dd2b5` is committed and pushed; root working tree now points at that engine commit.
+  - Notes: Engine commit `de6265a543d91d0561761df5437544b2373dd2b5` is committed and pushed; root commit `0f388dd` binds Last Beacon to that engine commit.
 - [x] Run root game validation.
   - Status: Complete
   - Repository: `root`
@@ -153,16 +153,16 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: Engine commit `de6265a543d91d0561761df5437544b2373dd2b5` pushed to `origin/feature/runtime-scene-open-command`.
-- [ ] Commit and push root changes, including submodule pointer and tracker updates.
-  - Status: Planned
+- [x] Commit and push root changes, including submodule pointer and tracker updates.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Push to origin if available.
+  - Notes: Root commit `0f388dd` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
 
 ### Validation
 - Game validation: `Passed scripts/validate.cmd`
 - Engine validation: `Passed focused checks and engine/scripts/validate-project.cmd`
 - Documentation generation: `Passed focused cargo doc and engine validation doc generation`
-- User confirmation: `Pending final implementation review or optional sanity review request`
+- User confirmation: `Pending user/manual smoke verification or optional sanity review request`
 
 ## Implementation / Review Handoff Notes
 - Use `gpt-5.4` for implementation and `gpt-5.5` for optional final review.
@@ -198,3 +198,4 @@
 - `2026-07-19`: Full engine validation passed with `engine/scripts/validate-project.cmd`.
 - `2026-07-19`: Committed and pushed engine commit `de6265a543d91d0561761df5437544b2373dd2b5`.
 - `2026-07-19`: Root validation passed with `scripts/validate.cmd` against engine commit `de6265a543d91d0561761df5437544b2373dd2b5`; interactive console smoke remains pending manual verification.
+- `2026-07-19`: Committed and pushed root submodule pointer/tracker commit `0f388dd`.
