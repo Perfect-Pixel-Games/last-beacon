@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `UI playground implemented and awaiting commit`
+- Overall status: `UI playground implemented, committed, and pushed`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `UI playground implemented with gpt-5.4; awaiting commit and push`
+- Current handoff state: `UI playground implemented with gpt-5.4; awaiting user review`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Shared silo UI styling commit 7012ce1 and follow-up tracker commits pushed to origin/feature/bevy-ui-scenes.`
+- Root commit/push state: `UI playground commit 78246f9 pushed to origin/feature/bevy-ui-scenes; tracker finalization commit pending.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Last Beacon UI playground scene implemented with Main Menu navigation; validation passed; commit pending.`
+- Current tweak state: `Last Beacon UI playground scene implemented with Main Menu navigation; validation passed; commit 78246f9 pushed.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -208,7 +208,7 @@
 - `2026-07-19`: User approved the shared Beacon/silo UI styling pass for commit.
 - `2026-07-19`: Committed shared Beacon/silo UI styling pass as `7012ce1 Match shared silo UI prototype style`, committed tracker update as `02369c7 Update shared silo UI tracker`, and pushed both to `origin/feature/bevy-ui-scenes`.
 - `2026-07-19`: User requested a Bevy Feathers-gallery-style UI playground scene to showcase reusable Last Beacon widgets and a Main Menu button to reach it; implementation started.
-- `2026-07-19`: Added `last-beacon/ui_playground`, Main Menu `UI PLAYGROUND` button widget, scene registration/tests, and BSN asset-flow coverage. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors.
+- `2026-07-19`: Added `last-beacon/ui_playground`, Main Menu `UI PLAYGROUND` button widget, scene registration/tests, and BSN asset-flow coverage. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `78246f9 Add UI playground scene`.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
