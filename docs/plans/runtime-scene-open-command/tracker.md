@@ -8,8 +8,8 @@
 - Engine branch: `feature/runtime-scene-open-command`
 - Root branch base verification: `Verified: created from root dev; origin/dev is an ancestor of HEAD on 2026-07-19`
 - Engine branch base verification: `Verified: created from engine dev; origin/dev is an ancestor of HEAD on 2026-07-19`
-- Engine submodule pointer: `d23603785bb39f8a75ef151bc5d111ef45f4e945` bound for follow-up implementation after engine commit
-- Overall status: `Follow-up implementation complete; interactive smoke verification pending`
+- Engine submodule pointer: `ef8a5810c3d341c070bb052efcf9005a01b43a4e` bound for click-to-reuse follow-up after engine commit
+- Overall status: `Implementation complete; interactive smoke verification pending`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
@@ -24,9 +24,9 @@
 - Shipping/no-dev-tools behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; final tracker status commit pending`
-- Engine commit/push state: `Committed de6265a543d91d0561761df5437544b2373dd2b5 and follow-up d23603785bb39f8a75ef151bc5d111ef45f4e945; both pushed to origin/feature/runtime-scene-open-command`
-- Root submodule pointer update: `Committed and pushed in follow-up root commit 1e29599; root points at engine d23603785bb39f8a75ef151bc5d111ef45f4e945`
+- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; click-to-reuse pointer/tracker commit pending`
+- Engine commit/push state: `Committed de6265a543d91d0561761df5437544b2373dd2b5, d23603785bb39f8a75ef151bc5d111ef45f4e945, and click-to-reuse follow-up ef8a5810c3d341c070bb052efcf9005a01b43a4e; all pushed to origin/feature/runtime-scene-open-command`
+- Root submodule pointer update: `Pending click-to-reuse follow-up root commit after validation; working tree points at engine ef8a5810c3d341c070bb052efcf9005a01b43a4e`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -137,14 +137,14 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: Passed `engine/scripts/validate-project.cmd`.
-- [x] Update root submodule pointer after engine commit.
-  - Status: Complete
+- [ ] Update root submodule pointer after engine commit.
+  - Status: Awaiting click-to-reuse follow-up root commit
   - Repository: `both`
-  - Notes: Engine commits `de6265a543d91d0561761df5437544b2373dd2b5` and follow-up `d23603785bb39f8a75ef151bc5d111ef45f4e945` are committed and pushed; root follow-up commit `1e29599` binds Last Beacon to the follow-up engine commit.
+  - Notes: Engine commits `de6265a543d91d0561761df5437544b2373dd2b5`, `d23603785bb39f8a75ef151bc5d111ef45f4e945`, and click-to-reuse follow-up `ef8a5810c3d341c070bb052efcf9005a01b43a4e` are committed and pushed; root working tree now points at the click-to-reuse engine commit.
 - [x] Run root game validation.
   - Status: Complete
   - Repository: `root`
-  - Notes: Passed `scripts/validate.cmd` after initial pointer update and again after follow-up pointer update; no Last Beacon runtime source changes were made.
+  - Notes: Passed `scripts/validate.cmd` after initial pointer update, prediction follow-up pointer update, and click-to-reuse pointer update; no Last Beacon runtime source changes were made.
 - [ ] Smoke-test the runtime command in Last Beacon where practical.
   - Status: Pending manual verification
   - Repository: `root`
@@ -152,14 +152,14 @@
 - [x] Commit and push engine changes.
   - Status: Complete
   - Repository: `engine`
-  - Notes: Engine commit `de6265a543d91d0561761df5437544b2373dd2b5` and follow-up `d23603785bb39f8a75ef151bc5d111ef45f4e945` pushed to `origin/feature/runtime-scene-open-command`.
+  - Notes: Engine commits `de6265a543d91d0561761df5437544b2373dd2b5`, `d23603785bb39f8a75ef151bc5d111ef45f4e945`, and `ef8a5810c3d341c070bb052efcf9005a01b43a4e` pushed to `origin/feature/runtime-scene-open-command`.
 - [x] Commit and push root changes, including submodule pointer and tracker updates.
   - Status: Complete
   - Repository: `root`
   - Notes: Root commits `0f388dd` and follow-up `1e29599` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
 
 ### Validation
-- Game validation: `Passed scripts/validate.cmd after initial and follow-up pointer updates`
+- Game validation: `Passed scripts/validate.cmd after initial, prediction follow-up, and click-to-reuse pointer updates`
 - Engine validation: `Passed focused checks and engine/scripts/validate-project.cmd; follow-up engine/scripts/validate-project.cmd also passed`
 - Documentation generation: `Passed focused cargo doc and engine validation doc generation for initial and follow-up commits`},{
 - User confirmation: `Pending user/manual smoke verification or optional sanity review request`
@@ -205,3 +205,8 @@
 - `2026-07-19`: Committed and pushed engine follow-up commit `d23603785bb39f8a75ef151bc5d111ef45f4e945`.
 - `2026-07-19`: Root validation passed with `scripts/validate.cmd` against follow-up engine commit `d23603785bb39f8a75ef151bc5d111ef45f4e945`.
 - `2026-07-19`: Committed and pushed root follow-up submodule pointer/tracker commit `1e29599`.
+- `2026-07-19`: User confirmed prediction behavior works perfectly and requested one small addition: users should be able to click preview options or history/log items to reuse them instead of only using Up/Down arrows.
+- `2026-07-19`: Implemented click-to-reuse for console suggestion options and command history items, keeping the input focused after a click.
+- `2026-07-19`: Click-to-reuse validation passed with focused console tests and full `engine/scripts/validate-project.cmd`.
+- `2026-07-19`: Committed and pushed engine click-to-reuse follow-up commit `ef8a5810c3d341c070bb052efcf9005a01b43a4e`.
+- `2026-07-19`: Root validation passed with `scripts/validate.cmd` against click-to-reuse engine commit `ef8a5810c3d341c070bb052efcf9005a01b43a4e`.
