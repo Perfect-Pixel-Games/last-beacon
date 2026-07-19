@@ -32,6 +32,7 @@ bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::sr
     blue: 0.141,
     alpha: 1.0,
 }))
+last_beacon::ui_widgets::LastBeaconMainMenuPrimaryButton
 bevy_ui::ui_node::BorderColor {
     top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
     red: 0.984,

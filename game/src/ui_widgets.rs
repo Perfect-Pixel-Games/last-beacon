@@ -20,6 +20,11 @@ pub struct LastBeaconBsnWidget {
     pub asset_path: String,
 }
 
+/// Marks a Main Menu primary button that should keep the prototype's yellow style.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconMainMenuPrimaryButton;
+
 #[derive(Clone, Debug, Component)]
 struct LastBeaconBsnWidgetPending {
     asset_path: String,
@@ -64,6 +69,16 @@ pub fn apply_last_beacon_ui_font(
     let ui_font = asset_server.load("fonts/NotoSans-Regular.ttf");
     for mut text_font in &mut text_fonts {
         text_font.font = FontSource::Handle(ui_font.clone());
+    }
+}
+
+/// Restores prototype-authored button colors after generic Foundation interaction styling.
+pub fn enforce_main_menu_primary_button_style(
+    mut primary_buttons: Query<&mut BackgroundColor, With<LastBeaconMainMenuPrimaryButton>>,
+) {
+    let prototype_menu_accent = Color::srgb(0.984, 0.749, 0.141);
+    for mut button_background in &mut primary_buttons {
+        *button_background = BackgroundColor(prototype_menu_accent);
     }
 }
 

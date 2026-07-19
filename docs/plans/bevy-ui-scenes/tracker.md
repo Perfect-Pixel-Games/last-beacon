@@ -22,7 +22,7 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Main Menu site-style refinement commit 9fd1d5e pushed to origin/feature/bevy-ui-scenes.`
+- Root commit/push state: `Main Menu primary button and border cleanup complete; awaiting commit/push.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
@@ -188,6 +188,7 @@
 - Main Menu styling now starts a reusable BSN widget library under `game/assets/ui/widgets/main_menu/`. The first implementation adds game-owned `LastBeaconBsnWidget` slots so scenes can compose widget BSN assets without Foundation Engine changes.
 - Dedicated widget assets currently cover Main Menu brand, menu buttons, current save panel, and footer. Other scenes still use the earlier static layout and should be migrated as follow-up tweaks.
 - Main Menu widgets were revised to match the Svelte prototype more closely: Tailwind slate palette values, `#fbbf24` menu accent, `rounded-sm`-style 2px radius, button border/padding proportions, rail width/padding/gaps, and NotoSans font application.
+- Continue is explicitly treated as the primary menu button and now has a game-owned style enforcement marker so generic Foundation button interaction styling cannot override its yellow background. The Main Menu left rail and viewport placeholder no longer author visible borders.
 - The Main Menu smoke run was terminated by timeout after startup and showed no BSN parse/load/apply errors; this confirms startup loading but is not a human visual review.
 
 ## Progress Log
@@ -196,6 +197,7 @@
 - `2026-07-19`: Committed and pushed Main Menu widget refinement as `5735044 Refine main menu widgets`; no pull request created.
 - `2026-07-19`: Fetched latest origin and rebased `feature/bevy-ui-scenes` onto `origin/dev` at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 so the prototype merge is beneath the feature changes.
 - `2026-07-19`: Refined Main Menu widget colors, button shape, font handling, padding, margins, and panel sizing to better match the Svelte prototype; validation passed and commit `9fd1d5e Match main menu prototype style` was pushed.
+- `2026-07-19`: Made Continue persist as a yellow primary button with black text and removed visible borders from the Main Menu rail and viewport placeholder; focused validation passed.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.

@@ -125,6 +125,7 @@ impl Plugin for LastBeaconPlugin {
         })
         .register_type::<SpinningCube>()
         .register_type::<ui_widgets::LastBeaconBsnWidget>()
+        .register_type::<ui_widgets::LastBeaconMainMenuPrimaryButton>()
         .add_systems(
             Startup,
             (
@@ -146,6 +147,10 @@ impl Plugin for LastBeaconPlugin {
         .add_systems(
             Update,
             ui_widgets::apply_pending_last_beacon_bsn_widgets.run_if(foundation_is_not_paused),
+        )
+        .add_systems(
+            PostUpdate,
+            ui_widgets::enforce_main_menu_primary_button_style,
         );
     }
 }

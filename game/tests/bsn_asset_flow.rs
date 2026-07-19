@@ -1,6 +1,9 @@
 use bevy::{prelude::*, scene::ScenePatch};
 use foundation_runtime_library::prelude::*;
-use last_beacon::{asset_root, ui_widgets::LastBeaconBsnWidget};
+use last_beacon::{
+    asset_root,
+    ui_widgets::{LastBeaconBsnWidget, LastBeaconMainMenuPrimaryButton},
+};
 
 #[test]
 fn converted_bsn_scene_assets_load_as_scene_patches() {
@@ -127,5 +130,6 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<FoundationCreditsRoll>()
         .register_type::<FoundationSplashUiRoot>()
         .register_type::<FoundationSplashText>()
-        .register_type::<LastBeaconBsnWidget>();
+        .register_type::<LastBeaconBsnWidget>()
+        .register_type::<LastBeaconMainMenuPrimaryButton>();
 }

@@ -16,18 +16,6 @@ bevy_ecs::hierarchy::Children [
         flex_direction: bevy_ui::ui_node::FlexDirection::Column,
         align_items: bevy_ui::ui_node::AlignItems::Center,
         justify_content: bevy_ui::ui_node::JustifyContent::Center,
-        border: bevy_ui::geometry::UiRect {
-            left: bevy_ui::geometry::Val::Px(2.0),
-            right: bevy_ui::geometry::Val::Px(2.0),
-            top: bevy_ui::geometry::Val::Px(2.0),
-            bottom: bevy_ui::geometry::Val::Px(2.0),
-        },
-        border_radius: bevy_ui::ui_node::BorderRadius {
-            top_left: bevy_ui::geometry::Val::Px(2.0),
-            top_right: bevy_ui::geometry::Val::Px(2.0),
-            bottom_right: bevy_ui::geometry::Val::Px(2.0),
-            bottom_left: bevy_ui::geometry::Val::Px(2.0),
-        },
     }
     bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
         red: 0.118,
@@ -35,32 +23,6 @@ bevy_ecs::hierarchy::Children [
         blue: 0.231,
         alpha: 0.4,
     }))
-    bevy_ui::ui_node::BorderColor {
-        top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.278,
-        green: 0.333,
-        blue: 0.412,
-        alpha: 1.0,
-    }),
-        right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.278,
-        green: 0.333,
-        blue: 0.412,
-        alpha: 1.0,
-    }),
-        bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.278,
-        green: 0.333,
-        blue: 0.412,
-        alpha: 1.0,
-    }),
-        left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.278,
-        green: 0.333,
-        blue: 0.412,
-        alpha: 1.0,
-    }),
-    }
     bevy_ecs::hierarchy::Children [
         bevy_ui::widget::text::Text("Save Scene - Equipped Robot in Silo / Last Location if Mid-Run")
         bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
@@ -86,12 +48,6 @@ bevy_ecs::hierarchy::Children [
             top: bevy_ui::geometry::Val::Px(40.0),
             bottom: bevy_ui::geometry::Val::Px(40.0),
         },
-        border: bevy_ui::geometry::UiRect {
-            left: bevy_ui::geometry::Val::Px(0.0),
-            right: bevy_ui::geometry::Val::Px(2.0),
-            top: bevy_ui::geometry::Val::Px(0.0),
-            bottom: bevy_ui::geometry::Val::Px(0.0),
-        },
     }
     bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
         red: 0.008,
@@ -99,32 +55,6 @@ bevy_ecs::hierarchy::Children [
         blue: 0.09,
         alpha: 0.85,
     }))
-    bevy_ui::ui_node::BorderColor {
-        top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.118,
-        green: 0.161,
-        blue: 0.231,
-        alpha: 1.0,
-    }),
-        right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.118,
-        green: 0.161,
-        blue: 0.231,
-        alpha: 1.0,
-    }),
-        bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.118,
-        green: 0.161,
-        blue: 0.231,
-        alpha: 1.0,
-    }),
-        left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.118,
-        green: 0.161,
-        blue: 0.231,
-        alpha: 1.0,
-    }),
-    }
     bevy_ecs::hierarchy::Children [
         #MainMenuButtonGroup
         bevy_ui::ui_node::Node {
