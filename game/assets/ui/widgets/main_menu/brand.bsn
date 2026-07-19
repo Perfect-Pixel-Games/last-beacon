@@ -1,0 +1,48 @@
+#MainMenuBrand
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(8.0),
+    margin: bevy_ui::geometry::UiRect {
+        left: bevy_ui::geometry::Val::Px(0.0),
+        right: bevy_ui::geometry::Val::Px(0.0),
+        top: bevy_ui::geometry::Val::Px(0.0),
+        bottom: bevy_ui::geometry::Val::Px(18.0),
+    },
+}
+bevy_ecs::hierarchy::Children [
+    bevy_ui::widget::text::Text("LAST BEACON")
+    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(34.0) }
+    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 0.94,
+        green: 0.97,
+        blue: 1.0,
+        alpha: 1.0,
+    })),
+
+    bevy_ui::widget::text::Text("BUILD. VENTURE. RECOVER. RETURN.")
+    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
+    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 0.22,
+        green: 0.86,
+        blue: 0.92,
+        alpha: 1.0,
+    })),
+
+    #BrandRule
+    bevy_ui::ui_node::Node {
+        width: bevy_ui::geometry::Val::Percent(100.0),
+        height: bevy_ui::geometry::Val::Px(2.0),
+        flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+        align_items: bevy_ui::ui_node::AlignItems::Stretch,
+        justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    }
+    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 0.22,
+        green: 0.86,
+        blue: 0.92,
+        alpha: 1.0,
+    }))
+]

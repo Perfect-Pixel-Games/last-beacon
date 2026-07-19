@@ -1,0 +1,68 @@
+#SettingsMenuButton
+bevy_ui::widget::button::Button
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(46.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    padding: bevy_ui::geometry::UiRect {
+        left: bevy_ui::geometry::Val::Px(18.0),
+        right: bevy_ui::geometry::Val::Px(18.0),
+        top: bevy_ui::geometry::Val::Px(0.0),
+        bottom: bevy_ui::geometry::Val::Px(0.0),
+    },
+    border: bevy_ui::geometry::UiRect {
+        left: bevy_ui::geometry::Val::Px(1.0),
+        right: bevy_ui::geometry::Val::Px(1.0),
+        top: bevy_ui::geometry::Val::Px(1.0),
+        bottom: bevy_ui::geometry::Val::Px(1.0),
+    },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.045,
+    green: 0.06,
+    blue: 0.09,
+    alpha: 0.94,
+}))
+bevy_ui::ui_node::BorderColor {
+    top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.09,
+    green: 0.13,
+    blue: 0.18,
+    alpha: 1.0,
+}),
+    right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.09,
+    green: 0.13,
+    blue: 0.18,
+    alpha: 1.0,
+}),
+    bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.09,
+    green: 0.13,
+    blue: 0.18,
+    alpha: 1.0,
+}),
+    left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.09,
+    green: 0.13,
+    blue: 0.18,
+    alpha: 1.0,
+}),
+}
+foundation_runtime_library::menu::FoundationMenuButton {
+    action: "open_overlay_scene",
+    scene_key: "last-beacon/options_menu",
+    stack_key: "settings",
+}
+bevy_ecs::hierarchy::Children [
+    bevy_ui::widget::text::Text("SETTINGS")
+    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 0.94,
+        green: 0.97,
+        blue: 1.0,
+        alpha: 1.0,
+    }))
+]

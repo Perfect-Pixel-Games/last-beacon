@@ -19,6 +19,7 @@ use foundation_editor_library::prelude::*;
 use foundation_runtime_library::prelude::*;
 
 pub mod scenes;
+pub mod ui_widgets;
 
 /// Foundation game name used by the engine `--game` argument.
 pub const GAME_NAME: &str = "last-beacon";
@@ -123,6 +124,7 @@ impl Plugin for LastBeaconPlugin {
             roots: vec![asset_root()],
         })
         .register_type::<SpinningCube>()
+        .register_type::<ui_widgets::LastBeaconBsnWidget>()
         .add_systems(
             Startup,
             (
@@ -135,9 +137,14 @@ impl Plugin for LastBeaconPlugin {
             Update,
             (
                 scenes::spawn_requested_last_beacon_scene_drivers,
+                ui_widgets::queue_last_beacon_bsn_widgets,
                 exit_game_on_foundation_exit_request,
                 spin_cube.run_if(foundation_is_not_paused),
             ),
+        )
+        .add_systems(
+            Update,
+            ui_widgets::apply_pending_last_beacon_bsn_widgets.run_if(foundation_is_not_paused),
         );
     }
 }

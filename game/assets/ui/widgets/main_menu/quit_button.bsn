@@ -1,0 +1,68 @@
+#QuitGameMenuButton
+bevy_ui::widget::button::Button
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(46.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    padding: bevy_ui::geometry::UiRect {
+        left: bevy_ui::geometry::Val::Px(18.0),
+        right: bevy_ui::geometry::Val::Px(18.0),
+        top: bevy_ui::geometry::Val::Px(0.0),
+        bottom: bevy_ui::geometry::Val::Px(0.0),
+    },
+    border: bevy_ui::geometry::UiRect {
+        left: bevy_ui::geometry::Val::Px(1.0),
+        right: bevy_ui::geometry::Val::Px(1.0),
+        top: bevy_ui::geometry::Val::Px(1.0),
+        bottom: bevy_ui::geometry::Val::Px(1.0),
+    },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.035,
+    green: 0.038,
+    blue: 0.045,
+    alpha: 0.72,
+}))
+bevy_ui::ui_node::BorderColor {
+    top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.09,
+    green: 0.13,
+    blue: 0.18,
+    alpha: 1.0,
+}),
+    right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.09,
+    green: 0.13,
+    blue: 0.18,
+    alpha: 1.0,
+}),
+    bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.09,
+    green: 0.13,
+    blue: 0.18,
+    alpha: 1.0,
+}),
+    left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+    red: 0.09,
+    green: 0.13,
+    blue: 0.18,
+    alpha: 1.0,
+}),
+}
+foundation_runtime_library::menu::FoundationMenuButton {
+    action: "exit",
+    scene_key: "",
+    stack_key: "",
+}
+bevy_ecs::hierarchy::Children [
+    bevy_ui::widget::text::Text("QUIT GAME")
+    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 0.25,
+        green: 0.31,
+        blue: 0.38,
+        alpha: 1.0,
+    }))
+]

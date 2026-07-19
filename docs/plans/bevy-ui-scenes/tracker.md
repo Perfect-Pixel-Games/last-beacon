@@ -9,11 +9,11 @@
 - Root branch base verification: `Verified against dev at c3aa296820dc54dc69e38e88dc065b84b878e208 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Implementation complete; awaiting user review`
+- Overall status: `Styling tweaks in progress`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Ready for user review; no pull request created`
+- Current handoff state: `Implementation tweaks in progress with gpt-5.4`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,7 +22,7 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Implementation commit daaf8f6 pushed to origin/feature/bevy-ui-scenes; final tracker update pending commit/push.`
+- Root commit/push state: `Implementation commits through 9e27526 pushed; main-menu reusable widget styling tweaks complete and awaiting commit/push.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is available on local branch feature/ui-prototype at f4d2abb Add UI prototype, but is not part of this feature branch from dev.`
@@ -185,8 +185,13 @@
 ## Notes / Issues / Oversights
 - The feature branch was created from `dev` after the prototype branch was committed and pushed. Because the prototype work is not on `dev`, implementation must reference `feature/ui-prototype` explicitly or wait for the prototype branch to be merged.
 - The old scene name `options_menu` may remain as the internal key for Settings Menu to minimize engine/menu integration churn, even though the user-facing label should be Settings Menu.
+- Main Menu styling now starts a reusable BSN widget library under `game/assets/ui/widgets/main_menu/`. The first implementation adds game-owned `LastBeaconBsnWidget` slots so scenes can compose widget BSN assets without Foundation Engine changes.
+- Dedicated widget assets currently cover Main Menu brand, menu buttons, current save panel, and footer. Other scenes still use the earlier static layout and should be migrated as follow-up tweaks.
+- The Main Menu smoke run was terminated by timeout after startup and showed no BSN parse/load/apply errors; this confirms startup loading but is not a human visual review.
 
 ## Progress Log
+- `2026-07-19`: User reviewed the first UI pass and requested reusable BSN widgets in a dedicated assets directory, starting with Main Menu styling.
+- `2026-07-19`: Added game-owned BSN widget composition support, moved Main Menu pieces into `game/assets/ui/widgets/main_menu/`, rewrote `main_menu.bsn` to compose those widgets, and validated the focused checks plus root validation.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.

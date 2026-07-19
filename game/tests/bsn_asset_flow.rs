@@ -1,6 +1,6 @@
 use bevy::{prelude::*, scene::ScenePatch};
 use foundation_runtime_library::prelude::*;
-use last_beacon::asset_root;
+use last_beacon::{asset_root, ui_widgets::LastBeaconBsnWidget};
 
 #[test]
 fn converted_bsn_scene_assets_load_as_scene_patches() {
@@ -21,9 +21,24 @@ fn converted_bsn_scene_assets_load_as_scene_patches() {
         "scenes/bevy_splash.bsn",
         "scenes/main_menu.bsn",
         "scenes/options_menu.bsn",
+        "scenes/dashboard.bsn",
+        "scenes/hangar.bsn",
+        "scenes/garage.bsn",
+        "scenes/mission_control.bsn",
+        "scenes/fabrication.bsn",
+        "scenes/silo_upgrades.bsn",
         "scenes/credits.bsn",
         "scenes/gameplay_level.bsn",
         "scenes/pause_menu.bsn",
+        "ui/widgets/main_menu/brand.bsn",
+        "ui/widgets/main_menu/continue_button.bsn",
+        "ui/widgets/main_menu/quick_run_button.bsn",
+        "ui/widgets/main_menu/new_game_button.bsn",
+        "ui/widgets/main_menu/settings_button.bsn",
+        "ui/widgets/main_menu/credits_button.bsn",
+        "ui/widgets/main_menu/quit_button.bsn",
+        "ui/widgets/main_menu/current_save_panel.bsn",
+        "ui/widgets/main_menu/footer.bsn",
     ];
     let scene_handles = scene_asset_paths
         .into_iter()
@@ -92,7 +107,9 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<PositionType>()
         .register_type::<Overflow>()
         .register_type::<OverflowAxis>()
+        .register_type::<UiRect>()
         .register_type::<BackgroundColor>()
+        .register_type::<BorderColor>()
         .register_type::<Button>()
         .register_type::<Text>()
         .register_type::<TextFont>()
@@ -108,5 +125,6 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<FoundationSimpleGameplayLevel>()
         .register_type::<FoundationCreditsRoll>()
         .register_type::<FoundationSplashUiRoot>()
-        .register_type::<FoundationSplashText>();
+        .register_type::<FoundationSplashText>()
+        .register_type::<LastBeaconBsnWidget>();
 }
