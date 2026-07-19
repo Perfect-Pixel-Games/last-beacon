@@ -8,7 +8,7 @@
 - Engine branch: `feature/runtime-scene-open-command`
 - Root branch base verification: `Verified: created from root dev; origin/dev is an ancestor of HEAD on 2026-07-19`
 - Engine branch base verification: `Verified: created from engine dev; origin/dev is an ancestor of HEAD on 2026-07-19`
-- Engine submodule pointer: `64825f052ec00f5f2c887f781389343dd5584498` bound for history-click gating follow-up after engine commit
+- Engine submodule pointer: `9348e08d6f4af507643343a4e534862b88f5575c` bound for history-click/blank-preview fix after engine commit
 - Overall status: `Implementation complete; interactive smoke verification pending`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
@@ -24,9 +24,9 @@
 - Shipping/no-dev-tools behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; click-to-reuse pointer/tracker commit 3cf75f2 pushed; history-click gating pointer/tracker commit b5d5955 pushed; final tracker status commit pending`
-- Engine commit/push state: `Committed de6265a543d91d0561761df5437544b2373dd2b5, d23603785bb39f8a75ef151bc5d111ef45f4e945, ef8a5810c3d341c070bb052efcf9005a01b43a4e, and history-click gating follow-up 64825f052ec00f5f2c887f781389343dd5584498; all pushed to origin/feature/runtime-scene-open-command`
-- Root submodule pointer update: `Committed and pushed in history-click gating root commit b5d5955; root points at engine 64825f052ec00f5f2c887f781389343dd5584498`
+- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; click-to-reuse pointer/tracker commit 3cf75f2 pushed; history-click gating pointer/tracker commit b5d5955 pushed; history-click fix pointer/tracker commit pending`
+- Engine commit/push state: `Committed engine work through history-click/blank-preview fix 9348e08d6f4af507643343a4e534862b88f5575c; all pushed to origin/feature/runtime-scene-open-command`
+- Root submodule pointer update: `Pending history-click/blank-preview fix root commit after validation; working tree points at engine 9348e08d6f4af507643343a4e534862b88f5575c`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -137,14 +137,14 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: Passed `engine/scripts/validate-project.cmd`.
-- [x] Update root submodule pointer after engine commit.
-  - Status: Complete
+- [ ] Update root submodule pointer after engine commit.
+  - Status: Awaiting history-click/blank-preview fix root commit
   - Repository: `both`
-  - Notes: Engine commits through history-click gating follow-up `64825f052ec00f5f2c887f781389343dd5584498` are committed and pushed; root history-click gating commit `b5d5955` binds Last Beacon to the history-click gating engine commit.
+  - Notes: Engine commits through history-click/blank-preview fix `9348e08d6f4af507643343a4e534862b88f5575c` are committed and pushed; root working tree now points at the fix engine commit.
 - [x] Run root game validation.
   - Status: Complete
   - Repository: `root`
-  - Notes: Passed `scripts/validate.cmd` after initial pointer update, prediction follow-up pointer update, click-to-reuse pointer update, and history-click gating pointer update; no Last Beacon runtime source changes were made.
+  - Notes: Passed `scripts/validate.cmd` after initial pointer update, prediction follow-up pointer update, click-to-reuse pointer update, history-click gating pointer update, and history-click/blank-preview fix pointer update; no Last Beacon runtime source changes were made.
 - [ ] Smoke-test the runtime command in Last Beacon where practical.
   - Status: Pending manual verification
   - Repository: `root`
@@ -152,14 +152,14 @@
 - [x] Commit and push engine changes.
   - Status: Complete
   - Repository: `engine`
-  - Notes: Engine commits through `64825f052ec00f5f2c887f781389343dd5584498` pushed to `origin/feature/runtime-scene-open-command`.
+  - Notes: Engine commits through `9348e08d6f4af507643343a4e534862b88f5575c` pushed to `origin/feature/runtime-scene-open-command`.
 - [x] Commit and push root changes, including submodule pointer and tracker updates.
   - Status: Complete
   - Repository: `root`
   - Notes: Root commits `0f388dd`, follow-up `1e29599`, click-to-reuse `3cf75f2`, and history-click gating `b5d5955` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
 
 ### Validation
-- Game validation: `Passed scripts/validate.cmd after initial, prediction follow-up, click-to-reuse, and history-click gating pointer updates`
+- Game validation: `Passed scripts/validate.cmd after initial, prediction follow-up, click-to-reuse, history-click gating, and history-click/blank-preview fix pointer updates`
 - Engine validation: `Passed focused checks and engine/scripts/validate-project.cmd; follow-up engine/scripts/validate-project.cmd also passed`
 - Documentation generation: `Passed focused cargo doc and engine validation doc generation for initial and follow-up commits`},{
 - User confirmation: `Pending user/manual smoke verification or optional sanity review request`
@@ -217,3 +217,8 @@
 - `2026-07-19`: Committed and pushed engine history-click gating follow-up commit `64825f052ec00f5f2c887f781389343dd5584498`.
 - `2026-07-19`: Root validation passed with `scripts/validate.cmd` against history-click gating engine commit `64825f052ec00f5f2c887f781389343dd5584498`.
 - `2026-07-19`: Committed and pushed root history-click gating submodule pointer/tracker commit `b5d5955`.
+- `2026-07-19`: User reported preview item clicks work but history item clicks do not, and requested previews be hidden when input is blank or whitespace-only. Implementation resumed for a follow-up fix.
+- `2026-07-19`: Implemented fix by building clickable history items immediately when the console opens and hiding autocomplete suggestions for blank/whitespace-only input.
+- `2026-07-19`: Fix validation passed with focused console tests, clippy, cargo doc, and full `engine/scripts/validate-project.cmd`.
+- `2026-07-19`: Committed and pushed engine fix commit `9348e08d6f4af507643343a4e534862b88f5575c`.
+- `2026-07-19`: Root validation passed with `scripts/validate.cmd` against history-click/blank-preview fix engine commit `9348e08d6f4af507643343a4e534862b88f5575c`.
