@@ -24,9 +24,9 @@
 - Shipping/no-dev-tools behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; click-to-reuse pointer/tracker commit pending`
+- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; click-to-reuse pointer/tracker commit 3cf75f2 pushed; final tracker status commit pending`
 - Engine commit/push state: `Committed de6265a543d91d0561761df5437544b2373dd2b5, d23603785bb39f8a75ef151bc5d111ef45f4e945, and click-to-reuse follow-up ef8a5810c3d341c070bb052efcf9005a01b43a4e; all pushed to origin/feature/runtime-scene-open-command`
-- Root submodule pointer update: `Pending click-to-reuse follow-up root commit after validation; working tree points at engine ef8a5810c3d341c070bb052efcf9005a01b43a4e`
+- Root submodule pointer update: `Committed and pushed in click-to-reuse root commit 3cf75f2; root points at engine ef8a5810c3d341c070bb052efcf9005a01b43a4e`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -137,10 +137,10 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: Passed `engine/scripts/validate-project.cmd`.
-- [ ] Update root submodule pointer after engine commit.
-  - Status: Awaiting click-to-reuse follow-up root commit
+- [x] Update root submodule pointer after engine commit.
+  - Status: Complete
   - Repository: `both`
-  - Notes: Engine commits `de6265a543d91d0561761df5437544b2373dd2b5`, `d23603785bb39f8a75ef151bc5d111ef45f4e945`, and click-to-reuse follow-up `ef8a5810c3d341c070bb052efcf9005a01b43a4e` are committed and pushed; root working tree now points at the click-to-reuse engine commit.
+  - Notes: Engine commits `de6265a543d91d0561761df5437544b2373dd2b5`, `d23603785bb39f8a75ef151bc5d111ef45f4e945`, and click-to-reuse follow-up `ef8a5810c3d341c070bb052efcf9005a01b43a4e` are committed and pushed; root click-to-reuse commit `3cf75f2` binds Last Beacon to the click-to-reuse engine commit.
 - [x] Run root game validation.
   - Status: Complete
   - Repository: `root`
@@ -156,7 +156,7 @@
 - [x] Commit and push root changes, including submodule pointer and tracker updates.
   - Status: Complete
   - Repository: `root`
-  - Notes: Root commits `0f388dd` and follow-up `1e29599` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
+  - Notes: Root commits `0f388dd`, follow-up `1e29599`, and click-to-reuse `3cf75f2` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
 
 ### Validation
 - Game validation: `Passed scripts/validate.cmd after initial, prediction follow-up, and click-to-reuse pointer updates`
@@ -210,3 +210,4 @@
 - `2026-07-19`: Click-to-reuse validation passed with focused console tests and full `engine/scripts/validate-project.cmd`.
 - `2026-07-19`: Committed and pushed engine click-to-reuse follow-up commit `ef8a5810c3d341c070bb052efcf9005a01b43a4e`.
 - `2026-07-19`: Root validation passed with `scripts/validate.cmd` against click-to-reuse engine commit `ef8a5810c3d341c070bb052efcf9005a01b43a4e`.
+- `2026-07-19`: Committed and pushed root click-to-reuse submodule pointer/tracker commit `3cf75f2`.
