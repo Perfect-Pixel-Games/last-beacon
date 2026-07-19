@@ -136,6 +136,7 @@ bevy_ecs::hierarchy::Children [
         width: bevy_ui::geometry::Val::Percent(100.0),
         height: bevy_ui::geometry::Val::Percent(100.0),
         flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+        flex_wrap: bevy_ui::ui_node::FlexWrap::Wrap,
         align_items: bevy_ui::ui_node::AlignItems::FlexStart,
         justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
         column_gap: bevy_ui::geometry::Val::Px(18.0),
@@ -307,6 +308,76 @@ bevy_ecs::hierarchy::Children [
 
             #StatRowsPanelSample
             last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/stat_rows_panel.bsn" }
+        ],
+
+        #InputWidgetGallery
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Px(360.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+            align_items: bevy_ui::ui_node::AlignItems::Stretch,
+            justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+            row_gap: bevy_ui::geometry::Val::Px(12.0),
+            padding: bevy_ui::geometry::UiRect {
+                left: bevy_ui::geometry::Val::Px(16.0),
+                right: bevy_ui::geometry::Val::Px(16.0),
+                top: bevy_ui::geometry::Val::Px(16.0),
+                bottom: bevy_ui::geometry::Val::Px(16.0),
+            },
+            border: bevy_ui::geometry::UiRect {
+                left: bevy_ui::geometry::Val::Px(2.0),
+                right: bevy_ui::geometry::Val::Px(2.0),
+                top: bevy_ui::geometry::Val::Px(2.0),
+                bottom: bevy_ui::geometry::Val::Px(2.0),
+            },
+            border_radius: bevy_ui::ui_node::BorderRadius {
+                top_left: bevy_ui::geometry::Val::Px(2.0),
+                top_right: bevy_ui::geometry::Val::Px(2.0),
+                bottom_right: bevy_ui::geometry::Val::Px(2.0),
+                bottom_left: bevy_ui::geometry::Val::Px(2.0),
+            },
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.059,
+            green: 0.09,
+            blue: 0.165,
+            alpha: 0.9,
+        }))
+        bevy_ui::ui_node::BorderColor {
+            top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }),
+            right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }),
+            bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }),
+            left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }),
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("INPUTS")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.58,
+                green: 0.639,
+                blue: 0.722,
+                alpha: 1.0,
+            })),
+
+            #TextFieldSample
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/text_field.bsn" },
+
+            #TextBoxSample
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/text_box.bsn" },
+
+            #RadioButtonsSample
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/radio_buttons.bsn" },
+
+            #ToggleButtonsSample
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/toggle_buttons.bsn" },
+
+            #ComboBoxSample
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/combo_box.bsn" },
+
+            #NumberFieldSample
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/number_field.bsn" },
+
+            #SliderSample
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/slider.bsn" }
         ]
     ]
 ]
