@@ -25,7 +25,7 @@ pub struct LastBeaconBsnWidget {
 #[reflect(Component, Default)]
 pub struct LastBeaconMainMenuPrimaryButton;
 
-/// Marks a Beacon primary action that should keep the prototype's cyan style.
+/// Marks a Beacon primary action that should keep the prototype's legacy cyan style.
 #[derive(Clone, Copy, Debug, Default, Component, Reflect)]
 #[reflect(Component, Default)]
 pub struct LastBeaconBeaconPrimaryButton;
@@ -269,29 +269,29 @@ fn reusable_button_style(variant: &str, interaction: Interaction) -> LastBeaconW
     let normalized_variant = variant.trim().to_ascii_lowercase();
     match (normalized_variant.as_str(), interaction) {
         ("primary", Interaction::Pressed) => LastBeaconWidgetStyle {
-            background_color: Color::srgb(0.028, 0.628, 0.718),
-            border_color: Color::srgb(0.028, 0.628, 0.718),
+            background_color: Color::srgb(0.854, 0.55, 0.08),
+            border_color: Color::srgb(0.854, 0.55, 0.08),
             text_color: Color::srgb(0.008, 0.024, 0.09),
         },
         ("primary", Interaction::Hovered) => LastBeaconWidgetStyle {
-            background_color: Color::srgb(0.404, 0.91, 0.965),
-            border_color: Color::srgb(0.404, 0.91, 0.965),
+            background_color: Color::srgb(1.0, 0.827, 0.32),
+            border_color: Color::srgb(1.0, 0.827, 0.32),
             text_color: Color::srgb(0.008, 0.024, 0.09),
         },
         ("primary", _) => LastBeaconWidgetStyle {
-            background_color: Color::srgb(0.133, 0.827, 0.933),
-            border_color: Color::srgb(0.133, 0.827, 0.933),
+            background_color: Color::srgb(0.984, 0.749, 0.141),
+            border_color: Color::srgb(0.984, 0.749, 0.141),
             text_color: Color::srgb(0.008, 0.024, 0.09),
         },
         ("tertiary", Interaction::Pressed) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.133, 0.827, 0.933, 0.18),
-            border_color: Color::srgb(0.133, 0.827, 0.933),
-            text_color: Color::srgb(0.133, 0.827, 0.933),
+            background_color: Color::srgba(0.984, 0.749, 0.141, 0.18),
+            border_color: Color::srgb(0.984, 0.749, 0.141),
+            text_color: Color::srgb(0.984, 0.749, 0.141),
         },
         ("tertiary", Interaction::Hovered) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.133, 0.827, 0.933, 0.1),
-            border_color: Color::srgb(0.133, 0.827, 0.933),
-            text_color: Color::srgb(0.404, 0.91, 0.965),
+            background_color: Color::srgba(0.984, 0.749, 0.141, 0.1),
+            border_color: Color::srgb(0.984, 0.749, 0.141),
+            text_color: Color::srgb(1.0, 0.827, 0.32),
         },
         ("tertiary", _) => LastBeaconWidgetStyle {
             background_color: Color::srgba(0.0, 0.0, 0.0, 0.0),
@@ -319,22 +319,22 @@ fn reusable_button_style(variant: &str, interaction: Interaction) -> LastBeaconW
 fn reusable_tab_style(is_selected: bool, interaction: Interaction) -> LastBeaconWidgetStyle {
     match (is_selected, interaction) {
         (true, Interaction::Pressed) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.133, 0.827, 0.933, 0.22),
-            border_color: Color::srgb(0.133, 0.827, 0.933),
-            text_color: Color::srgb(0.133, 0.827, 0.933),
+            background_color: Color::srgba(0.984, 0.749, 0.141, 0.22),
+            border_color: Color::srgb(0.984, 0.749, 0.141),
+            text_color: Color::srgb(0.984, 0.749, 0.141),
         },
         (true, _) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.133, 0.827, 0.933, 0.12),
-            border_color: Color::srgb(0.133, 0.827, 0.933),
-            text_color: Color::srgb(0.133, 0.827, 0.933),
+            background_color: Color::srgba(0.984, 0.749, 0.141, 0.12),
+            border_color: Color::srgb(0.984, 0.749, 0.141),
+            text_color: Color::srgb(0.984, 0.749, 0.141),
         },
         (false, Interaction::Pressed) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.133, 0.827, 0.933, 0.16),
-            border_color: Color::srgb(0.133, 0.827, 0.933),
-            text_color: Color::srgb(0.133, 0.827, 0.933),
+            background_color: Color::srgba(0.984, 0.749, 0.141, 0.16),
+            border_color: Color::srgb(0.984, 0.749, 0.141),
+            text_color: Color::srgb(0.984, 0.749, 0.141),
         },
         (false, Interaction::Hovered) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.133, 0.827, 0.933, 0.08),
+            background_color: Color::srgba(0.984, 0.749, 0.141, 0.08),
             border_color: Color::srgb(0.278, 0.333, 0.412),
             text_color: Color::srgb(0.945, 0.961, 0.976),
         },

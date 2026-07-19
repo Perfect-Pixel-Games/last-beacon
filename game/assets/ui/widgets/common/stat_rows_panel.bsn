@@ -54,7 +54,7 @@ bevy_ecs::hierarchy::Children [
             bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
             bevy_ui::widget::text::Text("Ready")
             bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }))
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
         ]
     ]
 ]
