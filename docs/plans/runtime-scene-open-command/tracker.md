@@ -24,9 +24,9 @@
 - Shipping/no-dev-tools behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; click-to-reuse pointer/tracker commit 3cf75f2 pushed; history-click gating pointer/tracker commit b5d5955 pushed; history-click fix pointer/tracker commit pending`
+- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; click-to-reuse pointer/tracker commit 3cf75f2 pushed; history-click gating pointer/tracker commit b5d5955 pushed; history-click fix pointer/tracker commit 653a5b6 pushed; final tracker status commit pending`
 - Engine commit/push state: `Committed engine work through history-click/blank-preview fix 9348e08d6f4af507643343a4e534862b88f5575c; all pushed to origin/feature/runtime-scene-open-command`
-- Root submodule pointer update: `Pending history-click/blank-preview fix root commit after validation; working tree points at engine 9348e08d6f4af507643343a4e534862b88f5575c`
+- Root submodule pointer update: `Committed and pushed in history-click/blank-preview fix root commit 653a5b6; root points at engine 9348e08d6f4af507643343a4e534862b88f5575c`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -137,10 +137,10 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: Passed `engine/scripts/validate-project.cmd`.
-- [ ] Update root submodule pointer after engine commit.
-  - Status: Awaiting history-click/blank-preview fix root commit
+- [x] Update root submodule pointer after engine commit.
+  - Status: Complete
   - Repository: `both`
-  - Notes: Engine commits through history-click/blank-preview fix `9348e08d6f4af507643343a4e534862b88f5575c` are committed and pushed; root working tree now points at the fix engine commit.
+  - Notes: Engine commits through history-click/blank-preview fix `9348e08d6f4af507643343a4e534862b88f5575c` are committed and pushed; root history-click fix commit `653a5b6` binds Last Beacon to the fix engine commit.
 - [x] Run root game validation.
   - Status: Complete
   - Repository: `root`
@@ -156,7 +156,7 @@
 - [x] Commit and push root changes, including submodule pointer and tracker updates.
   - Status: Complete
   - Repository: `root`
-  - Notes: Root commits `0f388dd`, follow-up `1e29599`, click-to-reuse `3cf75f2`, and history-click gating `b5d5955` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
+  - Notes: Root commits `0f388dd`, follow-up `1e29599`, click-to-reuse `3cf75f2`, history-click gating `b5d5955`, and history-click fix `653a5b6` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
 
 ### Validation
 - Game validation: `Passed scripts/validate.cmd after initial, prediction follow-up, click-to-reuse, history-click gating, and history-click/blank-preview fix pointer updates`
@@ -222,3 +222,4 @@
 - `2026-07-19`: Fix validation passed with focused console tests, clippy, cargo doc, and full `engine/scripts/validate-project.cmd`.
 - `2026-07-19`: Committed and pushed engine fix commit `9348e08d6f4af507643343a4e534862b88f5575c`.
 - `2026-07-19`: Root validation passed with `scripts/validate.cmd` against history-click/blank-preview fix engine commit `9348e08d6f4af507643343a4e534862b88f5575c`.
+- `2026-07-19`: Committed and pushed root history-click fix submodule pointer/tracker commit `653a5b6`.
