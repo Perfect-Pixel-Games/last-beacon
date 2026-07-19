@@ -22,7 +22,7 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Main Menu site-style refinement complete and awaiting commit/push.`
+- Root commit/push state: `Main Menu site-style refinement commit 9fd1d5e pushed to origin/feature/bevy-ui-scenes.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
@@ -195,7 +195,7 @@
 - `2026-07-19`: Added game-owned BSN widget composition support, moved Main Menu pieces into `game/assets/ui/widgets/main_menu/`, rewrote `main_menu.bsn` to compose those widgets, and validated the focused checks plus root validation.
 - `2026-07-19`: Committed and pushed Main Menu widget refinement as `5735044 Refine main menu widgets`; no pull request created.
 - `2026-07-19`: Fetched latest origin and rebased `feature/bevy-ui-scenes` onto `origin/dev` at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 so the prototype merge is beneath the feature changes.
-- `2026-07-19`: Refined Main Menu widget colors, button shape, font handling, padding, margins, and panel sizing to better match the Svelte prototype; validation passed.
+- `2026-07-19`: Refined Main Menu widget colors, button shape, font handling, padding, margins, and panel sizing to better match the Svelte prototype; validation passed and commit `9fd1d5e Match main menu prototype style` was pushed.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
