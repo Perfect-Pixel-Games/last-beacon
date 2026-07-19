@@ -24,9 +24,9 @@
 - Shipping/no-dev-tools behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; click-to-reuse pointer/tracker commit 3cf75f2 pushed; history-click gating pointer/tracker commit pending`
+- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; click-to-reuse pointer/tracker commit 3cf75f2 pushed; history-click gating pointer/tracker commit b5d5955 pushed; final tracker status commit pending`
 - Engine commit/push state: `Committed de6265a543d91d0561761df5437544b2373dd2b5, d23603785bb39f8a75ef151bc5d111ef45f4e945, ef8a5810c3d341c070bb052efcf9005a01b43a4e, and history-click gating follow-up 64825f052ec00f5f2c887f781389343dd5584498; all pushed to origin/feature/runtime-scene-open-command`
-- Root submodule pointer update: `Pending history-click gating follow-up root commit after validation; working tree points at engine 64825f052ec00f5f2c887f781389343dd5584498`
+- Root submodule pointer update: `Committed and pushed in history-click gating root commit b5d5955; root points at engine 64825f052ec00f5f2c887f781389343dd5584498`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -137,10 +137,10 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: Passed `engine/scripts/validate-project.cmd`.
-- [ ] Update root submodule pointer after engine commit.
-  - Status: Awaiting history-click gating follow-up root commit
+- [x] Update root submodule pointer after engine commit.
+  - Status: Complete
   - Repository: `both`
-  - Notes: Engine commits through history-click gating follow-up `64825f052ec00f5f2c887f781389343dd5584498` are committed and pushed; root working tree now points at the history-click gating engine commit.
+  - Notes: Engine commits through history-click gating follow-up `64825f052ec00f5f2c887f781389343dd5584498` are committed and pushed; root history-click gating commit `b5d5955` binds Last Beacon to the history-click gating engine commit.
 - [x] Run root game validation.
   - Status: Complete
   - Repository: `root`
@@ -156,7 +156,7 @@
 - [x] Commit and push root changes, including submodule pointer and tracker updates.
   - Status: Complete
   - Repository: `root`
-  - Notes: Root commits `0f388dd`, follow-up `1e29599`, and click-to-reuse `3cf75f2` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
+  - Notes: Root commits `0f388dd`, follow-up `1e29599`, click-to-reuse `3cf75f2`, and history-click gating `b5d5955` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
 
 ### Validation
 - Game validation: `Passed scripts/validate.cmd after initial, prediction follow-up, click-to-reuse, and history-click gating pointer updates`
@@ -216,3 +216,4 @@
 - `2026-07-19`: History-click gating validation passed with focused console tests, clippy, cargo doc, and full `engine/scripts/validate-project.cmd`.
 - `2026-07-19`: Committed and pushed engine history-click gating follow-up commit `64825f052ec00f5f2c887f781389343dd5584498`.
 - `2026-07-19`: Root validation passed with `scripts/validate.cmd` against history-click gating engine commit `64825f052ec00f5f2c887f781389343dd5584498`.
+- `2026-07-19`: Committed and pushed root history-click gating submodule pointer/tracker commit `b5d5955`.
