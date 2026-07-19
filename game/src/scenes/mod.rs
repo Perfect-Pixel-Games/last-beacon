@@ -24,6 +24,8 @@ pub const GARAGE_SCENE: &str = "last-beacon/garage";
 pub const MISSION_CONTROL_SCENE: &str = "last-beacon/mission_control";
 /// Scene key for the fabrication bay.
 pub const FABRICATION_SCENE: &str = "last-beacon/fabrication";
+/// Scene key for the reusable UI widget playground.
+pub const UI_PLAYGROUND_SCENE: &str = "last-beacon/ui_playground";
 /// Scene key for silo upgrades.
 pub const SILO_UPGRADES_SCENE: &str = "last-beacon/silo_upgrades";
 /// Scene key for the scrolling credits scene.
@@ -48,6 +50,7 @@ pub fn register_last_beacon_bsn_scenes(mut registry: ResMut<FoundationBsnSceneRe
     registry.register_scene(GARAGE_SCENE, "scenes/garage.bsn");
     registry.register_scene(MISSION_CONTROL_SCENE, "scenes/mission_control.bsn");
     registry.register_scene(FABRICATION_SCENE, "scenes/fabrication.bsn");
+    registry.register_scene(UI_PLAYGROUND_SCENE, "scenes/ui_playground.bsn");
     registry.register_scene(SILO_UPGRADES_SCENE, "scenes/silo_upgrades.bsn");
     registry.register_scene(CREDITS_SCENE, "scenes/credits.bsn");
     registry.register_scene(GAMEPLAY_LEVEL_SCENE, "scenes/gameplay_level.bsn");
@@ -168,6 +171,7 @@ mod tests {
         assert_eq!(GARAGE_SCENE, "last-beacon/garage");
         assert_eq!(MISSION_CONTROL_SCENE, "last-beacon/mission_control");
         assert_eq!(FABRICATION_SCENE, "last-beacon/fabrication");
+        assert_eq!(UI_PLAYGROUND_SCENE, "last-beacon/ui_playground");
         assert_eq!(SILO_UPGRADES_SCENE, "last-beacon/silo_upgrades");
         assert_eq!(CREDITS_SCENE, "last-beacon/credits");
         assert_eq!(GAMEPLAY_LEVEL_SCENE, "last-beacon/gameplay_level");
@@ -198,6 +202,7 @@ mod tests {
         registry.register_scene(MAIN_MENU_SCENE, "scenes/main_menu.bsn");
         registry.register_scene(DASHBOARD_SCENE, "scenes/dashboard.bsn");
         registry.register_scene(SILO_UPGRADES_SCENE, "scenes/silo_upgrades.bsn");
+        registry.register_scene(UI_PLAYGROUND_SCENE, "scenes/ui_playground.bsn");
 
         assert_eq!(
             registry.resolve_scene_path(MAIN_MENU_SCENE),
@@ -210,6 +215,10 @@ mod tests {
         assert_eq!(
             registry.resolve_scene_path(SILO_UPGRADES_SCENE),
             "scenes/silo_upgrades.bsn"
+        );
+        assert_eq!(
+            registry.resolve_scene_path(UI_PLAYGROUND_SCENE),
+            "scenes/ui_playground.bsn"
         );
     }
 }

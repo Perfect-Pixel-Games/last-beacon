@@ -95,6 +95,11 @@ bevy_ecs::hierarchy::Children [
                 asset_path: "ui/widgets/main_menu/credits_button.bsn",
             },
 
+            #UiPlaygroundButtonSlot
+            last_beacon::ui_widgets::LastBeaconBsnWidget {
+                asset_path: "ui/widgets/main_menu/ui_playground_button.bsn",
+            },
+
             #QuitButtonSlot
             last_beacon::ui_widgets::LastBeaconBsnWidget {
                 asset_path: "ui/widgets/main_menu/quit_button.bsn",

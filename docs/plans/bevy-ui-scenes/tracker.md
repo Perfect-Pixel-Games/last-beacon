@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Shared silo UI styling tweaks awaiting visual review`
+- Overall status: `UI playground implemented and awaiting commit`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Shared silo UI tweaks implemented with gpt-5.4; awaiting user visual review`
+- Current handoff state: `UI playground implemented with gpt-5.4; awaiting commit and push`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -27,7 +27,7 @@
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Shared Beacon/silo UI chrome and styling pass approved by user for commit.`
+- Current tweak state: `Last Beacon UI playground scene implemented with Main Menu navigation; validation passed; commit pending.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -187,7 +187,8 @@
 - The feature branch was originally created from older local `dev` at c3aa296820dc54dc69e38e88dc065b84b878e208, then rebased onto latest `origin/dev` at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 after the prototype branch was merged.
 - The old scene name `options_menu` may remain as the internal key for Settings Menu to minimize engine/menu integration churn, even though the user-facing label should be Settings Menu.
 - Main Menu styling now starts a reusable BSN widget library under `game/assets/ui/widgets/main_menu/`. The first implementation adds game-owned `LastBeaconBsnWidget` slots so scenes can compose widget BSN assets without Foundation Engine changes.
-- Dedicated widget assets currently cover Main Menu brand, menu buttons, current save panel, and footer. Other scenes still use the earlier static layout and should be migrated as follow-up tweaks.
+- Dedicated widget assets currently cover Main Menu brand, menu buttons, UI Playground navigation, current save panel, and footer. Other scenes still use the earlier static layout and should be migrated as follow-up tweaks.
+- Added `last-beacon/ui_playground` as a Feathers-gallery-inspired static widget showcase scene. It displays all current reusable Main Menu widget BSN assets, the current save/footer composites, and the Beacon style marker components in one screen.
 - Shared silo UI pass is now targeting the Svelte website's Beacon layout: absolute 16:9 frame feel, centered top tab navigation, resource chip group, 2px slate panel borders, slate-900 panel fills, cyan active tab underline, compact uppercase labels, and floating/edge panels over the existing simple 3D stand-in.
 - Added game-owned Beacon button style markers so generic Foundation button interaction colors do not overwrite cyan primary actions or transparent Beacon top-nav tabs.
 - Updated BSN asset flow tests to register the new marker types, wait long enough for all BSN assets to load, and serialize the asset-flow tests because the Bevy asset pipeline is shared enough for these app-level tests to race when run concurrently.
@@ -206,6 +207,8 @@
 - `2026-07-19`: Reworked shared Beacon/silo scene chrome for Dashboard, Hangar, Garage, Mission Control, Fabrication, and Silo Upgrades to better match the Svelte website; passed `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, and `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`.
 - `2026-07-19`: User approved the shared Beacon/silo UI styling pass for commit.
 - `2026-07-19`: Committed shared Beacon/silo UI styling pass as `7012ce1 Match shared silo UI prototype style`, committed tracker update as `02369c7 Update shared silo UI tracker`, and pushed both to `origin/feature/bevy-ui-scenes`.
+- `2026-07-19`: User requested a Bevy Feathers-gallery-style UI playground scene to showcase reusable Last Beacon widgets and a Main Menu button to reach it; implementation started.
+- `2026-07-19`: Added `last-beacon/ui_playground`, Main Menu `UI PLAYGROUND` button widget, scene registration/tests, and BSN asset-flow coverage. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
