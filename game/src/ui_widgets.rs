@@ -7,9 +7,10 @@
 use std::{collections::HashMap, sync::Arc};
 
 use bevy::{
+    input_focus::{FocusCause, InputFocus},
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
-    text::FontSource,
+    text::{EditableText, FontSource, TextCursorStyle, TextLayout},
 };
 
 /// Requests that a reusable Last Beacon BSN widget asset be applied to this entity.
@@ -73,11 +74,81 @@ impl Default for LastBeaconUiTab {
     }
 }
 
+/// Makes an authored text value editable when clicked.
+#[derive(Clone, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiTextInput {
+    /// Initial value shown in the input.
+    pub value: String,
+    /// Whether the input should allow newline entry.
+    pub multiline: bool,
+}
+
+/// Applies simple clickable value behavior to authored input examples.
+#[derive(Clone, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiValueButton {
+    /// Shared value key this control writes to.
+    pub target: String,
+    /// Absolute value to set when pressed. If empty, `delta` is applied instead.
+    pub set_value: String,
+    /// Numeric delta applied to the current value when `set_value` is empty.
+    pub delta: f32,
+    /// Minimum numeric value for delta updates.
+    pub min: f32,
+    /// Maximum numeric value for delta updates.
+    pub max: f32,
+}
+
+impl Default for LastBeaconUiValueButton {
+    fn default() -> Self {
+        Self {
+            target: String::new(),
+            set_value: String::new(),
+            delta: 0.0,
+            min: 0.0,
+            max: 100.0,
+        }
+    }
+}
+
+/// Displays a value from [`LastBeaconUiInputValues`] in an authored text entity.
+#[derive(Clone, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiValueText {
+    /// Shared value key this text mirrors.
+    pub target: String,
+    /// Text prepended before the value.
+    pub prefix: String,
+    /// Text appended after the value.
+    pub suffix: String,
+}
+
 /// Remembers selected tabs for authored reusable tab groups.
 #[derive(Clone, Debug, Default, Resource)]
 pub struct LastBeaconUiTabSelections {
     selected_tabs: HashMap<String, String>,
 }
+
+/// Stores lightweight example input values for the reusable UI playground widgets.
+#[derive(Clone, Debug, Default, Resource)]
+pub struct LastBeaconUiInputValues {
+    values: HashMap<String, String>,
+}
+
+type LastBeaconUiTextInputFocusQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (&'static Interaction, Option<&'static Children>),
+    (Changed<Interaction>, With<LastBeaconUiTextInput>),
+>;
+
+type LastBeaconUiValueButtonInteractionQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (&'static LastBeaconUiValueButton, &'static Interaction),
+    (Changed<Interaction>, With<Button>),
+>;
 
 type LastBeaconUiTabInteractionQuery<'world, 'state> = Query<
     'world,
@@ -195,6 +266,133 @@ pub fn apply_last_beacon_ui_font(
     let ui_font = asset_server.load("fonts/NotoSans-Regular.ttf");
     for mut text_font in &mut text_fonts {
         text_font.font = FontSource::Handle(ui_font.clone());
+    }
+}
+
+/// Turns authored text-input containers into focusable editable text widgets.
+pub fn initialize_last_beacon_ui_text_inputs(
+    mut commands: Commands,
+    text_inputs: Query<
+        (Entity, &LastBeaconUiTextInput, Option<&Children>),
+        Added<LastBeaconUiTextInput>,
+    >,
+    children_query: Query<&Children>,
+    text_query: Query<(), With<Text>>,
+) {
+    for (input_entity, text_input, input_children) in &text_inputs {
+        let Some(text_entity) =
+            first_descendant_with_text(input_children, &children_query, &text_query)
+        else {
+            warn!("LastBeaconUiTextInput on {input_entity:?} has no child Text entity.");
+            continue;
+        };
+
+        let mut editable_text = EditableText::new(&text_input.value);
+        editable_text.allow_newlines = text_input.multiline;
+        editable_text.visible_width = Some(if text_input.multiline { 32.0 } else { 24.0 });
+        editable_text.visible_lines = Some(if text_input.multiline { 3.0 } else { 1.0 });
+
+        commands.entity(text_entity).insert((
+            Node::default(),
+            editable_text,
+            TextCursorStyle::default(),
+            TextLayout::default(),
+        ));
+    }
+}
+
+/// Focuses editable text when its authored input container is clicked.
+pub fn focus_last_beacon_ui_text_inputs(
+    mut input_focus: ResMut<InputFocus>,
+    text_inputs: LastBeaconUiTextInputFocusQuery,
+    children_query: Query<&Children>,
+    editable_text_query: Query<(), With<EditableText>>,
+) {
+    for (interaction, input_children) in &text_inputs {
+        if *interaction != Interaction::Pressed {
+            continue;
+        }
+        let Some(text_entity) = first_descendant_with_editable_text(
+            input_children,
+            &children_query,
+            &editable_text_query,
+        ) else {
+            continue;
+        };
+        input_focus.set(text_entity, FocusCause::Pressed);
+    }
+}
+
+/// Seeds stored example input values from authored labels.
+pub fn initialize_last_beacon_ui_value_text(
+    mut input_values: ResMut<LastBeaconUiInputValues>,
+    value_texts: Query<(&LastBeaconUiValueText, &Text), Added<LastBeaconUiValueText>>,
+) {
+    for (value_text, text) in &value_texts {
+        if value_text.target.is_empty() || input_values.values.contains_key(&value_text.target) {
+            continue;
+        }
+
+        let Some(initial_value) = text
+            .0
+            .strip_prefix(&value_text.prefix)
+            .and_then(|value| value.strip_suffix(&value_text.suffix))
+        else {
+            input_values
+                .values
+                .insert(value_text.target.clone(), text.0.clone());
+            continue;
+        };
+
+        input_values
+            .values
+            .insert(value_text.target.clone(), initial_value.to_string());
+    }
+}
+
+/// Applies simple value changes for authored reusable input examples.
+pub fn update_last_beacon_ui_value_buttons(
+    mut input_values: ResMut<LastBeaconUiInputValues>,
+    buttons: LastBeaconUiValueButtonInteractionQuery,
+) {
+    for (button, interaction) in &buttons {
+        if *interaction != Interaction::Pressed || button.target.is_empty() {
+            continue;
+        }
+
+        if !button.set_value.is_empty() {
+            input_values
+                .values
+                .insert(button.target.clone(), button.set_value.clone());
+            continue;
+        }
+
+        let current_value = input_values
+            .values
+            .get(&button.target)
+            .and_then(|value| value.parse::<f32>().ok())
+            .unwrap_or(0.0);
+        let next_value = (current_value + button.delta).clamp(button.min, button.max);
+        input_values
+            .values
+            .insert(button.target.clone(), format_value(next_value));
+    }
+}
+
+/// Mirrors stored example input values into authored text labels.
+pub fn refresh_last_beacon_ui_value_text(
+    input_values: Res<LastBeaconUiInputValues>,
+    mut value_texts: Query<(&LastBeaconUiValueText, &mut Text)>,
+) {
+    if !input_values.is_changed() {
+        return;
+    }
+
+    for (value_text, mut text) in &mut value_texts {
+        let Some(value) = input_values.values.get(&value_text.target) else {
+            continue;
+        };
+        text.0 = format!("{}{}{}", value_text.prefix, value, value_text.suffix);
     }
 }
 
@@ -344,6 +542,55 @@ fn reusable_tab_style(is_selected: bool, interaction: Interaction) -> LastBeacon
             text_color: Color::srgb(0.58, 0.639, 0.722),
         },
     }
+}
+
+fn format_value(value: f32) -> String {
+    if value.fract().abs() < f32::EPSILON {
+        format!("{value:.0}")
+    } else {
+        format!("{value:.1}")
+    }
+}
+
+fn first_descendant_with_text(
+    children: Option<&Children>,
+    children_query: &Query<&Children>,
+    text_query: &Query<(), With<Text>>,
+) -> Option<Entity> {
+    first_matching_descendant(children, children_query, |entity| {
+        text_query.contains(entity)
+    })
+}
+
+fn first_descendant_with_editable_text(
+    children: Option<&Children>,
+    children_query: &Query<&Children>,
+    editable_text_query: &Query<(), With<EditableText>>,
+) -> Option<Entity> {
+    first_matching_descendant(children, children_query, |entity| {
+        editable_text_query.contains(entity)
+    })
+}
+
+fn first_matching_descendant(
+    children: Option<&Children>,
+    children_query: &Query<&Children>,
+    matches_entity: impl Fn(Entity) -> bool + Copy,
+) -> Option<Entity> {
+    let children = children?;
+    for child_entity in children.iter() {
+        if matches_entity(child_entity) {
+            return Some(child_entity);
+        }
+        if let Ok(grandchildren) = children_query.get(child_entity) {
+            if let Some(descendant) =
+                first_matching_descendant(Some(grandchildren), children_query, matches_entity)
+            {
+                return Some(descendant);
+            }
+        }
+    }
+    None
 }
 
 fn apply_text_color(

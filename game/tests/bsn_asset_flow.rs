@@ -7,6 +7,7 @@ use last_beacon::{
     ui_widgets::{
         LastBeaconBeaconPrimaryButton, LastBeaconBeaconTabButton, LastBeaconBsnWidget,
         LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiTab,
+        LastBeaconUiTextInput, LastBeaconUiValueButton, LastBeaconUiValueText,
     },
 };
 
@@ -49,6 +50,14 @@ fn converted_bsn_scene_assets_load_as_scene_patches() {
         "ui/widgets/common/tertiary_button.bsn",
         "ui/widgets/common/tabs.bsn",
         "ui/widgets/common/stat_rows_panel.bsn",
+        "ui/widgets/common/text_field.bsn",
+        "ui/widgets/common/text_box.bsn",
+        "ui/widgets/common/radio_buttons.bsn",
+        "ui/widgets/common/toggle_buttons.bsn",
+        "ui/widgets/common/combo_box.bsn",
+        "ui/widgets/common/number_field.bsn",
+        "ui/widgets/common/slider.bsn",
+        "ui/widgets/common/property_container.bsn",
         "ui/widgets/main_menu/brand.bsn",
         "ui/widgets/main_menu/continue_button.bsn",
         "ui/widgets/main_menu/quick_run_button.bsn",
@@ -160,5 +169,8 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<LastBeaconBeaconPrimaryButton>()
         .register_type::<LastBeaconBeaconTabButton>()
         .register_type::<LastBeaconUiButton>()
-        .register_type::<LastBeaconUiTab>();
+        .register_type::<LastBeaconUiTab>()
+        .register_type::<LastBeaconUiTextInput>()
+        .register_type::<LastBeaconUiValueButton>()
+        .register_type::<LastBeaconUiValueText>();
 }

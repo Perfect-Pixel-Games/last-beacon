@@ -12,6 +12,7 @@ bevy_ecs::hierarchy::Children [
     bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 0.12 }))
     bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), }
     last_beacon::ui_widgets::LastBeaconUiTab { group: "radio-power", tab: "online", selected: true }
+    last_beacon::ui_widgets::LastBeaconUiValueButton { target: "radio-power", set_value: "online", delta: 0.0, min: 0.0, max: 1.0 }
     bevy_ecs::hierarchy::Children [
         bevy_ui::widget::text::Text("● ONLINE")
         bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
@@ -24,6 +25,7 @@ bevy_ecs::hierarchy::Children [
     bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
     bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), }
     last_beacon::ui_widgets::LastBeaconUiTab { group: "radio-power", tab: "standby", selected: false }
+    last_beacon::ui_widgets::LastBeaconUiValueButton { target: "radio-power", set_value: "standby", delta: 0.0, min: 0.0, max: 1.0 }
     bevy_ecs::hierarchy::Children [
         bevy_ui::widget::text::Text("○ STANDBY")
         bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }

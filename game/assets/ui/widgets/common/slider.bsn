@@ -1,4 +1,5 @@
 #Slider
+bevy_ui::widget::button::Button
 bevy_ui::ui_node::Node {
     width: bevy_ui::geometry::Val::Px(260.0),
     height: bevy_ui::geometry::Val::Px(42.0),
@@ -6,6 +7,7 @@ bevy_ui::ui_node::Node {
     justify_content: bevy_ui::ui_node::JustifyContent::Center,
     row_gap: bevy_ui::geometry::Val::Px(8.0),
 }
+last_beacon::ui_widgets::LastBeaconUiValueButton { target: "slider-volume", set_value: "", delta: 10.0, min: 0.0, max: 100.0 }
 bevy_ecs::hierarchy::Children [
     #SliderLabelRow
     bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Percent(100.0), flex_direction: bevy_ui::ui_node::FlexDirection::Row, justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween, }
@@ -15,6 +17,7 @@ bevy_ecs::hierarchy::Children [
         bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
 
         bevy_ui::widget::text::Text("72%")
+    last_beacon::ui_widgets::LastBeaconUiValueText { target: "slider-volume", prefix: "", suffix: "%" }
         bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
         bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
     ],

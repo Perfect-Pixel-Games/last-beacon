@@ -13,9 +13,11 @@ bevy_ui::ui_node::Node {
 bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }))
 bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), }
 last_beacon::ui_widgets::LastBeaconUiButton { variant: "secondary" }
+last_beacon::ui_widgets::LastBeaconUiValueButton { target: "combo-mode", set_value: "HARD", delta: 0.0, min: 0.0, max: 1.0 }
 foundation_runtime_library::menu::FoundationMenuButton { action: "none", scene_key: "", stack_key: "" }
 bevy_ecs::hierarchy::Children [
     bevy_ui::widget::text::Text("NORMAL")
+    last_beacon::ui_widgets::LastBeaconUiValueText { target: "combo-mode", prefix: "", suffix: "" }
     bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(13.0) }
     bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 })),
 
