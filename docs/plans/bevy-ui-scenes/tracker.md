@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Reusable input bug-fix implementation in progress`
+- Overall status: `Reusable input bug-fix implementation committed and pushed`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Reusable input bug-fix implementation in progress with gpt-5.4`
+- Current handoff state: `Reusable input bug-fix implementation complete with gpt-5.4; awaiting user review`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Reusable input interaction commit 7ab15c0 pushed to origin/feature/bevy-ui-scenes; tracker finalization commit pending.`
+- Root commit/push state: `Reusable input bug-fix commit 192aa5e pushed to origin/feature/bevy-ui-scenes; tracker finalization commit pending.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Input bug fixes implemented: consistent text input values/colours/borders, combo dropdown popup, and cursor-position slider dragging; validation passed; commit pending.`
+- Current tweak state: `Input bug fixes implemented: consistent text input values/colours/borders, combo dropdown popup, and cursor-position slider dragging; validation passed; commit 192aa5e pushed.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -222,7 +222,7 @@
 - `2026-07-19`: User requested the property container be essentially invisible; removed the container background, border, and padding, and changed it to fill the available width. This was a BSN-only hot-reload edit, so no recompile was run.
 - `2026-07-19`: User requested removal of the `PROPERTY` and `VALUE` column headers from the property container; removed the header row. This was a BSN-only hot-reload edit, so no recompile was run.
 - `2026-07-19`: User requested all UI Playground inputs be interactable and include values. Added runtime reusable input components for editable text inputs and simple value-backed buttons/text, wired them into text field, text box, radio, toggle, combo box, number field, and slider BSN samples, and added BSN asset-flow coverage for the common input widgets. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `7ab15c0 Make playground input widgets interactive`.
-- `2026-07-19`: User reported UI Playground input bugs: text field placeholder/value mismatch, text box fixed placeholder and inconsistent colour, yellow input borders, combo box lacking an options popup, and slider lacking cursor dragging. BSN-only presentation fixes were hot-reloaded; combo popup and slider drag required runtime support, so Rust changes were made. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors.
+- `2026-07-19`: User reported UI Playground input bugs: text field placeholder/value mismatch, text box fixed placeholder and inconsistent colour, yellow input borders, combo box lacking an options popup, and slider lacking cursor dragging. BSN-only presentation fixes were hot-reloaded; combo popup and slider drag required runtime support, so Rust changes were made. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `192aa5e Fix playground input widget behavior`.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
