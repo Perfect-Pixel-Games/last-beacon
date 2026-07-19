@@ -83,6 +83,12 @@ bevy_ecs::hierarchy::Children [
             flex_direction: bevy_ui::ui_node::FlexDirection::Row,
             align_items: bevy_ui::ui_node::AlignItems::Center,
             justify_content: bevy_ui::ui_node::JustifyContent::Center,
+            padding: bevy_ui::geometry::UiRect {
+                left: bevy_ui::geometry::Val::Px(16.0),
+                right: bevy_ui::geometry::Val::Px(16.0),
+                top: bevy_ui::geometry::Val::Px(8.0),
+                bottom: bevy_ui::geometry::Val::Px(8.0),
+            },
             border: bevy_ui::geometry::UiRect {
                 left: bevy_ui::geometry::Val::Px(1.0),
                 right: bevy_ui::geometry::Val::Px(1.0),
@@ -108,6 +114,7 @@ bevy_ecs::hierarchy::Children [
             bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }),
             left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }),
         }
+        last_beacon::ui_widgets::LastBeaconUiButton { variant: "secondary" }
         foundation_runtime_library::menu::FoundationMenuButton {
             action: "clear_and_open_scene",
             scene_key: "last-beacon/main_menu",
@@ -122,8 +129,7 @@ bevy_ecs::hierarchy::Children [
                 blue: 0.976,
                 alpha: 1.0,
             }))
-        ]
-    ],
+        ]    ],
 
     #UiPlaygroundBody
     bevy_ui::ui_node::Node {

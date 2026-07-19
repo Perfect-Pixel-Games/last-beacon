@@ -27,7 +27,7 @@
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Reusable UI widget accent colour changed from cyan/blue to yellow/amber; validation passed; commit 5fa96a2 pushed.`
+- Current tweak state: `UI Playground Back To Menu button now uses the shared reusable secondary button styling component; BSN-only hot-reload edit made without recompiling.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -216,6 +216,7 @@
 - `2026-07-19`: Replaced menu/beacon-specific common button samples with reusable `primary`, `secondary`, and `tertiary` button widgets, added `LastBeaconUiButton` hover/pressed styling, added stateful `LastBeaconUiTab` selection memory, and updated the UI Playground showcase. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `13e5479 Add reusable widget interactions`.
 - `2026-07-19`: User requested yellow/amber as the reusable UI accent colour instead of blue/cyan; implementation started.
 - `2026-07-19`: Updated reusable primary/tertiary button and tab interaction styling plus common widget previews to use the yellow/amber accent. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `5fa96a2 Use amber reusable widget accent`.
+- `2026-07-19`: Updated the UI Playground `BACK TO MENU` control to use `LastBeaconUiButton { variant: "secondary" }` so it shares the reusable button styling/hover/press behavior while keeping its scene navigation action. This was a BSN-only hot-reload edit, so no recompile was run.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
