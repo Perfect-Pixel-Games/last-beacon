@@ -3,3 +3,29 @@
 /artifacts/
 /logs/
 *.pdb
+
+# JavaScript, TypeScript, Svelte, and Tailwind prototypes
+/prototypes/**/node_modules/
+/prototypes/**/.svelte-kit/
+/prototypes/**/.vite/
+/prototypes/**/build/
+/prototypes/**/dist/
+/prototypes/**/.output/
+/prototypes/**/.vercel/
+/prototypes/**/.netlify/
+/prototypes/**/.wrangler/
+/prototypes/**/coverage/
+/prototypes/**/.env
+/prototypes/**/.env.*
+!/prototypes/**/.env.example
+!/prototypes/**/.env.test
+/prototypes/**/npm-debug.log*
+/prototypes/**/yarn-debug.log*
+/prototypes/**/yarn-error.log*
+/prototypes/**/pnpm-debug.log*
+/prototypes/**/vite.config.js.timestamp-*
+/prototypes/**/vite.config.ts.timestamp-*
+
+# OS metadata
+.DS_Store
+Thumbs.db
