@@ -24,9 +24,9 @@
 - Shipping/no-dev-tools behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit pending`
+- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; final tracker status commit pending`
 - Engine commit/push state: `Committed de6265a543d91d0561761df5437544b2373dd2b5 and follow-up d23603785bb39f8a75ef151bc5d111ef45f4e945; both pushed to origin/feature/runtime-scene-open-command`
-- Root submodule pointer update: `Pending follow-up root commit after validation; working tree points at engine d23603785bb39f8a75ef151bc5d111ef45f4e945`
+- Root submodule pointer update: `Committed and pushed in follow-up root commit 1e29599; root points at engine d23603785bb39f8a75ef151bc5d111ef45f4e945`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -137,10 +137,10 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: Passed `engine/scripts/validate-project.cmd`.
-- [ ] Update root submodule pointer after engine commit.
-  - Status: Awaiting follow-up root commit
+- [x] Update root submodule pointer after engine commit.
+  - Status: Complete
   - Repository: `both`
-  - Notes: Engine commits `de6265a543d91d0561761df5437544b2373dd2b5` and follow-up `d23603785bb39f8a75ef151bc5d111ef45f4e945` are committed and pushed; root working tree now points at the follow-up engine commit.
+  - Notes: Engine commits `de6265a543d91d0561761df5437544b2373dd2b5` and follow-up `d23603785bb39f8a75ef151bc5d111ef45f4e945` are committed and pushed; root follow-up commit `1e29599` binds Last Beacon to the follow-up engine commit.
 - [x] Run root game validation.
   - Status: Complete
   - Repository: `root`
@@ -156,7 +156,7 @@
 - [x] Commit and push root changes, including submodule pointer and tracker updates.
   - Status: Complete
   - Repository: `root`
-  - Notes: Root commit `0f388dd` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
+  - Notes: Root commits `0f388dd` and follow-up `1e29599` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
 
 ### Validation
 - Game validation: `Passed scripts/validate.cmd after initial and follow-up pointer updates`
@@ -204,3 +204,4 @@
 - `2026-07-19`: Follow-up focused validation passed: console tests, format check, clippy, cargo doc, and full `engine/scripts/validate-project.cmd`.
 - `2026-07-19`: Committed and pushed engine follow-up commit `d23603785bb39f8a75ef151bc5d111ef45f4e945`.
 - `2026-07-19`: Root validation passed with `scripts/validate.cmd` against follow-up engine commit `d23603785bb39f8a75ef151bc5d111ef45f4e945`.
+- `2026-07-19`: Committed and pushed root follow-up submodule pointer/tracker commit `1e29599`.
