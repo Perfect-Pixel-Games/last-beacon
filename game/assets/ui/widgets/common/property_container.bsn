@@ -6,25 +6,6 @@ bevy_ui::ui_node::Node {
     row_gap: bevy_ui::geometry::Val::Px(10.0),
 }
 bevy_ecs::hierarchy::Children [
-    #PropertyHeader
-    bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Percent(100.0), flex_direction: bevy_ui::ui_node::FlexDirection::Row, align_items: bevy_ui::ui_node::AlignItems::Center, column_gap: bevy_ui::geometry::Val::Px(16.0), padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(4.0), }, }
-    bevy_ecs::hierarchy::Children [
-        #PropertyNameHeader
-bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(150.0), min_height: bevy_ui::geometry::Val::Px(30.0), align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
-bevy_ecs::hierarchy::Children [
-    bevy_ui::widget::text::Text("PROPERTY")
-    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
-    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
-],
-        #PropertyValueHeader
-bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(260.0), min_height: bevy_ui::geometry::Val::Px(30.0), align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
-bevy_ecs::hierarchy::Children [
-    bevy_ui::widget::text::Text("VALUE")
-    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
-    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
-]
-    ],
-
     #TextFieldProperty
     bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Percent(100.0), flex_direction: bevy_ui::ui_node::FlexDirection::Row, align_items: bevy_ui::ui_node::AlignItems::Center, column_gap: bevy_ui::geometry::Val::Px(16.0), }
     bevy_ecs::hierarchy::Children [

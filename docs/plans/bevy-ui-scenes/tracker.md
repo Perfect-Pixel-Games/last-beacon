@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Reusable property container invisible-layout BSN hot-reload update in progress`
+- Overall status: `Reusable property container header removal BSN hot-reload update in progress`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Reusable property container invisible-layout BSN hot-reload update in progress with gpt-5.4`
+- Current handoff state: `Reusable property container header removal BSN hot-reload update in progress with gpt-5.4`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -27,7 +27,7 @@
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Property container background, border, and padding removed so the reusable property rows fill the gallery space; BSN-only hot-reload edit made without recompiling.`
+- Current tweak state: `Property container column headers removed; BSN-only hot-reload edit made without recompiling.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -220,6 +220,7 @@
 - `2026-07-19`: User requested reusable input widgets using hot-reload without recompiling; added BSN-only reusable samples for text fields, text boxes, radio buttons, toggle buttons, combo boxes, number fields, and sliders, and added an `INPUTS` gallery to the UI Playground. Committed and pushed as `d82d410 Add reusable input widget samples`.
 - `2026-07-19`: User requested a reusable property container that lays property names in a left column and values in a right column; added `ui/widgets/common/property_container.bsn`, moved the UI Playground input examples into it, and widened the input gallery for the two-column container. This was a BSN-only hot-reload edit, so no recompile was run. Committed and pushed as `8a4bb57 Add reusable property container sample`.
 - `2026-07-19`: User requested the property container be essentially invisible; removed the container background, border, and padding, and changed it to fill the available width. This was a BSN-only hot-reload edit, so no recompile was run.
+- `2026-07-19`: User requested removal of the `PROPERTY` and `VALUE` column headers from the property container; removed the header row. This was a BSN-only hot-reload edit, so no recompile was run.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
