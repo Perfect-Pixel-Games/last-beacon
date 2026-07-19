@@ -8,8 +8,8 @@
 - Engine branch: `feature/runtime-scene-open-command`
 - Root branch base verification: `Verified: created from root dev; origin/dev is an ancestor of HEAD on 2026-07-19`
 - Engine branch base verification: `Verified: created from engine dev; origin/dev is an ancestor of HEAD on 2026-07-19`
-- Engine submodule pointer: `de6265a543d91d0561761df5437544b2373dd2b5` bound for implementation after engine commit
-- Overall status: `Implementation complete; interactive smoke verification pending`
+- Engine submodule pointer: `d23603785bb39f8a75ef151bc5d111ef45f4e945` bound for follow-up implementation after engine commit
+- Overall status: `Follow-up implementation complete; interactive smoke verification pending`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
@@ -24,9 +24,9 @@
 - Shipping/no-dev-tools behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; final tracker status commit pending`
-- Engine commit/push state: `Committed de6265a543d91d0561761df5437544b2373dd2b5 and pushed to origin/feature/runtime-scene-open-command`
-- Root submodule pointer update: `Committed and pushed in root commit 0f388dd; root points at engine de6265a543d91d0561761df5437544b2373dd2b5`
+- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit pending`
+- Engine commit/push state: `Committed de6265a543d91d0561761df5437544b2373dd2b5 and follow-up d23603785bb39f8a75ef151bc5d111ef45f4e945; both pushed to origin/feature/runtime-scene-open-command`
+- Root submodule pointer update: `Pending follow-up root commit after validation; working tree points at engine d23603785bb39f8a75ef151bc5d111ef45f4e945`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -113,7 +113,7 @@
 - [x] Expand debug console suggestion UI from one prediction to a floating multi-result list.
   - Status: Complete
   - Repository: `engine`
-  - Notes: Reworked `FoundationConsoleSuggestion` as a hidden-when-empty floating suggestions box above the input/history area, showing all matching command names or registered BSN scene keys.
+  - Notes: Reworked `FoundationConsoleSuggestion` as a hidden-when-empty floating suggestions box above the input/history area, showing all matching command names or registered BSN scene keys. Follow-up chained console input/suggestion systems so previews update as the user types, changed command matching from prefix to contains, and starts scene-key previews while `open` is still partially typed.
 - [x] Update engine debug console and/or scene docs.
   - Status: Complete
   - Repository: `engine`
@@ -137,14 +137,14 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: Passed `engine/scripts/validate-project.cmd`.
-- [x] Update root submodule pointer after engine commit.
-  - Status: Complete
+- [ ] Update root submodule pointer after engine commit.
+  - Status: Awaiting follow-up root commit
   - Repository: `both`
-  - Notes: Engine commit `de6265a543d91d0561761df5437544b2373dd2b5` is committed and pushed; root commit `0f388dd` binds Last Beacon to that engine commit.
+  - Notes: Engine commits `de6265a543d91d0561761df5437544b2373dd2b5` and follow-up `d23603785bb39f8a75ef151bc5d111ef45f4e945` are committed and pushed; root working tree now points at the follow-up engine commit.
 - [x] Run root game validation.
   - Status: Complete
   - Repository: `root`
-  - Notes: Passed `scripts/validate.cmd` after pointer update; no Last Beacon runtime source changes were made.
+  - Notes: Passed `scripts/validate.cmd` after initial pointer update and again after follow-up pointer update; no Last Beacon runtime source changes were made.
 - [ ] Smoke-test the runtime command in Last Beacon where practical.
   - Status: Pending manual verification
   - Repository: `root`
@@ -152,16 +152,16 @@
 - [x] Commit and push engine changes.
   - Status: Complete
   - Repository: `engine`
-  - Notes: Engine commit `de6265a543d91d0561761df5437544b2373dd2b5` pushed to `origin/feature/runtime-scene-open-command`.
+  - Notes: Engine commit `de6265a543d91d0561761df5437544b2373dd2b5` and follow-up `d23603785bb39f8a75ef151bc5d111ef45f4e945` pushed to `origin/feature/runtime-scene-open-command`.
 - [x] Commit and push root changes, including submodule pointer and tracker updates.
   - Status: Complete
   - Repository: `root`
   - Notes: Root commit `0f388dd` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`.
 
 ### Validation
-- Game validation: `Passed scripts/validate.cmd`
-- Engine validation: `Passed focused checks and engine/scripts/validate-project.cmd`
-- Documentation generation: `Passed focused cargo doc and engine validation doc generation`
+- Game validation: `Passed scripts/validate.cmd after initial and follow-up pointer updates`
+- Engine validation: `Passed focused checks and engine/scripts/validate-project.cmd; follow-up engine/scripts/validate-project.cmd also passed`
+- Documentation generation: `Passed focused cargo doc and engine validation doc generation for initial and follow-up commits`},{
 - User confirmation: `Pending user/manual smoke verification or optional sanity review request`
 
 ## Implementation / Review Handoff Notes
@@ -199,3 +199,8 @@
 - `2026-07-19`: Committed and pushed engine commit `de6265a543d91d0561761df5437544b2373dd2b5`.
 - `2026-07-19`: Root validation passed with `scripts/validate.cmd` against engine commit `de6265a543d91d0561761df5437544b2373dd2b5`; interactive console smoke remains pending manual verification.
 - `2026-07-19`: Committed and pushed root submodule pointer/tracker commit `0f388dd`.
+- `2026-07-19`: User reported follow-up console prediction issues: previews should update while typing, command predictions should match text contained anywhere (for example `op`), and scene-key predictions for `open ...` should appear as soon as the user starts typing the `open` command rather than only after `open` is fully written.
+- `2026-07-19`: Implemented follow-up prediction behavior: chained console UI update systems, command contains matching, scene-key contains matching, full-command displays such as `open last-beacon/mapmap`, and partial `open` previews while typing `op`.
+- `2026-07-19`: Follow-up focused validation passed: console tests, format check, clippy, cargo doc, and full `engine/scripts/validate-project.cmd`.
+- `2026-07-19`: Committed and pushed engine follow-up commit `d23603785bb39f8a75ef151bc5d111ef45f4e945`.
+- `2026-07-19`: Root validation passed with `scripts/validate.cmd` against follow-up engine commit `d23603785bb39f8a75ef151bc5d111ef45f4e945`.
