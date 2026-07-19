@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Reusable input regression fixes implemented`
+- Overall status: `Reusable input regression fixes committed and pushed`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Reusable input regression fixes implemented with gpt-5.4; awaiting commit and push`
+- Current handoff state: `Reusable input regression fixes implemented with gpt-5.4; awaiting user review`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Reusable numeric/slider/scroll fix commit b4ac81f pushed to origin/feature/bevy-ui-scenes; regression fix commit pending.`
+- Root commit/push state: `Reusable input regression fix commit 641d05b pushed to origin/feature/bevy-ui-scenes; tracker finalization commit pending.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Fixed remaining text-box scroll behavior, repaired number-field hierarchy so the minus button and numeric input render correctly, and corrected slider cursor normalization; validation passed; commit pending.`
+- Current tweak state: `Fixed remaining text-box scroll behavior, repaired number-field hierarchy so the minus button and numeric input render correctly, and corrected slider cursor normalization; validation passed; commit 641d05b pushed.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -225,7 +225,7 @@
 - `2026-07-19`: User reported UI Playground input bugs: text field placeholder/value mismatch, text box fixed placeholder and inconsistent colour, yellow input borders, combo box lacking an options popup, and slider lacking cursor dragging. BSN-only presentation fixes were hot-reloaded; combo popup and slider drag required runtime support, so Rust changes were made. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `192aa5e Fix playground input widget behavior`.
 - `2026-07-19`: User reported follow-up input bugs: text box missing scrolling, combo options affecting layout instead of overlaying, number field minus rendering as `0`, and slider drag starting from zero instead of the current value/cursor anchor. Hot-reloaded BSN fixes for popup absolute positioning and minus glyph, added text-box scroll state/wheel handling, and anchored slider drags from current value. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `bca27e1 Fix playground input widget edge cases`.
 - `2026-07-19`: User reported text-box scrolling/scrollbar still missing, requested direct numeric input for the number field, and requested authored min/max plus optional unit types for number and slider widgets. Added a visible text-box scrollbar, improved multiline scroll hit detection, added `LastBeaconUiNumberInput`, wired number field direct typing with `0..250 cm`, and simplified slider interaction so cursor position maps directly across its authored `0..100 %` range. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `b4ac81f Add numeric input ranges and scroll affordance`.
-- `2026-07-19`: User reported regressions: text-box wheel still did not scroll, the number value appeared in the minus button while the readout was blank, and the slider remained cursor-offset. Fixed self-hosted text-input initialization/focus so numeric editability lives on the actual numeric text entity, moved the number readout back to a stable shell with `-`/`+` buttons isolated, directly offsets multiline editable text during wheel scroll, and corrected slider mapping from Bevy's `-0.5..0.5` relative cursor coordinates into `0..1`. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors.
+- `2026-07-19`: User reported regressions: text-box wheel still did not scroll, the number value appeared in the minus button while the readout was blank, and the slider remained cursor-offset. Fixed self-hosted text-input initialization/focus so numeric editability lives on the actual numeric text entity, moved the number readout back to a stable shell with `-`/`+` buttons isolated, directly offsets multiline editable text during wheel scroll, and corrected slider mapping from Bevy's `-0.5..0.5` relative cursor coordinates into `0..1`. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `641d05b Fix input widget regressions`.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
