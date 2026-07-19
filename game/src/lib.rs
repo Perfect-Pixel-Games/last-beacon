@@ -128,13 +128,13 @@ impl Plugin for LastBeaconPlugin {
         .init_resource::<ui_widgets::LastBeaconUiTabSelections>()
         .init_resource::<ui_widgets::LastBeaconUiInputValues>()
         .init_resource::<ui_widgets::LastBeaconUiDropdownStates>()
-        .init_resource::<ui_widgets::LastBeaconUiSliderDragStates>()
         .register_type::<ui_widgets::LastBeaconMainMenuPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconTabButton>()
         .register_type::<ui_widgets::LastBeaconUiButton>()
         .register_type::<ui_widgets::LastBeaconUiTab>()
         .register_type::<ui_widgets::LastBeaconUiTextInput>()
+        .register_type::<ui_widgets::LastBeaconUiNumberInput>()
         .register_type::<ui_widgets::LastBeaconUiValueButton>()
         .register_type::<ui_widgets::LastBeaconUiValueText>()
         .register_type::<ui_widgets::LastBeaconUiDropdownToggle>()
@@ -159,6 +159,7 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::focus_last_beacon_ui_text_inputs,
                 ui_widgets::scroll_last_beacon_ui_text_inputs,
                 ui_widgets::initialize_last_beacon_ui_value_text,
+                ui_widgets::update_last_beacon_ui_number_inputs,
                 ui_widgets::update_last_beacon_ui_value_buttons,
                 ui_widgets::toggle_last_beacon_ui_dropdowns,
                 ui_widgets::refresh_last_beacon_ui_dropdown_panels,

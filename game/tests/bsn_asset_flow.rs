@@ -7,8 +7,9 @@ use last_beacon::{
     ui_widgets::{
         LastBeaconBeaconPrimaryButton, LastBeaconBeaconTabButton, LastBeaconBsnWidget,
         LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiDropdownPanel,
-        LastBeaconUiDropdownToggle, LastBeaconUiSlider, LastBeaconUiSliderFill, LastBeaconUiTab,
-        LastBeaconUiTextInput, LastBeaconUiValueButton, LastBeaconUiValueText,
+        LastBeaconUiDropdownToggle, LastBeaconUiNumberInput, LastBeaconUiSlider,
+        LastBeaconUiSliderFill, LastBeaconUiTab, LastBeaconUiTextInput, LastBeaconUiValueButton,
+        LastBeaconUiValueText,
     },
 };
 
@@ -172,6 +173,7 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<LastBeaconUiButton>()
         .register_type::<LastBeaconUiTab>()
         .register_type::<LastBeaconUiTextInput>()
+        .register_type::<LastBeaconUiNumberInput>()
         .register_type::<LastBeaconUiValueButton>()
         .register_type::<LastBeaconUiValueText>()
         .register_type::<LastBeaconUiDropdownToggle>()

@@ -11,7 +11,7 @@ use bevy::{
     input_focus::{FocusCause, InputFocus},
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
-    text::{EditableText, FontSource, TextCursorStyle, TextLayout},
+    text::{EditableText, FontSource, TextCursorStyle, TextEdit, TextLayout},
     ui::{RelativeCursorPosition, ScrollPosition},
 };
 
@@ -84,6 +84,28 @@ pub struct LastBeaconUiTextInput {
     pub value: String,
     /// Whether the input should allow newline entry.
     pub multiline: bool,
+}
+
+/// Makes an editable text input feed a numeric value.
+#[derive(Clone, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiNumberInput {
+    /// Shared value key this input writes to.
+    pub target: String,
+    /// Minimum accepted value.
+    pub min: f32,
+    /// Maximum accepted value.
+    pub max: f32,
+}
+
+impl Default for LastBeaconUiNumberInput {
+    fn default() -> Self {
+        Self {
+            target: String::new(),
+            min: 0.0,
+            max: 100.0,
+        }
+    }
 }
 
 /// Applies simple clickable value behavior to authored input examples.
@@ -204,18 +226,6 @@ pub struct LastBeaconUiDropdownStates {
     open_dropdowns: HashMap<String, bool>,
 }
 
-#[derive(Clone, Copy, Debug)]
-struct LastBeaconUiSliderDrag {
-    start_cursor_x: f32,
-    start_value: f32,
-}
-
-/// Stores active slider drag anchors so dragging starts from the current slider value.
-#[derive(Clone, Debug, Default, Resource)]
-pub struct LastBeaconUiSliderDragStates {
-    active_drags: HashMap<Entity, LastBeaconUiSliderDrag>,
-}
-
 type LastBeaconUiTextInputFocusQuery<'world, 'state> = Query<
     'world,
     'state,
@@ -228,7 +238,8 @@ type LastBeaconUiTextInputScrollQuery<'world, 'state> = Query<
     'state,
     (
         &'static LastBeaconUiTextInput,
-        &'static Interaction,
+        Option<&'static Interaction>,
+        Option<&'static RelativeCursorPosition>,
         &'static mut ScrollPosition,
     ),
 >;
@@ -404,7 +415,7 @@ pub fn initialize_last_beacon_ui_text_inputs(
         if text_input.multiline {
             commands
                 .entity(input_entity)
-                .insert(ScrollPosition::default());
+                .insert((ScrollPosition::default(), RelativeCursorPosition::default()));
         }
 
         commands.entity(text_entity).insert((
@@ -462,6 +473,25 @@ pub fn initialize_last_beacon_ui_value_text(
         input_values
             .values
             .insert(value_text.target.clone(), initial_value.to_string());
+    }
+}
+
+/// Synchronizes edited numeric text into shared widget values.
+pub fn update_last_beacon_ui_number_inputs(
+    mut input_values: ResMut<LastBeaconUiInputValues>,
+    number_inputs: Query<(&LastBeaconUiNumberInput, &EditableText), Changed<EditableText>>,
+) {
+    for (number_input, editable_text) in &number_inputs {
+        if number_input.target.is_empty() {
+            continue;
+        }
+        let Ok(value) = editable_text.value().to_string().trim().parse::<f32>() else {
+            continue;
+        };
+        let clamped_value = value.clamp(number_input.min, number_input.max);
+        input_values
+            .values
+            .insert(number_input.target.clone(), format_value(clamped_value));
     }
 }
 
@@ -570,8 +600,14 @@ pub fn scroll_last_beacon_ui_text_inputs(
         return;
     }
 
-    for (text_input, interaction, mut scroll_position) in &mut text_inputs {
-        if !text_input.multiline || *interaction == Interaction::None {
+    for (text_input, interaction, relative_cursor_position, mut scroll_position) in &mut text_inputs
+    {
+        let cursor_is_over = relative_cursor_position
+            .map(RelativeCursorPosition::cursor_over)
+            .unwrap_or_else(|| {
+                interaction.is_some_and(|interaction| *interaction != Interaction::None)
+            });
+        if !text_input.multiline || !cursor_is_over {
             continue;
         }
         scroll_position.y = (scroll_position.y - scroll_delta).max(0.0);
@@ -582,18 +618,12 @@ pub fn scroll_last_beacon_ui_text_inputs(
 pub fn update_last_beacon_ui_sliders(
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mut input_values: ResMut<LastBeaconUiInputValues>,
-    mut slider_drag_states: ResMut<LastBeaconUiSliderDragStates>,
     sliders: LastBeaconUiSliderInteractionQuery,
 ) {
-    if mouse_buttons.just_released(MouseButton::Left) {
-        slider_drag_states.active_drags.clear();
-    }
-
-    for (slider_entity, slider, interaction, relative_cursor_position) in &sliders {
+    for (_slider_entity, slider, interaction, relative_cursor_position) in &sliders {
         let slider_is_active = *interaction == Interaction::Pressed
             || (*interaction == Interaction::Hovered && mouse_buttons.pressed(MouseButton::Left));
         if !slider_is_active || slider.target.is_empty() {
-            slider_drag_states.active_drags.remove(&slider_entity);
             continue;
         }
 
@@ -606,20 +636,7 @@ pub fn update_last_beacon_ui_sliders(
             continue;
         }
 
-        let current_value = input_values
-            .values
-            .get(&slider.target)
-            .and_then(|value| value.parse::<f32>().ok())
-            .unwrap_or(slider.min);
-        let drag = slider_drag_states
-            .active_drags
-            .entry(slider_entity)
-            .or_insert(LastBeaconUiSliderDrag {
-                start_cursor_x: normalized_x,
-                start_value: current_value,
-            });
-        let next_value = (drag.start_value + (normalized_x - drag.start_cursor_x) * range)
-            .clamp(slider.min, slider.max);
+        let next_value = slider.min + normalized_x * range;
         input_values
             .values
             .insert(slider.target.clone(), format_value(next_value));
@@ -655,17 +672,22 @@ pub fn refresh_last_beacon_ui_slider_fills(
 /// Mirrors stored example input values into authored text labels.
 pub fn refresh_last_beacon_ui_value_text(
     input_values: Res<LastBeaconUiInputValues>,
-    mut value_texts: Query<(&LastBeaconUiValueText, &mut Text)>,
+    mut value_texts: Query<(&LastBeaconUiValueText, &mut Text, Option<&mut EditableText>)>,
 ) {
     if !input_values.is_changed() {
         return;
     }
 
-    for (value_text, mut text) in &mut value_texts {
+    for (value_text, mut text, editable_text) in &mut value_texts {
         let Some(value) = input_values.values.get(&value_text.target) else {
             continue;
         };
-        text.0 = format!("{}{}{}", value_text.prefix, value, value_text.suffix);
+        let rendered_value = format!("{}{}{}", value_text.prefix, value, value_text.suffix);
+        text.0 = rendered_value.clone();
+        if let Some(mut editable_text) = editable_text {
+            editable_text.editor_mut().set_text(&rendered_value);
+            editable_text.queue_edit(TextEdit::TextEnd(false));
+        }
     }
 }
 
