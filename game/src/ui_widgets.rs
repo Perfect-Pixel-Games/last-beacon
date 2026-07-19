@@ -229,7 +229,7 @@ pub struct LastBeaconUiDropdownStates {
 type LastBeaconUiTextInputFocusQuery<'world, 'state> = Query<
     'world,
     'state,
-    (&'static Interaction, Option<&'static Children>),
+    (Entity, &'static Interaction, Option<&'static Children>),
     (Changed<Interaction>, With<LastBeaconUiTextInput>),
 >;
 
@@ -238,6 +238,7 @@ type LastBeaconUiTextInputScrollQuery<'world, 'state> = Query<
     'state,
     (
         &'static LastBeaconUiTextInput,
+        Option<&'static Children>,
         Option<&'static Interaction>,
         Option<&'static RelativeCursorPosition>,
         &'static mut ScrollPosition,
@@ -400,11 +401,16 @@ pub fn initialize_last_beacon_ui_text_inputs(
     text_query: Query<(), With<Text>>,
 ) {
     for (input_entity, text_input, input_children) in &text_inputs {
-        let Some(text_entity) =
-            first_descendant_with_text(input_children, &children_query, &text_query)
-        else {
-            warn!("LastBeaconUiTextInput on {input_entity:?} has no child Text entity.");
-            continue;
+        let text_entity = if text_query.contains(input_entity) {
+            input_entity
+        } else {
+            let Some(text_entity) =
+                first_descendant_with_text(input_children, &children_query, &text_query)
+            else {
+                warn!("LastBeaconUiTextInput on {input_entity:?} has no child Text entity.");
+                continue;
+            };
+            text_entity
         };
 
         let mut editable_text = EditableText::new(&text_input.value);
@@ -418,8 +424,13 @@ pub fn initialize_last_beacon_ui_text_inputs(
                 .insert((ScrollPosition::default(), RelativeCursorPosition::default()));
         }
 
+        let mut text_node = Node::default();
+        if text_input.multiline {
+            text_node.position_type = PositionType::Relative;
+        }
+
         commands.entity(text_entity).insert((
-            Node::default(),
+            text_node,
             editable_text,
             TextCursorStyle::default(),
             TextLayout::default(),
@@ -434,16 +445,21 @@ pub fn focus_last_beacon_ui_text_inputs(
     children_query: Query<&Children>,
     editable_text_query: Query<(), With<EditableText>>,
 ) {
-    for (interaction, input_children) in &text_inputs {
+    for (input_entity, interaction, input_children) in &text_inputs {
         if *interaction != Interaction::Pressed {
             continue;
         }
-        let Some(text_entity) = first_descendant_with_editable_text(
-            input_children,
-            &children_query,
-            &editable_text_query,
-        ) else {
-            continue;
+        let text_entity = if editable_text_query.contains(input_entity) {
+            input_entity
+        } else {
+            let Some(text_entity) = first_descendant_with_editable_text(
+                input_children,
+                &children_query,
+                &editable_text_query,
+            ) else {
+                continue;
+            };
+            text_entity
         };
         input_focus.set(text_entity, FocusCause::Pressed);
     }
@@ -588,6 +604,9 @@ pub fn initialize_last_beacon_ui_sliders(
 pub fn scroll_last_beacon_ui_text_inputs(
     mut mouse_wheel_messages: MessageReader<MouseWheel>,
     mut text_inputs: LastBeaconUiTextInputScrollQuery,
+    children_query: Query<&Children>,
+    editable_text_query: Query<(), With<EditableText>>,
+    mut node_query: Query<&mut Node>,
 ) {
     let scroll_delta = mouse_wheel_messages
         .read()
@@ -600,7 +619,8 @@ pub fn scroll_last_beacon_ui_text_inputs(
         return;
     }
 
-    for (text_input, interaction, relative_cursor_position, mut scroll_position) in &mut text_inputs
+    for (text_input, input_children, interaction, relative_cursor_position, mut scroll_position) in
+        &mut text_inputs
     {
         let cursor_is_over = relative_cursor_position
             .map(RelativeCursorPosition::cursor_over)
@@ -610,7 +630,16 @@ pub fn scroll_last_beacon_ui_text_inputs(
         if !text_input.multiline || !cursor_is_over {
             continue;
         }
-        scroll_position.y = (scroll_position.y - scroll_delta).max(0.0);
+        scroll_position.y = (scroll_position.y - scroll_delta).clamp(0.0, 72.0);
+        if let Some(text_entity) = first_descendant_with_editable_text(
+            input_children,
+            &children_query,
+            &editable_text_query,
+        ) {
+            if let Ok(mut text_node) = node_query.get_mut(text_entity) {
+                text_node.top = Val::Px(-scroll_position.y);
+            }
+        }
     }
 }
 
@@ -630,7 +659,7 @@ pub fn update_last_beacon_ui_sliders(
         let Some(normalized_cursor_position) = relative_cursor_position.normalized else {
             continue;
         };
-        let normalized_x = normalized_cursor_position.x.clamp(0.0, 1.0);
+        let normalized_x = (normalized_cursor_position.x + 0.5).clamp(0.0, 1.0);
         let range = slider.max - slider.min;
         if range.abs() < f32::EPSILON {
             continue;

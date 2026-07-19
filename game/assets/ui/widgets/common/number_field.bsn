@@ -18,13 +18,14 @@ bevy_ecs::hierarchy::Children [
     bevy_ecs::hierarchy::Children [ bevy_ui::widget::text::Text("-") bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) } bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 })) ],
 
     #NumberReadout
-    bevy_ui::widget::button::Button
     bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(160.0), height: bevy_ui::geometry::Val::Px(38.0), flex_direction: bevy_ui::ui_node::FlexDirection::Row, align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::Center, column_gap: bevy_ui::geometry::Val::Px(6.0), border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), }, }
     bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.015, green: 0.023, blue: 0.042, alpha: 0.92 }))
     bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
-    last_beacon::ui_widgets::LastBeaconUiTextInput { value: "42", multiline: false }
     bevy_ecs::hierarchy::Children [
+        #NumberValueText
+        bevy_ui::widget::button::Button
         bevy_ui::widget::text::Text("42")
+        last_beacon::ui_widgets::LastBeaconUiTextInput { value: "42", multiline: false }
         last_beacon::ui_widgets::LastBeaconUiNumberInput { target: "number-field", min: 0.0, max: 250.0 }
         last_beacon::ui_widgets::LastBeaconUiValueText { target: "number-field", prefix: "", suffix: "" }
         bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
