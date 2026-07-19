@@ -138,6 +138,7 @@ impl Plugin for LastBeaconPlugin {
             (
                 scenes::spawn_requested_last_beacon_scene_drivers,
                 ui_widgets::queue_last_beacon_bsn_widgets,
+                ui_widgets::apply_last_beacon_ui_font,
                 exit_game_on_foundation_exit_request,
                 spin_cube.run_if(foundation_is_not_paused),
             ),

@@ -9,6 +9,7 @@ use std::sync::Arc;
 use bevy::{
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
+    text::FontSource,
 };
 
 /// Requests that a reusable Last Beacon BSN widget asset be applied to this entity.
@@ -55,6 +56,17 @@ pub fn queue_last_beacon_bsn_widgets(
 }
 
 /// Applies loaded widget scene patches onto their slot entities.
+/// Applies Last Beacon's current UI font to newly spawned text.
+pub fn apply_last_beacon_ui_font(
+    asset_server: Res<AssetServer>,
+    mut text_fonts: Query<&mut TextFont, Added<TextFont>>,
+) {
+    let ui_font = asset_server.load("fonts/NotoSans-Regular.ttf");
+    for mut text_font in &mut text_fonts {
+        text_font.font = FontSource::Handle(ui_font.clone());
+    }
+}
+
 pub fn apply_pending_last_beacon_bsn_widgets(world: &mut World) {
     let pending_widgets = {
         let mut pending_query = world.query::<(Entity, &LastBeaconBsnWidgetPending)>();

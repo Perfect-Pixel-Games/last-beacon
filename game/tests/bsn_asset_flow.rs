@@ -108,6 +108,7 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<Overflow>()
         .register_type::<OverflowAxis>()
         .register_type::<UiRect>()
+        .register_type::<BorderRadius>()
         .register_type::<BackgroundColor>()
         .register_type::<BorderColor>()
         .register_type::<Button>()
