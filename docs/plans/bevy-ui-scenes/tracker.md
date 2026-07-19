@@ -22,7 +22,7 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Shared silo UI styling commit 7012ce1 and tracker commit 02369c7 pushed to origin/feature/bevy-ui-scenes; final push-state tracker commit pending.`
+- Root commit/push state: `Shared silo UI styling commit 7012ce1 and follow-up tracker commits pushed to origin/feature/bevy-ui-scenes.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
