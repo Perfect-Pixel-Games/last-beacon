@@ -1,0 +1,60 @@
+#StatRowsPanel
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(320.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+    #PanelHeader
+    bevy_ui::ui_node::Node {
+        width: bevy_ui::geometry::Val::Percent(100.0),
+        flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+        align_items: bevy_ui::ui_node::AlignItems::Center,
+        justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+        padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+        border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+    }
+    bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+    bevy_ecs::hierarchy::Children [
+        bevy_ui::widget::text::Text("PANEL + STAT ROWS")
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+    ],
+
+    #PanelBody
+    bevy_ui::ui_node::Node {
+        width: bevy_ui::geometry::Val::Percent(100.0),
+        flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+        align_items: bevy_ui::ui_node::AlignItems::Stretch,
+        justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+        padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(16.0), bottom: bevy_ui::geometry::Val::Px(16.0), },
+    }
+    bevy_ecs::hierarchy::Children [
+        #StatRowOne
+        bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Percent(100.0), height: bevy_ui::geometry::Val::Px(32.0), flex_direction: bevy_ui::ui_node::FlexDirection::Row, align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Label")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+            bevy_ui::widget::text::Text("Value")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+        ],
+
+        #StatRowAccent
+        bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Percent(100.0), height: bevy_ui::geometry::Val::Px(32.0), flex_direction: bevy_ui::ui_node::FlexDirection::Row, align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Accent")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+            bevy_ui::widget::text::Text("Ready")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }))
+        ]
+    ]
+]

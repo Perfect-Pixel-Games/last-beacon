@@ -1,0 +1,48 @@
+#BeaconTabs
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(48.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    column_gap: bevy_ui::geometry::Val::Px(4.0),
+}
+bevy_ecs::hierarchy::Children [
+    #ActiveBeaconTab
+    bevy_ui::widget::button::Button
+    bevy_ui::ui_node::Node {
+        width: bevy_ui::geometry::Val::Px(132.0),
+        height: bevy_ui::geometry::Val::Px(42.0),
+        flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+        align_items: bevy_ui::ui_node::AlignItems::Center,
+        justify_content: bevy_ui::ui_node::JustifyContent::Center,
+        border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    }
+    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
+    bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }), }
+    last_beacon::ui_widgets::LastBeaconBeaconTabButton
+    foundation_runtime_library::menu::FoundationMenuButton { action: "none", scene_key: "", stack_key: "" }
+    bevy_ecs::hierarchy::Children [
+        bevy_ui::widget::text::Text("ACTIVE TAB")
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }))
+    ],
+
+    #InactiveBeaconTab
+    bevy_ui::widget::button::Button
+    bevy_ui::ui_node::Node {
+        width: bevy_ui::geometry::Val::Px(144.0),
+        height: bevy_ui::geometry::Val::Px(42.0),
+        flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+        align_items: bevy_ui::ui_node::AlignItems::Center,
+        justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    }
+    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
+    last_beacon::ui_widgets::LastBeaconBeaconTabButton
+    foundation_runtime_library::menu::FoundationMenuButton { action: "none", scene_key: "", stack_key: "" }
+    bevy_ecs::hierarchy::Children [
+        bevy_ui::widget::text::Text("INACTIVE TAB")
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+    ]
+]
