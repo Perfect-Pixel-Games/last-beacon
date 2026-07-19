@@ -9,7 +9,7 @@
 - Root branch base verification: `Verified: created from root dev; origin/dev is an ancestor of HEAD on 2026-07-19`
 - Engine branch base verification: `Verified: created from engine dev; origin/dev is an ancestor of HEAD on 2026-07-19`
 - Engine submodule pointer: `36593bd84a3bc774e2fb64dca97e023cbf1a4102` bound for console history/prediction layering and scroll follow-up
-- Overall status: `Implementation committed in engine; root pointer/tracker commit pending`
+- Overall status: `Implementation complete; interactive smoke verification pending`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
@@ -24,9 +24,9 @@
 - Shipping/no-dev-tools behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; click-to-reuse pointer/tracker commit 3cf75f2 pushed; history-click gating pointer/tracker commit b5d5955 pushed; history-click fix pointer/tracker commit 653a5b6 pushed; final scroll/layering pointer/tracker commit pending`
+- Root commit/push state: `Planning commit 78da598 pushed; root pointer/tracker commit 0f388dd pushed; tracker status commit 5408898 pushed; follow-up pointer/tracker commit 1e29599 pushed; click-to-reuse pointer/tracker commit 3cf75f2 pushed; history-click gating pointer/tracker commit b5d5955 pushed; history-click fix pointer/tracker commit 653a5b6 pushed; scroll/layering pointer/tracker commit d023406316d8cda6a947a7553cec1c4bfddfa4be pushed; final tracker status commit pending`
 - Engine commit/push state: `Committed engine work through console history/prediction layering and scroll follow-up 36593bd84a3bc774e2fb64dca97e023cbf1a4102; pushed to origin/feature/runtime-scene-open-command`
-- Root submodule pointer update: `Pending root commit to bind Last Beacon to engine 36593bd84a3bc774e2fb64dca97e023cbf1a4102`
+- Root submodule pointer update: `Committed and pushed in scroll/layering root commit d023406316d8cda6a947a7553cec1c4bfddfa4be; root points at engine 36593bd84a3bc774e2fb64dca97e023cbf1a4102`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -140,7 +140,7 @@
 - [x] Update root submodule pointer after engine commit.
   - Status: Complete
   - Repository: `both`
-  - Notes: Engine commits through console history/prediction layering and scroll follow-up `36593bd84a3bc774e2fb64dca97e023cbf1a4102` are committed and pushed; root pointer commit is pending.
+  - Notes: Engine commits through console history/prediction layering and scroll follow-up `36593bd84a3bc774e2fb64dca97e023cbf1a4102` are committed and pushed; root scroll/layering pointer commit `d023406316d8cda6a947a7553cec1c4bfddfa4be` binds Last Beacon to the engine commit.
 - [x] Run root game validation.
   - Status: Complete
   - Repository: `root`
@@ -156,7 +156,7 @@
 - [x] Commit and push root changes, including submodule pointer and tracker updates.
   - Status: Complete
   - Repository: `root`
-  - Notes: Root commits `0f388dd`, follow-up `1e29599`, click-to-reuse `3cf75f2`, history-click gating `b5d5955`, and history-click fix `653a5b6` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`; final scroll/layering pointer/tracker commit is pending.
+  - Notes: Root commits `0f388dd`, follow-up `1e29599`, click-to-reuse `3cf75f2`, history-click gating `b5d5955`, history-click fix `653a5b6`, and scroll/layering pointer/tracker `d023406316d8cda6a947a7553cec1c4bfddfa4be` with submodule pointer/tracker updates pushed to `origin/feature/runtime-scene-open-command`; final tracker status commit is pending.
 
 ### Validation
 - Game validation: `Passed scripts/validate.cmd after initial, prediction follow-up, click-to-reuse, history-click gating, history-click/blank-preview fix, and console history/prediction scroll/layering pointer updates`
@@ -226,4 +226,4 @@
 - `2026-07-19`: User clarified the remaining bug: history must contain only previous commands, predictions must live only in the popup, blank/whitespace input must show no popup, and clicking a history item should copy that previous command into input. Applied local uncommitted fix and will not commit until user approval.
 - `2026-07-19`: Refined local uncommitted fix: output/history first lines (`> command`) are the clickable history entries, prediction popup remains separate with higher z-index, hidden popup uses `Display::None`, and popup is anchored/bounded above the input row.
 - `2026-07-19`: User confirmed the corrected history/prediction separation works but reported history scrolling was lost and prediction popup also needs scrolling for many predictions. Updated local uncommitted fix to restore history scroll calculations and add scroll handling to the prediction popup.
-- `2026-07-19`: User approved committing the console history/prediction layering and scroll follow-up. Focused engine validation and root `scripts/validate.cmd` passed; committed and pushed engine commit `36593bd84a3bc774e2fb64dca97e023cbf1a4102`.
+- `2026-07-19`: User approved committing the console history/prediction layering and scroll follow-up. Focused engine validation and root `scripts/validate.cmd` passed; committed and pushed engine commit `36593bd84a3bc774e2fb64dca97e023cbf1a4102` and root pointer/tracker commit `d023406316d8cda6a947a7553cec1c4bfddfa4be`.
