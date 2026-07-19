@@ -7,11 +7,12 @@
 use std::{collections::HashMap, sync::Arc};
 
 use bevy::{
+    input::mouse::{MouseScrollUnit, MouseWheel},
     input_focus::{FocusCause, InputFocus},
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
     text::{EditableText, FontSource, TextCursorStyle, TextLayout},
-    ui::RelativeCursorPosition,
+    ui::{RelativeCursorPosition, ScrollPosition},
 };
 
 /// Requests that a reusable Last Beacon BSN widget asset be applied to this entity.
@@ -203,11 +204,33 @@ pub struct LastBeaconUiDropdownStates {
     open_dropdowns: HashMap<String, bool>,
 }
 
+#[derive(Clone, Copy, Debug)]
+struct LastBeaconUiSliderDrag {
+    start_cursor_x: f32,
+    start_value: f32,
+}
+
+/// Stores active slider drag anchors so dragging starts from the current slider value.
+#[derive(Clone, Debug, Default, Resource)]
+pub struct LastBeaconUiSliderDragStates {
+    active_drags: HashMap<Entity, LastBeaconUiSliderDrag>,
+}
+
 type LastBeaconUiTextInputFocusQuery<'world, 'state> = Query<
     'world,
     'state,
     (&'static Interaction, Option<&'static Children>),
     (Changed<Interaction>, With<LastBeaconUiTextInput>),
+>;
+
+type LastBeaconUiTextInputScrollQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (
+        &'static LastBeaconUiTextInput,
+        &'static Interaction,
+        &'static mut ScrollPosition,
+    ),
 >;
 
 type LastBeaconUiValueButtonInteractionQuery<'world, 'state> = Query<
@@ -228,6 +251,7 @@ type LastBeaconUiSliderInteractionQuery<'world, 'state> = Query<
     'world,
     'state,
     (
+        Entity,
         &'static LastBeaconUiSlider,
         &'static Interaction,
         &'static RelativeCursorPosition,
@@ -377,6 +401,12 @@ pub fn initialize_last_beacon_ui_text_inputs(
         editable_text.visible_width = Some(if text_input.multiline { 32.0 } else { 24.0 });
         editable_text.visible_lines = Some(if text_input.multiline { 3.0 } else { 1.0 });
 
+        if text_input.multiline {
+            commands
+                .entity(input_entity)
+                .insert(ScrollPosition::default());
+        }
+
         commands.entity(text_entity).insert((
             Node::default(),
             editable_text,
@@ -524,16 +554,46 @@ pub fn initialize_last_beacon_ui_sliders(
     }
 }
 
+/// Applies mouse-wheel scrolling to hovered multiline text boxes.
+pub fn scroll_last_beacon_ui_text_inputs(
+    mut mouse_wheel_messages: MessageReader<MouseWheel>,
+    mut text_inputs: LastBeaconUiTextInputScrollQuery,
+) {
+    let scroll_delta = mouse_wheel_messages
+        .read()
+        .map(|message| match message.unit {
+            MouseScrollUnit::Line => message.y * 18.0,
+            MouseScrollUnit::Pixel => message.y,
+        })
+        .sum::<f32>();
+    if scroll_delta.abs() < f32::EPSILON {
+        return;
+    }
+
+    for (text_input, interaction, mut scroll_position) in &mut text_inputs {
+        if !text_input.multiline || *interaction == Interaction::None {
+            continue;
+        }
+        scroll_position.y = (scroll_position.y - scroll_delta).max(0.0);
+    }
+}
+
 /// Updates slider values from cursor position while pressed or dragged.
 pub fn update_last_beacon_ui_sliders(
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mut input_values: ResMut<LastBeaconUiInputValues>,
+    mut slider_drag_states: ResMut<LastBeaconUiSliderDragStates>,
     sliders: LastBeaconUiSliderInteractionQuery,
 ) {
-    for (slider, interaction, relative_cursor_position) in &sliders {
+    if mouse_buttons.just_released(MouseButton::Left) {
+        slider_drag_states.active_drags.clear();
+    }
+
+    for (slider_entity, slider, interaction, relative_cursor_position) in &sliders {
         let slider_is_active = *interaction == Interaction::Pressed
             || (*interaction == Interaction::Hovered && mouse_buttons.pressed(MouseButton::Left));
         if !slider_is_active || slider.target.is_empty() {
+            slider_drag_states.active_drags.remove(&slider_entity);
             continue;
         }
 
@@ -541,7 +601,25 @@ pub fn update_last_beacon_ui_sliders(
             continue;
         };
         let normalized_x = normalized_cursor_position.x.clamp(0.0, 1.0);
-        let next_value = slider.min + normalized_x * (slider.max - slider.min);
+        let range = slider.max - slider.min;
+        if range.abs() < f32::EPSILON {
+            continue;
+        }
+
+        let current_value = input_values
+            .values
+            .get(&slider.target)
+            .and_then(|value| value.parse::<f32>().ok())
+            .unwrap_or(slider.min);
+        let drag = slider_drag_states
+            .active_drags
+            .entry(slider_entity)
+            .or_insert(LastBeaconUiSliderDrag {
+                start_cursor_x: normalized_x,
+                start_value: current_value,
+            });
+        let next_value = (drag.start_value + (normalized_x - drag.start_cursor_x) * range)
+            .clamp(slider.min, slider.max);
         input_values
             .values
             .insert(slider.target.clone(), format_value(next_value));
