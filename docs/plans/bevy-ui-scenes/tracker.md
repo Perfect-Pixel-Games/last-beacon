@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Reusable property container BSN hot-reload update in progress`
+- Overall status: `Reusable property container BSN hot-reload update committed and pushed`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Reusable property container BSN hot-reload update in progress with gpt-5.4`
+- Current handoff state: `Reusable property container BSN hot-reload update implemented with gpt-5.4; awaiting user review`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Reusable input widget BSN commit d82d410 pushed to origin/feature/bevy-ui-scenes; tracker finalization commit pending.`
+- Root commit/push state: `Reusable property container BSN commit 8a4bb57 pushed to origin/feature/bevy-ui-scenes; tracker finalization commit pending.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Reusable property container BSN widget added and UI Playground input examples moved into its left-name/right-value layout; BSN-only hot-reload edits made without recompiling.`
+- Current tweak state: `Reusable property container BSN widget added and UI Playground input examples moved into its left-name/right-value layout; BSN-only hot-reload edits made without recompiling; commit 8a4bb57 pushed.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -218,7 +218,7 @@
 - `2026-07-19`: Updated reusable primary/tertiary button and tab interaction styling plus common widget previews to use the yellow/amber accent. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `5fa96a2 Use amber reusable widget accent`.
 - `2026-07-19`: Updated the UI Playground `BACK TO MENU` control to use `LastBeaconUiButton { variant: "secondary" }` so it shares the reusable button styling/hover/press behavior while keeping its scene navigation action. This was a BSN-only hot-reload edit, so no recompile was run.
 - `2026-07-19`: User requested reusable input widgets using hot-reload without recompiling; added BSN-only reusable samples for text fields, text boxes, radio buttons, toggle buttons, combo boxes, number fields, and sliders, and added an `INPUTS` gallery to the UI Playground. Committed and pushed as `d82d410 Add reusable input widget samples`.
-- `2026-07-19`: User requested a reusable property container that lays property names in a left column and values in a right column; added `ui/widgets/common/property_container.bsn`, moved the UI Playground input examples into it, and widened the input gallery for the two-column container. This was a BSN-only hot-reload edit, so no recompile was run.
+- `2026-07-19`: User requested a reusable property container that lays property names in a left column and values in a right column; added `ui/widgets/common/property_container.bsn`, moved the UI Playground input examples into it, and widened the input gallery for the two-column container. This was a BSN-only hot-reload edit, so no recompile was run. Committed and pushed as `8a4bb57 Add reusable property container sample`.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
