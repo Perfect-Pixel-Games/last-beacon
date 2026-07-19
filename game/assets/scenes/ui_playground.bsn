@@ -312,7 +312,7 @@ bevy_ecs::hierarchy::Children [
 
         #InputWidgetGallery
         bevy_ui::ui_node::Node {
-            width: bevy_ui::geometry::Val::Px(360.0),
+            width: bevy_ui::geometry::Val::Px(560.0),
             flex_direction: bevy_ui::ui_node::FlexDirection::Column,
             align_items: bevy_ui::ui_node::AlignItems::Stretch,
             justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
@@ -358,26 +358,8 @@ bevy_ecs::hierarchy::Children [
                 alpha: 1.0,
             })),
 
-            #TextFieldSample
-            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/text_field.bsn" },
-
-            #TextBoxSample
-            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/text_box.bsn" },
-
-            #RadioButtonsSample
-            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/radio_buttons.bsn" },
-
-            #ToggleButtonsSample
-            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/toggle_buttons.bsn" },
-
-            #ComboBoxSample
-            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/combo_box.bsn" },
-
-            #NumberFieldSample
-            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/number_field.bsn" },
-
-            #SliderSample
-            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/slider.bsn" }
+            #PropertyContainerSample
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/property_container.bsn" }
         ]
     ]
 ]
