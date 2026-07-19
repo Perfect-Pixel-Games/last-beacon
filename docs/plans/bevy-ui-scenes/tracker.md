@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Reusable widget accent colour update implemented`
+- Overall status: `Reusable widget accent colour update committed and pushed`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Reusable widget accent colour update implemented with gpt-5.4; awaiting commit and push`
+- Current handoff state: `Reusable widget accent colour update implemented with gpt-5.4; awaiting user review`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Reusable widget interaction commit 13e5479 pushed to origin/feature/bevy-ui-scenes; tracker finalization commit pending.`
+- Root commit/push state: `Reusable widget amber accent commit 5fa96a2 pushed to origin/feature/bevy-ui-scenes; tracker finalization commit pending.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Reusable UI widget accent colour changed from cyan/blue to yellow/amber; validation passed; commit pending.`
+- Current tweak state: `Reusable UI widget accent colour changed from cyan/blue to yellow/amber; validation passed; commit 5fa96a2 pushed.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -215,7 +215,7 @@
 - `2026-07-19`: User requested reusable button variants to be generic primary/secondary/tertiary rather than menu/beacon-specific, with hover/click states, and requested functional tabs with hover/click states and remembered selection; implementation started.
 - `2026-07-19`: Replaced menu/beacon-specific common button samples with reusable `primary`, `secondary`, and `tertiary` button widgets, added `LastBeaconUiButton` hover/pressed styling, added stateful `LastBeaconUiTab` selection memory, and updated the UI Playground showcase. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `13e5479 Add reusable widget interactions`.
 - `2026-07-19`: User requested yellow/amber as the reusable UI accent colour instead of blue/cyan; implementation started.
-- `2026-07-19`: Updated reusable primary/tertiary button and tab interaction styling plus common widget previews to use the yellow/amber accent. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors.
+- `2026-07-19`: Updated reusable primary/tertiary button and tab interaction styling plus common widget previews to use the yellow/amber accent. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `5fa96a2 Use amber reusable widget accent`.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
