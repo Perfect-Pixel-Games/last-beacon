@@ -127,6 +127,7 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<ui_widgets::LastBeaconBsnWidget>()
         .init_resource::<ui_widgets::LastBeaconUiTabSelections>()
         .init_resource::<ui_widgets::LastBeaconUiInputValues>()
+        .init_resource::<ui_widgets::LastBeaconUiDropdownStates>()
         .register_type::<ui_widgets::LastBeaconMainMenuPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconTabButton>()
@@ -135,6 +136,10 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<ui_widgets::LastBeaconUiTextInput>()
         .register_type::<ui_widgets::LastBeaconUiValueButton>()
         .register_type::<ui_widgets::LastBeaconUiValueText>()
+        .register_type::<ui_widgets::LastBeaconUiDropdownToggle>()
+        .register_type::<ui_widgets::LastBeaconUiDropdownPanel>()
+        .register_type::<ui_widgets::LastBeaconUiSlider>()
+        .register_type::<ui_widgets::LastBeaconUiSliderFill>()
         .add_systems(
             Startup,
             (
@@ -153,6 +158,11 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::focus_last_beacon_ui_text_inputs,
                 ui_widgets::initialize_last_beacon_ui_value_text,
                 ui_widgets::update_last_beacon_ui_value_buttons,
+                ui_widgets::toggle_last_beacon_ui_dropdowns,
+                ui_widgets::refresh_last_beacon_ui_dropdown_panels,
+                ui_widgets::initialize_last_beacon_ui_sliders,
+                ui_widgets::update_last_beacon_ui_sliders,
+                ui_widgets::refresh_last_beacon_ui_slider_fills,
                 ui_widgets::refresh_last_beacon_ui_value_text,
                 ui_widgets::update_last_beacon_ui_tab_selection,
                 exit_game_on_foundation_exit_request,

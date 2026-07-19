@@ -6,7 +6,8 @@ use last_beacon::{
     asset_root,
     ui_widgets::{
         LastBeaconBeaconPrimaryButton, LastBeaconBeaconTabButton, LastBeaconBsnWidget,
-        LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiTab,
+        LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiDropdownPanel,
+        LastBeaconUiDropdownToggle, LastBeaconUiSlider, LastBeaconUiSliderFill, LastBeaconUiTab,
         LastBeaconUiTextInput, LastBeaconUiValueButton, LastBeaconUiValueText,
     },
 };
@@ -172,5 +173,9 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<LastBeaconUiTab>()
         .register_type::<LastBeaconUiTextInput>()
         .register_type::<LastBeaconUiValueButton>()
-        .register_type::<LastBeaconUiValueText>();
+        .register_type::<LastBeaconUiValueText>()
+        .register_type::<LastBeaconUiDropdownToggle>()
+        .register_type::<LastBeaconUiDropdownPanel>()
+        .register_type::<LastBeaconUiSlider>()
+        .register_type::<LastBeaconUiSliderFill>();
 }

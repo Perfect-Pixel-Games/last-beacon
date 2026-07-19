@@ -11,6 +11,7 @@ use bevy::{
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
     text::{EditableText, FontSource, TextCursorStyle, TextLayout},
+    ui::RelativeCursorPosition,
 };
 
 /// Requests that a reusable Last Beacon BSN widget asset be applied to this entity.
@@ -124,6 +125,66 @@ pub struct LastBeaconUiValueText {
     pub suffix: String,
 }
 
+/// Toggles a reusable combo-box option panel.
+#[derive(Clone, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiDropdownToggle {
+    /// Shared dropdown key this control opens or closes.
+    pub target: String,
+}
+
+/// Marks a reusable combo-box option panel whose display follows dropdown state.
+#[derive(Clone, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiDropdownPanel {
+    /// Shared dropdown key this panel belongs to.
+    pub target: String,
+}
+
+/// Makes an authored slider update a value from cursor position.
+#[derive(Clone, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiSlider {
+    /// Shared value key this slider writes to.
+    pub target: String,
+    /// Minimum slider value.
+    pub min: f32,
+    /// Maximum slider value.
+    pub max: f32,
+}
+
+impl Default for LastBeaconUiSlider {
+    fn default() -> Self {
+        Self {
+            target: String::new(),
+            min: 0.0,
+            max: 100.0,
+        }
+    }
+}
+
+/// Marks a slider fill node whose width mirrors a stored slider value.
+#[derive(Clone, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiSliderFill {
+    /// Shared value key this fill visual reads from.
+    pub target: String,
+    /// Minimum slider value.
+    pub min: f32,
+    /// Maximum slider value.
+    pub max: f32,
+}
+
+impl Default for LastBeaconUiSliderFill {
+    fn default() -> Self {
+        Self {
+            target: String::new(),
+            min: 0.0,
+            max: 100.0,
+        }
+    }
+}
+
 /// Remembers selected tabs for authored reusable tab groups.
 #[derive(Clone, Debug, Default, Resource)]
 pub struct LastBeaconUiTabSelections {
@@ -134,6 +195,12 @@ pub struct LastBeaconUiTabSelections {
 #[derive(Clone, Debug, Default, Resource)]
 pub struct LastBeaconUiInputValues {
     values: HashMap<String, String>,
+}
+
+/// Stores open state for lightweight reusable dropdown examples.
+#[derive(Clone, Debug, Default, Resource)]
+pub struct LastBeaconUiDropdownStates {
+    open_dropdowns: HashMap<String, bool>,
 }
 
 type LastBeaconUiTextInputFocusQuery<'world, 'state> = Query<
@@ -148,6 +215,24 @@ type LastBeaconUiValueButtonInteractionQuery<'world, 'state> = Query<
     'state,
     (&'static LastBeaconUiValueButton, &'static Interaction),
     (Changed<Interaction>, With<Button>),
+>;
+
+type LastBeaconUiDropdownToggleQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (&'static LastBeaconUiDropdownToggle, &'static Interaction),
+    (Changed<Interaction>, With<Button>),
+>;
+
+type LastBeaconUiSliderInteractionQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (
+        &'static LastBeaconUiSlider,
+        &'static Interaction,
+        &'static RelativeCursorPosition,
+    ),
+    With<Button>,
 >;
 
 type LastBeaconUiTabInteractionQuery<'world, 'state> = Query<
@@ -353,6 +438,7 @@ pub fn initialize_last_beacon_ui_value_text(
 /// Applies simple value changes for authored reusable input examples.
 pub fn update_last_beacon_ui_value_buttons(
     mut input_values: ResMut<LastBeaconUiInputValues>,
+    mut dropdown_states: ResMut<LastBeaconUiDropdownStates>,
     buttons: LastBeaconUiValueButtonInteractionQuery,
 ) {
     for (button, interaction) in &buttons {
@@ -364,6 +450,9 @@ pub fn update_last_beacon_ui_value_buttons(
             input_values
                 .values
                 .insert(button.target.clone(), button.set_value.clone());
+            dropdown_states
+                .open_dropdowns
+                .insert(button.target.clone(), false);
             continue;
         }
 
@@ -376,6 +465,112 @@ pub fn update_last_beacon_ui_value_buttons(
         input_values
             .values
             .insert(button.target.clone(), format_value(next_value));
+    }
+}
+
+/// Opens or closes authored reusable dropdown panels.
+pub fn toggle_last_beacon_ui_dropdowns(
+    mut dropdown_states: ResMut<LastBeaconUiDropdownStates>,
+    toggles: LastBeaconUiDropdownToggleQuery,
+) {
+    for (toggle, interaction) in &toggles {
+        if *interaction != Interaction::Pressed || toggle.target.is_empty() {
+            continue;
+        }
+
+        let next_open_state = !dropdown_states
+            .open_dropdowns
+            .get(&toggle.target)
+            .copied()
+            .unwrap_or(false);
+        dropdown_states
+            .open_dropdowns
+            .insert(toggle.target.clone(), next_open_state);
+    }
+}
+
+/// Applies dropdown open state to authored option panels.
+pub fn refresh_last_beacon_ui_dropdown_panels(
+    dropdown_states: Res<LastBeaconUiDropdownStates>,
+    mut panels: Query<(&LastBeaconUiDropdownPanel, &mut Node)>,
+) {
+    if !dropdown_states.is_changed() {
+        return;
+    }
+
+    for (panel, mut node) in &mut panels {
+        let panel_is_open = dropdown_states
+            .open_dropdowns
+            .get(&panel.target)
+            .copied()
+            .unwrap_or(false);
+        node.display = if panel_is_open {
+            Display::Flex
+        } else {
+            Display::None
+        };
+    }
+}
+
+/// Enables cursor-position tracking for authored reusable sliders.
+pub fn initialize_last_beacon_ui_sliders(
+    mut commands: Commands,
+    sliders: Query<Entity, Added<LastBeaconUiSlider>>,
+) {
+    for slider_entity in &sliders {
+        commands
+            .entity(slider_entity)
+            .insert(RelativeCursorPosition::default());
+    }
+}
+
+/// Updates slider values from cursor position while pressed or dragged.
+pub fn update_last_beacon_ui_sliders(
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    mut input_values: ResMut<LastBeaconUiInputValues>,
+    sliders: LastBeaconUiSliderInteractionQuery,
+) {
+    for (slider, interaction, relative_cursor_position) in &sliders {
+        let slider_is_active = *interaction == Interaction::Pressed
+            || (*interaction == Interaction::Hovered && mouse_buttons.pressed(MouseButton::Left));
+        if !slider_is_active || slider.target.is_empty() {
+            continue;
+        }
+
+        let Some(normalized_cursor_position) = relative_cursor_position.normalized else {
+            continue;
+        };
+        let normalized_x = normalized_cursor_position.x.clamp(0.0, 1.0);
+        let next_value = slider.min + normalized_x * (slider.max - slider.min);
+        input_values
+            .values
+            .insert(slider.target.clone(), format_value(next_value));
+    }
+}
+
+/// Mirrors stored slider values into fill widths.
+pub fn refresh_last_beacon_ui_slider_fills(
+    input_values: Res<LastBeaconUiInputValues>,
+    mut slider_fills: Query<(&LastBeaconUiSliderFill, &mut Node)>,
+) {
+    if !input_values.is_changed() {
+        return;
+    }
+
+    for (slider_fill, mut node) in &mut slider_fills {
+        let Some(value) = input_values
+            .values
+            .get(&slider_fill.target)
+            .and_then(|value| value.parse::<f32>().ok())
+        else {
+            continue;
+        };
+        let range = slider_fill.max - slider_fill.min;
+        if range.abs() < f32::EPSILON {
+            continue;
+        }
+        let percent = ((value - slider_fill.min) / range * 100.0).clamp(0.0, 100.0);
+        node.width = Val::Percent(percent);
     }
 }
 
