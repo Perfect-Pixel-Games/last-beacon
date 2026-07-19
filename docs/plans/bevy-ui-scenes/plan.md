@@ -32,7 +32,7 @@ This feature replaces Last Beacon's placeholder menu BSN assets with prototype-m
 - `game/assets/scenes/gameplay_level.bsn` currently owns the gameplay placeholder through `FoundationSimpleGameplayLevel` and opens `last-beacon/pause_menu` through `FoundationPauseOpener`. This scene should remain the gameplay level and should continue opening the new pause scene key.
 - `game/assets/scenes/credits.bsn`, `pixel_perfect_splash.bsn`, and `bevy_splash.bsn` should remain intact unless navigation references need minor updates.
 - Foundation runtime supports `FoundationMenuButton` actions: `none`, `open_scene`, `open_overlay_scene`, `clear_and_open_scene`, `close_current`, `resume`, and `exit`.
-- The UI prototype exists on the previously created `feature/ui-prototype` branch at commit `f4d2abb Add UI prototype`. The current planning branch is from `dev`, so implementation should either use `git show feature/ui-prototype:<path>` as reference or wait until that branch is merged into `dev`.
+- The UI prototype exists on the previously created `feature/ui-prototype` branch at commit `f4d2abb Add UI prototype`; latest `origin/dev` now includes that prototype merge at `df9d52a7e2c94203904b8a7b72f96af57d1f6a80`.
 - Prototype routes and components map to game scenes as follows:
   - `/menu` -> Main Menu.
   - `/menu/settings` -> Settings Menu.
@@ -100,9 +100,9 @@ No external online research was performed because this feature is driven by repo
 ## Risks, Constraints, And Assumptions
 - BSN asset syntax and reflected Bevy UI components may make large static UI scenes verbose; implementation should favor clear scene structure over perfect CSS parity.
 - Some prototype interactions, such as tabs or selecting mission/module/upgrade rows, may not be dynamic without new Rust systems. The plan assumes static mock states are acceptable as long as scene-to-scene flow works.
-- If prototype source is not merged into `dev` before implementation, the implementation model must use the local `feature/ui-prototype` branch or commit `f4d2abb` as the reference.
+- Prototype source is now present under `prototypes/` through latest `origin/dev`, so follow-up UI work can inspect files directly on this feature branch.
 - If a new interactive behavior is required beyond `FoundationMenuButton`, the plan may need revision to decide whether that behavior belongs in game code or reusable Foundation runtime code.
-- The current planning branch has leftover untracked prototype build artifacts from switching away from `feature/ui-prototype`; they are not part of this feature and should not be committed.
+- Local untracked prototype build artifacts were cleaned before rebasing so tracked prototype source from `origin/dev` could be checked out cleanly.
 
 ## Open Questions
 - Should Main Menu Continue/New Game open the Beacon Dashboard first, or should one of those actions open the current gameplay level directly? Proposed default: Continue/New Game open Dashboard, Quick Run opens gameplay.
@@ -119,7 +119,7 @@ No external online research was performed because this feature is driven by repo
 - Read this plan, `tracker.md`, `.pi/skills/feature-tracker-update/SKILL.md`, `.pi/skills/rust-workspace-dev/SKILL.md`, `.pi/skills/rust-coding-standards/SKILL.md`, `.pi/skills/foundation-architecture/SKILL.md`, and `.pi/skills/gitflow-workflow/SKILL.md` before editing.
 - Confirm `feature/bevy-ui-scenes` is still based on root `dev` before implementation edits.
 - Do not edit `engine/` unless the tracker is updated and a valid engine feature branch is created first.
-- Use `git show feature/ui-prototype:<prototype-path>` for prototype reference if the prototype branch has not been merged into `dev`.
+- Use tracked files under `prototypes/` for prototype reference now that the prototype branch has been merged into `origin/dev`.
 - Avoid committing `prototypes/` generated artifacts or dependency folders as part of this feature.
 
 ## Optional Review Focus Areas

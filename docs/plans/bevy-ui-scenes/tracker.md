@@ -6,7 +6,7 @@
 - Primary area: `game`
 - Root branch: `feature/bevy-ui-scenes`
 - Engine branch: `N/A`
-- Root branch base verification: `Verified against dev at c3aa296820dc54dc69e38e88dc065b84b878e208 on 2026-07-19`
+- Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
 - Overall status: `Styling tweaks in progress`
@@ -22,10 +22,10 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Main-menu widget refinement commit 5735044 pushed to origin/feature/bevy-ui-scenes.`
+- Root commit/push state: `Branch rebased onto origin/dev; rewritten commits are local and awaiting force-with-lease push.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
-- Prototype reference state: `Prototype is available on local branch feature/ui-prototype at f4d2abb Add UI prototype, but is not part of this feature branch from dev.`
+- Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
 
 ## Phase 1: Planning
@@ -183,7 +183,7 @@
 - Dynamic tab, selection, mission toggle, module selection, and upgrade selection behavior may be postponed unless achievable with existing Foundation menu buttons without new runtime systems.
 
 ## Notes / Issues / Oversights
-- The feature branch was created from `dev` after the prototype branch was committed and pushed. Because the prototype work is not on `dev`, implementation must reference `feature/ui-prototype` explicitly or wait for the prototype branch to be merged.
+- The feature branch was originally created from older local `dev` at c3aa296820dc54dc69e38e88dc065b84b878e208, then rebased onto latest `origin/dev` at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 after the prototype branch was merged.
 - The old scene name `options_menu` may remain as the internal key for Settings Menu to minimize engine/menu integration churn, even though the user-facing label should be Settings Menu.
 - Main Menu styling now starts a reusable BSN widget library under `game/assets/ui/widgets/main_menu/`. The first implementation adds game-owned `LastBeaconBsnWidget` slots so scenes can compose widget BSN assets without Foundation Engine changes.
 - Dedicated widget assets currently cover Main Menu brand, menu buttons, current save panel, and footer. Other scenes still use the earlier static layout and should be migrated as follow-up tweaks.
@@ -193,6 +193,7 @@
 - `2026-07-19`: User reviewed the first UI pass and requested reusable BSN widgets in a dedicated assets directory, starting with Main Menu styling.
 - `2026-07-19`: Added game-owned BSN widget composition support, moved Main Menu pieces into `game/assets/ui/widgets/main_menu/`, rewrote `main_menu.bsn` to compose those widgets, and validated the focused checks plus root validation.
 - `2026-07-19`: Committed and pushed Main Menu widget refinement as `5735044 Refine main menu widgets`; no pull request created.
+- `2026-07-19`: Fetched latest origin and rebased `feature/bevy-ui-scenes` onto `origin/dev` at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 so the prototype merge is beneath the feature changes.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
