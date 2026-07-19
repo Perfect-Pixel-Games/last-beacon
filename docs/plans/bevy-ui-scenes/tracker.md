@@ -22,7 +22,7 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Shared silo UI styling commit bf25e8b pending push; previous Main Menu primary styling commit 9f712c3 pushed to origin/feature/bevy-ui-scenes.`
+- Root commit/push state: `Shared silo UI styling commit 7012ce1 pending push; tracker state commit pending; previous Main Menu primary styling commit 9f712c3 pushed to origin/feature/bevy-ui-scenes.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
@@ -205,7 +205,7 @@
 - `2026-07-19`: User clarified that the shared silo UI should be fixed to match the website more closely; implementation resumed for Dashboard, Hangar, Garage, Mission Control, Fabrication, and Silo Upgrades shared chrome/styling.
 - `2026-07-19`: Reworked shared Beacon/silo scene chrome for Dashboard, Hangar, Garage, Mission Control, Fabrication, and Silo Upgrades to better match the Svelte website; passed `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, and `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`.
 - `2026-07-19`: User approved the shared Beacon/silo UI styling pass for commit.
-- `2026-07-19`: Committed shared Beacon/silo UI styling pass as `bf25e8b Match shared silo UI prototype style`; push pending.
+- `2026-07-19`: Committed shared Beacon/silo UI styling pass as `7012ce1 Match shared silo UI prototype style`; tracker state commit and push pending.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
