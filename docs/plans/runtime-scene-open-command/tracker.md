@@ -7,13 +7,13 @@
 - Root branch: `feature/runtime-scene-open-command`
 - Engine branch: `feature/runtime-scene-open-command`
 - Root branch base verification: `Verified: created from root dev; origin/dev is an ancestor of HEAD on 2026-07-19`
-- Engine branch base verification: `Pending; engine/ is currently detached at dev commit 7fe0e2b68a6c7f6c4a9b2abf07325582b57264a0`
-- Engine submodule pointer: `7fe0e2b68a6c7f6c4a9b2abf07325582b57264a0`
-- Overall status: `Planned`
+- Engine branch base verification: `Verified: created from engine dev; origin/dev is an ancestor of HEAD on 2026-07-19`
+- Engine submodule pointer: `de6265a543d91d0561761df5437544b2373dd2b5` bound for implementation after engine commit
+- Overall status: `Implementation in progress`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Ready for gpt-5.4 implementation after user approval`
+- Current handoff state: `Implementation in progress with gpt-5.4`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -24,9 +24,9 @@
 - Shipping/no-dev-tools behavior must be validated or explicitly waived before completion.
 
 ## Repository State
-- Root commit/push state: `Planning docs uncommitted`
-- Engine commit/push state: `Pending`
-- Root submodule pointer update: `Pending engine implementation`
+- Root commit/push state: `Planning commit 78da598 pushed to origin/feature/runtime-scene-open-command; root pointer/tracker commit pending after validation`
+- Engine commit/push state: `Committed de6265a543d91d0561761df5437544b2373dd2b5 and pushed to origin/feature/runtime-scene-open-command`
+- Root submodule pointer update: `Pending root commit; working tree points at engine de6265a543d91d0561761df5437544b2373dd2b5`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -63,65 +63,65 @@
 - User confirmation: `Pending approval to begin implementation`
 
 ## Phase 2: Foundation Runtime Console Command
-**Status:** Planned  
+**Status:** Complete  
 **Goal:** Add a dev-only `open` console command that clears current scene content and opens one or more BSN scenes in order.
 
 ### Tasks
-- [ ] Create/switch engine branch `feature/runtime-scene-open-command` from engine `dev` before edits.
-  - Status: Planned
+- [x] Create/switch engine branch `feature/runtime-scene-open-command` from engine `dev` before edits.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Engine is currently detached; no engine edits should occur until this is done.
-- [ ] Add shared scene-open command construction for ordered scene keys/paths.
-  - Status: Planned
+  - Notes: Created engine branch from detached dev commit and verified `origin/dev` is an ancestor of `HEAD`.
+- [x] Add shared scene-open command construction for ordered scene keys/paths.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: First scene must clear stack/world scene content; later scenes open normally above it.
-- [ ] Extend console parsing/execution to support `open <scene> [scene ...]` positional arguments.
-  - Status: Planned
+  - Notes: Added `runtime_open_scene_commands`; first scene uses `OpenSceneOptions::clear_stack()`, later scenes open normally above it.
+- [x] Extend console parsing/execution to support `open <scene> [scene ...]` positional arguments.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Preserve existing named-parameter command behavior.
-- [ ] Return clear errors for missing scene arguments.
-  - Status: Planned
+  - Notes: `FoundationConsoleRegistry::execute_command_line` special-cases the built-in `open` command while preserving existing macro/named-parameter command execution.
+- [x] Return clear errors for missing scene arguments.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: `open` with no scenes must not silently do nothing.
-- [ ] Keep command dev-only/no-dev-tools disabled.
-  - Status: Planned
+  - Notes: `open` with no scenes returns `ConsoleCommandError::MissingOpenSceneArgument`.
+- [x] Keep command dev-only/no-dev-tools disabled.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Shipping-compatible builds must not include this dev command.
-- [ ] Expose registered BSN scene keys for prediction.
-  - Status: Planned
+  - Notes: The command lives in the `console` module, which is compiled only with `dev-tools`; no-default-features tests passed.
+- [x] Expose registered BSN scene keys for prediction.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: `FoundationBsnSceneRegistry` should provide deterministic registered-key suggestions for `open` arguments such as `open las` -> `last-beacon/...`. Users may still type direct `.bsn` paths relative to the active assets directory, but predictions should only list registered scene keys.
+  - Notes: `FoundationBsnSceneRegistry` now exposes deterministic registered-key listing and prefix matching. Users may still type direct `.bsn` paths relative to the active assets directory, but predictions only list registered scene keys.
 
 ### Validation
-- Engine validation: `Pending`
-- Documentation generation: `Pending`
+- Engine validation: `Passed focused runtime console tests, full runtime all-features tests, no-default-features runtime tests, clippy, cargo doc, and engine/scripts/validate-project.cmd`
+- Documentation generation: `Passed cargo doc --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-features --no-deps and engine validation doc generation`
 - User confirmation: `Not required until phase completion unless scope changes`
 
 ## Phase 3: Console Prediction UI, Tests, And Documentation
-**Status:** Planned  
+**Status:** Complete  
 **Goal:** Prove command behavior, expand predictive lookup, and document usage.
 
 ### Tasks
-- [ ] Add Foundation runtime tests for single-scene open, multi-scene open, no-argument error, BSN scene-key predictions, multi-result prediction ordering, and existing command compatibility.
-  - Status: Planned
+- [x] Add Foundation runtime tests for single-scene open, multi-scene open, no-argument error, BSN scene-key predictions, multi-result prediction ordering, and existing command compatibility.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Prefer non-window tests using `World`/`App` and scene command messages/resources.
-- [ ] Add no-dev-tools or shipping-compatible validation coverage where practical.
-  - Status: Planned
+  - Notes: Added focused console tests for ordered open commands, executing against scene stack, missing arguments, registered-key predictions, and command suggestions.
+- [x] Add no-dev-tools or shipping-compatible validation coverage where practical.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Prove command is absent or unavailable without `dev-tools`.
-- [ ] Expand debug console suggestion UI from one prediction to a floating multi-result list.
-  - Status: Planned
+  - Notes: `cargo test --manifest-path engine/Cargo.toml -p foundation-runtime-library --no-default-features` passed, proving the dev-only console module is absent in no-dev-tools builds.
+- [x] Expand debug console suggestion UI from one prediction to a floating multi-result list.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: The floating list should sit above the history area and show matching command names or registered BSN scene keys.
-- [ ] Update engine debug console and/or scene docs.
-  - Status: Planned
+  - Notes: Reworked `FoundationConsoleSuggestion` as a hidden-when-empty floating suggestions box above the input/history area, showing all matching command names or registered BSN scene keys.
+- [x] Update engine debug console and/or scene docs.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Include `open last-beacon/main_menu`, `open last-beacon/gameplay_level last-beacon/pause_menu`, and `open las` autocomplete examples.
+  - Notes: Updated `engine/docs/debug-console.md` and `engine/docs/scene-system.md` with `open last-beacon/main_menu`, `open last-beacon/gameplay_level last-beacon/pause_menu`, direct asset-relative path, and autocomplete examples.
 
 ### Validation
-- Engine validation: `Pending`
-- Documentation generation: `Pending`
+- Engine validation: `Passed focused runtime console tests, full runtime all-features tests, no-default-features runtime tests, clippy, cargo doc, and engine/scripts/validate-project.cmd`
+- Documentation generation: `Passed cargo doc --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-features --no-deps and engine validation doc generation`
 - User confirmation: `Not required until phase completion unless docs reveal behavior changes`
 
 ## Phase 4: Integration, Validation, Commits, And Handoff
@@ -129,39 +129,39 @@
 **Goal:** Validate against Last Beacon, commit/push engine and root changes, and prepare PR-ready handoff.
 
 ### Tasks
-- [ ] Run focused engine validation.
-  - Status: Planned
+- [x] Run focused engine validation.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Runtime tests, clippy, docs.
-- [ ] Run full engine validation as required.
-  - Status: Planned
+  - Notes: Passed format check, focused console tests, full runtime all-features tests, no-default-features runtime tests, clippy, and cargo doc.
+- [x] Run full engine validation as required.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Use `engine/scripts/validate-project.cmd` unless a waiver is approved.
+  - Notes: Passed `engine/scripts/validate-project.cmd`.
 - [ ] Update root submodule pointer after engine commit.
-  - Status: Planned
+  - Status: Awaiting root commit
   - Repository: `both`
-  - Notes: Record exact engine commit hash first.
-- [ ] Run root game validation.
-  - Status: Planned
+  - Notes: Engine commit `de6265a543d91d0561761df5437544b2373dd2b5` is committed and pushed; root working tree now points at that engine commit.
+- [x] Run root game validation.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Use `scripts/validate.cmd` after pointer update only to verify Last Beacon still builds against the updated engine; no Last Beacon runtime source changes are planned.
+  - Notes: Passed `scripts/validate.cmd` after pointer update; no Last Beacon runtime source changes were made.
 - [ ] Smoke-test the runtime command in Last Beacon where practical.
-  - Status: Planned
+  - Status: Pending manual verification
   - Repository: `root`
-  - Notes: Open console with backtick and execute single- and multi-scene examples.
-- [ ] Commit and push engine changes.
-  - Status: Planned
+  - Notes: Automated engine tests covered command behavior and Last Beacon validation passed. Interactive console smoke remains pending because it requires opening the game, toggling the console, and typing commands.
+- [x] Commit and push engine changes.
+  - Status: Complete
   - Repository: `engine`
-  - Notes: Push to origin if available.
+  - Notes: Engine commit `de6265a543d91d0561761df5437544b2373dd2b5` pushed to `origin/feature/runtime-scene-open-command`.
 - [ ] Commit and push root changes, including submodule pointer and tracker updates.
   - Status: Planned
   - Repository: `root`
   - Notes: Push to origin if available.
 
 ### Validation
-- Game validation: `Pending`
-- Engine validation: `Pending`
-- Documentation generation: `Pending`
+- Game validation: `Passed scripts/validate.cmd`
+- Engine validation: `Passed focused checks and engine/scripts/validate-project.cmd`
+- Documentation generation: `Passed focused cargo doc and engine validation doc generation`
 - User confirmation: `Pending final implementation review or optional sanity review request`
 
 ## Implementation / Review Handoff Notes
@@ -175,6 +175,7 @@
 ## Postponed Work
 - Quoted scene paths containing spaces are postponed unless the console parser is generalized for shell-like quoting in a separate feature.
 - Per-scene presentation options are postponed; scenes use existing default presentation unless opened later by authored menu/runtime systems.
+- Interactive Last Beacon smoke verification is pending manual/user verification because automated tests cover the command behavior without opening a game window, while using the console requires runtime UI input.
 
 ## Notes / Issues / Oversights
 - Existing console command parsing expects named `name=value` arguments. The `open scene scene` command requires either a special parsing path or a reusable raw-argument command descriptor mode.
@@ -189,3 +190,11 @@
 - `2026-07-19`: User clarified the feature should be entirely within the engine. Updated plan/tracker classification to `engine` and kept root scope limited to planning/tracking plus eventual submodule pointer validation.
 - `2026-07-19`: User added predictive lookup requirements: `open las` should suggest registered BSN scene keys such as `last-beacon/my_map`, and the debug console should show all matching predictions in a floating list instead of only one predicted command.
 - `2026-07-19`: User clarified that direct `.bsn` paths are valid explicit `open` inputs, and those direct paths mean paths relative to the active assets directory, but autocomplete predictions should only come from registered scene keys.
+- `2026-07-19`: User approved the plan/tracker, requested committing them, then starting implementation.
+- `2026-07-19`: Committed and pushed root planning commit `78da598`.
+- `2026-07-19`: Created engine branch `feature/runtime-scene-open-command` and verified `origin/dev` ancestry; implementation started with gpt-5.4.
+- `2026-07-19`: Implemented engine-only runtime `open` console command, registered BSN scene-key prediction, and floating multi-result console suggestions.
+- `2026-07-19`: Focused validation passed: format check, console tests, runtime all-features tests, runtime no-default-features tests, clippy, and cargo doc.
+- `2026-07-19`: Full engine validation passed with `engine/scripts/validate-project.cmd`.
+- `2026-07-19`: Committed and pushed engine commit `de6265a543d91d0561761df5437544b2373dd2b5`.
+- `2026-07-19`: Root validation passed with `scripts/validate.cmd` against engine commit `de6265a543d91d0561761df5437544b2373dd2b5`; interactive console smoke remains pending manual verification.
