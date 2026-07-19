@@ -7,7 +7,11 @@
 use std::{collections::HashMap, sync::Arc};
 
 use bevy::{
-    input::mouse::{MouseScrollUnit, MouseWheel},
+    input::{
+        keyboard::{Key, KeyboardInput},
+        mouse::{MouseScrollUnit, MouseWheel},
+        ButtonState,
+    },
     input_focus::{FocusCause, InputFocus},
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
@@ -85,6 +89,11 @@ pub struct LastBeaconUiTextInput {
     /// Whether the input should allow newline entry.
     pub multiline: bool,
 }
+
+/// Marks the visual scroll thumb for a multiline text input.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiTextScrollThumb;
 
 /// Makes an editable text input feed a numeric value.
 #[derive(Clone, Debug, Component, Reflect)]
@@ -226,10 +235,29 @@ pub struct LastBeaconUiDropdownStates {
     open_dropdowns: HashMap<String, bool>,
 }
 
+/// Stores custom text and wheel offsets for multiline text inputs.
+#[derive(Clone, Debug, Default, Resource)]
+pub struct LastBeaconUiTextBoxStates {
+    boxes: HashMap<Entity, LastBeaconUiTextBoxState>,
+}
+
+#[derive(Clone, Debug, Default)]
+struct LastBeaconUiTextBoxState {
+    value: String,
+    first_visible_line: usize,
+}
+
+const TEXT_BOX_VISIBLE_LINES: usize = 4;
+
 type LastBeaconUiTextInputFocusQuery<'world, 'state> = Query<
     'world,
     'state,
-    (Entity, &'static Interaction, Option<&'static Children>),
+    (
+        Entity,
+        &'static LastBeaconUiTextInput,
+        &'static Interaction,
+        Option<&'static Children>,
+    ),
     (Changed<Interaction>, With<LastBeaconUiTextInput>),
 >;
 
@@ -237,6 +265,7 @@ type LastBeaconUiTextInputScrollQuery<'world, 'state> = Query<
     'world,
     'state,
     (
+        Entity,
         &'static LastBeaconUiTextInput,
         Option<&'static Children>,
         Option<&'static Interaction>,
@@ -393,12 +422,14 @@ pub fn apply_last_beacon_ui_font(
 /// Turns authored text-input containers into focusable editable text widgets.
 pub fn initialize_last_beacon_ui_text_inputs(
     mut commands: Commands,
+    mut text_box_states: ResMut<LastBeaconUiTextBoxStates>,
     text_inputs: Query<
         (Entity, &LastBeaconUiTextInput, Option<&Children>),
         Added<LastBeaconUiTextInput>,
     >,
     children_query: Query<&Children>,
     text_query: Query<(), With<Text>>,
+    mut text_values: Query<&mut Text>,
 ) {
     for (input_entity, text_input, input_children) in &text_inputs {
         let text_entity = if text_query.contains(input_entity) {
@@ -413,24 +444,30 @@ pub fn initialize_last_beacon_ui_text_inputs(
             text_entity
         };
 
-        let mut editable_text = EditableText::new(&text_input.value);
-        editable_text.allow_newlines = text_input.multiline;
-        editable_text.visible_width = Some(if text_input.multiline { 32.0 } else { 24.0 });
-        editable_text.visible_lines = Some(if text_input.multiline { 3.0 } else { 1.0 });
-
         if text_input.multiline {
+            text_box_states.boxes.insert(
+                input_entity,
+                LastBeaconUiTextBoxState {
+                    value: text_input.value.clone(),
+                    first_visible_line: 0,
+                },
+            );
+            if let Ok(mut text) = text_values.get_mut(text_entity) {
+                text.0 = visible_text_box_lines(&text_input.value, 0);
+            }
             commands
                 .entity(input_entity)
                 .insert((ScrollPosition::default(), RelativeCursorPosition::default()));
+            continue;
         }
 
-        let mut text_node = Node::default();
-        if text_input.multiline {
-            text_node.position_type = PositionType::Relative;
-        }
+        let mut editable_text = EditableText::new(&text_input.value);
+        editable_text.allow_newlines = false;
+        editable_text.visible_width = Some(24.0);
+        editable_text.visible_lines = Some(1.0);
 
         commands.entity(text_entity).insert((
-            text_node,
+            Node::default(),
             editable_text,
             TextCursorStyle::default(),
             TextLayout::default(),
@@ -445,8 +482,12 @@ pub fn focus_last_beacon_ui_text_inputs(
     children_query: Query<&Children>,
     editable_text_query: Query<(), With<EditableText>>,
 ) {
-    for (input_entity, interaction, input_children) in &text_inputs {
+    for (input_entity, text_input, interaction, input_children) in &text_inputs {
         if *interaction != Interaction::Pressed {
+            continue;
+        }
+        if text_input.multiline {
+            input_focus.set(input_entity, FocusCause::Pressed);
             continue;
         }
         let text_entity = if editable_text_query.contains(input_entity) {
@@ -600,27 +641,103 @@ pub fn initialize_last_beacon_ui_sliders(
     }
 }
 
+/// Applies keyboard input to focused multiline text boxes without using Bevy's internal text scroller.
+#[allow(clippy::too_many_arguments)]
+pub fn type_into_last_beacon_ui_text_boxes(
+    input_focus: Res<InputFocus>,
+    mut keyboard_inputs: MessageReader<KeyboardInput>,
+    mut text_box_states: ResMut<LastBeaconUiTextBoxStates>,
+    text_inputs: Query<(&LastBeaconUiTextInput, Option<&Children>)>,
+    children_query: Query<&Children>,
+    scroll_thumb_query: Query<(), With<LastBeaconUiTextScrollThumb>>,
+    mut text_query: Query<&mut Text>,
+    mut node_query: Query<&mut Node>,
+) {
+    let Some(focused_entity) = input_focus.get() else {
+        keyboard_inputs.clear();
+        return;
+    };
+    let Ok((text_input, input_children)) = text_inputs.get(focused_entity) else {
+        keyboard_inputs.clear();
+        return;
+    };
+    if !text_input.multiline {
+        return;
+    }
+
+    let mut text_changed = false;
+    let Some(text_box_state) = text_box_states.boxes.get_mut(&focused_entity) else {
+        keyboard_inputs.clear();
+        return;
+    };
+
+    for keyboard_input in keyboard_inputs.read() {
+        if keyboard_input.state != ButtonState::Pressed {
+            continue;
+        }
+
+        match &keyboard_input.logical_key {
+            Key::Enter => {
+                text_box_state.value.push('\n');
+                text_changed = true;
+            }
+            Key::Backspace => {
+                text_box_state.value.pop();
+                text_changed = true;
+            }
+            Key::Character(character) => {
+                text_box_state.value.push_str(character.as_str());
+                text_changed = true;
+            }
+            _ => {}
+        }
+    }
+
+    if !text_changed {
+        return;
+    }
+
+    text_box_state.first_visible_line = max_first_visible_text_box_line(&text_box_state.value);
+    refresh_text_box_view(
+        focused_entity,
+        input_children,
+        text_box_state,
+        &children_query,
+        &scroll_thumb_query,
+        &mut text_query,
+        &mut node_query,
+    );
+}
+
 /// Applies mouse-wheel scrolling to hovered multiline text boxes.
 pub fn scroll_last_beacon_ui_text_inputs(
     mut mouse_wheel_messages: MessageReader<MouseWheel>,
+    mut text_box_states: ResMut<LastBeaconUiTextBoxStates>,
     mut text_inputs: LastBeaconUiTextInputScrollQuery,
     children_query: Query<&Children>,
-    editable_text_query: Query<(), With<EditableText>>,
+    scroll_thumb_query: Query<(), With<LastBeaconUiTextScrollThumb>>,
+    mut text_query: Query<&mut Text>,
     mut node_query: Query<&mut Node>,
 ) {
     let scroll_delta = mouse_wheel_messages
         .read()
         .map(|message| match message.unit {
-            MouseScrollUnit::Line => message.y * 18.0,
-            MouseScrollUnit::Pixel => message.y,
+            MouseScrollUnit::Line => message.y,
+            MouseScrollUnit::Pixel => message.y / 18.0,
         })
         .sum::<f32>();
     if scroll_delta.abs() < f32::EPSILON {
         return;
     }
 
-    for (text_input, input_children, interaction, relative_cursor_position, mut scroll_position) in
-        &mut text_inputs
+    for (
+        input_entity,
+        text_input,
+        input_children,
+        interaction,
+        relative_cursor_position,
+        mut scroll_position,
+    ) in &mut text_inputs
     {
         let cursor_is_over = relative_cursor_position
             .map(RelativeCursorPosition::cursor_over)
@@ -630,16 +747,27 @@ pub fn scroll_last_beacon_ui_text_inputs(
         if !text_input.multiline || !cursor_is_over {
             continue;
         }
-        scroll_position.y = (scroll_position.y - scroll_delta).clamp(0.0, 72.0);
-        if let Some(text_entity) = first_descendant_with_editable_text(
+        scroll_position.y = 0.0;
+
+        let Some(text_box_state) = text_box_states.boxes.get_mut(&input_entity) else {
+            continue;
+        };
+        let max_first_visible_line = max_first_visible_text_box_line(&text_box_state.value);
+        let scroll_line_delta = if scroll_delta > 0.0 { -1 } else { 1 };
+        text_box_state.first_visible_line = text_box_state
+            .first_visible_line
+            .saturating_add_signed(scroll_line_delta)
+            .min(max_first_visible_line);
+
+        refresh_text_box_view(
+            input_entity,
             input_children,
+            text_box_state,
             &children_query,
-            &editable_text_query,
-        ) {
-            if let Ok(mut text_node) = node_query.get_mut(text_entity) {
-                text_node.top = Val::Px(-scroll_position.y);
-            }
-        }
+            &scroll_thumb_query,
+            &mut text_query,
+            &mut node_query,
+        );
     }
 }
 
@@ -876,10 +1004,71 @@ fn format_value(value: f32) -> String {
     }
 }
 
+fn visible_text_box_lines(value: &str, first_visible_line: usize) -> String {
+    value
+        .lines()
+        .skip(first_visible_line)
+        .take(TEXT_BOX_VISIBLE_LINES)
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn max_first_visible_text_box_line(value: &str) -> usize {
+    value.lines().count().saturating_sub(TEXT_BOX_VISIBLE_LINES)
+}
+
+fn refresh_text_box_view(
+    input_entity: Entity,
+    input_children: Option<&Children>,
+    text_box_state: &LastBeaconUiTextBoxState,
+    children_query: &Query<&Children>,
+    scroll_thumb_query: &Query<(), With<LastBeaconUiTextScrollThumb>>,
+    text_query: &mut Query<&mut Text>,
+    node_query: &mut Query<&mut Node>,
+) {
+    let Some(text_entity) =
+        first_descendant_with_rendered_text(input_children, children_query, text_query)
+    else {
+        warn!("LastBeaconUiTextInput on {input_entity:?} has no child Text entity.");
+        return;
+    };
+    if let Ok(mut text) = text_query.get_mut(text_entity) {
+        text.0 = visible_text_box_lines(&text_box_state.value, text_box_state.first_visible_line);
+    }
+
+    let max_first_visible_line = max_first_visible_text_box_line(&text_box_state.value);
+    let scroll_progress = if max_first_visible_line == 0 {
+        0.0
+    } else {
+        text_box_state.first_visible_line as f32 / max_first_visible_line as f32
+    };
+    let text_box_scroll_track_height = 72.0;
+    let text_box_scroll_thumb_height = 28.0;
+    let text_box_scroll_thumb_travel = text_box_scroll_track_height - text_box_scroll_thumb_height;
+
+    if let Some(scroll_thumb_entity) =
+        first_descendant_with_scroll_thumb(input_children, children_query, scroll_thumb_query)
+    {
+        if let Ok(mut scroll_thumb_node) = node_query.get_mut(scroll_thumb_entity) {
+            scroll_thumb_node.top = Val::Px(scroll_progress * text_box_scroll_thumb_travel);
+        }
+    }
+}
+
 fn first_descendant_with_text(
     children: Option<&Children>,
     children_query: &Query<&Children>,
     text_query: &Query<(), With<Text>>,
+) -> Option<Entity> {
+    first_matching_descendant(children, children_query, |entity| {
+        text_query.contains(entity)
+    })
+}
+
+fn first_descendant_with_rendered_text(
+    children: Option<&Children>,
+    children_query: &Query<&Children>,
+    text_query: &Query<&mut Text>,
 ) -> Option<Entity> {
     first_matching_descendant(children, children_query, |entity| {
         text_query.contains(entity)
@@ -893,6 +1082,16 @@ fn first_descendant_with_editable_text(
 ) -> Option<Entity> {
     first_matching_descendant(children, children_query, |entity| {
         editable_text_query.contains(entity)
+    })
+}
+
+fn first_descendant_with_scroll_thumb(
+    children: Option<&Children>,
+    children_query: &Query<&Children>,
+    scroll_thumb_query: &Query<(), With<LastBeaconUiTextScrollThumb>>,
+) -> Option<Entity> {
+    first_matching_descendant(children, children_query, |entity| {
+        scroll_thumb_query.contains(entity)
     })
 }
 

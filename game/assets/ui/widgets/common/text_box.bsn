@@ -24,7 +24,8 @@ bevy_ecs::hierarchy::Children [
     bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }))
     bevy_ecs::hierarchy::Children [
         #TextBoxScrollThumb
-        bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(3.0), height: bevy_ui::geometry::Val::Px(28.0), }
+        bevy_ui::ui_node::Node { position_type: bevy_ui::ui_node::PositionType::Relative, width: bevy_ui::geometry::Val::Px(3.0), height: bevy_ui::geometry::Val::Px(28.0), }
         bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
+        last_beacon::ui_widgets::LastBeaconUiTextScrollThumb
     ]
 ]
