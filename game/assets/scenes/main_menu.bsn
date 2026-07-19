@@ -3,138 +3,390 @@ bevy_ui::ui_node::Node {
     width: bevy_ui::geometry::Val::Percent(100.0),
     height: bevy_ui::geometry::Val::Percent(100.0),
     flex_direction: bevy_ui::ui_node::FlexDirection::Column,
-    align_items: bevy_ui::ui_node::AlignItems::Center,
-    justify_content: bevy_ui::ui_node::JustifyContent::Center,
-    row_gap: bevy_ui::geometry::Val::Px(16.0),
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
 }
-bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-    red: 0.02,
-    green: 0.02,
-    blue: 0.04,
-    alpha: 0.92,
-}))
+foundation_runtime_library::menu::FoundationSimpleGameplayLevel { cube_size: 2.0 }
 bevy_ecs::hierarchy::Children [
-    bevy_ui::widget::text::Text("Last Beacon")
-    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(64.0) }
-    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 1.0,
-        green: 1.0,
-        blue: 1.0,
-        alpha: 1.0,
-    })),
-
-    bevy_ui::widget::button::Button
+    #MainMenuRail
     bevy_ui::ui_node::Node {
-        width: bevy_ui::geometry::Val::Px(260.0),
-        height: bevy_ui::geometry::Val::Px(56.0),
-        align_items: bevy_ui::ui_node::AlignItems::Center,
+        width: bevy_ui::geometry::Val::Px(340.0),
+        height: bevy_ui::geometry::Val::Percent(100.0),
+        flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+        align_items: bevy_ui::ui_node::AlignItems::Stretch,
         justify_content: bevy_ui::ui_node::JustifyContent::Center,
+        row_gap: bevy_ui::geometry::Val::Px(18.0),
     }
     bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.15,
-        green: 0.15,
-        blue: 0.18,
-        alpha: 1.0,
+        red: 0.01,
+        green: 0.02,
+        blue: 0.04,
+        alpha: 0.84,
     }))
-    foundation_runtime_library::menu::FoundationMenuButton {
-        action: "clear_and_open_scene",
-        scene_key: "last-beacon/gameplay_level",
-        stack_key: "gameplay",
-    }
     bevy_ecs::hierarchy::Children [
-        bevy_ui::widget::text::Text("New Game")
+        bevy_ui::widget::text::Text("Last Beacon")
         bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(28.0) }
         bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-            red: 1.0,
-            green: 1.0,
+            red: 0.92,
+            green: 0.96,
             blue: 1.0,
+            alpha: 1.0,
+        })),
+
+        #ContinueButton
+        bevy_ui::widget::button::Button
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Px(260.0),
+            height: bevy_ui::geometry::Val::Px(48.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+            align_items: bevy_ui::ui_node::AlignItems::Center,
+            justify_content: bevy_ui::ui_node::JustifyContent::Center,
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.05,
+            green: 0.34,
+            blue: 0.4,
+            alpha: 0.98,
+        }))
+        foundation_runtime_library::menu::FoundationMenuButton {
+            action: "clear_and_open_scene",
+            scene_key: "last-beacon/dashboard",
+            stack_key: "dashboard",
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Continue")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.92,
+                green: 0.96,
+                blue: 1.0,
+                alpha: 1.0,
+            }))
+        ],
+
+        #QuickRunButton
+        bevy_ui::widget::button::Button
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Px(260.0),
+            height: bevy_ui::geometry::Val::Px(48.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+            align_items: bevy_ui::ui_node::AlignItems::Center,
+            justify_content: bevy_ui::ui_node::JustifyContent::Center,
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.08,
+            green: 0.12,
+            blue: 0.18,
+            alpha: 0.96,
+        }))
+        foundation_runtime_library::menu::FoundationMenuButton {
+            action: "clear_and_open_scene",
+            scene_key: "last-beacon/gameplay_level",
+            stack_key: "gameplay",
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Quick Run")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.92,
+                green: 0.96,
+                blue: 1.0,
+                alpha: 1.0,
+            }))
+        ],
+
+        #NewGameButton
+        bevy_ui::widget::button::Button
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Px(260.0),
+            height: bevy_ui::geometry::Val::Px(48.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+            align_items: bevy_ui::ui_node::AlignItems::Center,
+            justify_content: bevy_ui::ui_node::JustifyContent::Center,
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.08,
+            green: 0.12,
+            blue: 0.18,
+            alpha: 0.96,
+        }))
+        foundation_runtime_library::menu::FoundationMenuButton {
+            action: "clear_and_open_scene",
+            scene_key: "last-beacon/dashboard",
+            stack_key: "dashboard",
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("New Game")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.92,
+                green: 0.96,
+                blue: 1.0,
+                alpha: 1.0,
+            }))
+        ],
+
+        #SettingsButton
+        bevy_ui::widget::button::Button
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Px(260.0),
+            height: bevy_ui::geometry::Val::Px(48.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+            align_items: bevy_ui::ui_node::AlignItems::Center,
+            justify_content: bevy_ui::ui_node::JustifyContent::Center,
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.08,
+            green: 0.12,
+            blue: 0.18,
+            alpha: 0.96,
+        }))
+        foundation_runtime_library::menu::FoundationMenuButton {
+            action: "open_overlay_scene",
+            scene_key: "last-beacon/options_menu",
+            stack_key: "settings",
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Settings")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.92,
+                green: 0.96,
+                blue: 1.0,
+                alpha: 1.0,
+            }))
+        ],
+
+        #CreditsButton
+        bevy_ui::widget::button::Button
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Px(260.0),
+            height: bevy_ui::geometry::Val::Px(48.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+            align_items: bevy_ui::ui_node::AlignItems::Center,
+            justify_content: bevy_ui::ui_node::JustifyContent::Center,
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.08,
+            green: 0.12,
+            blue: 0.18,
+            alpha: 0.96,
+        }))
+        foundation_runtime_library::menu::FoundationMenuButton {
+            action: "open_scene",
+            scene_key: "last-beacon/credits",
+            stack_key: "credits",
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Credits")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.92,
+                green: 0.96,
+                blue: 1.0,
+                alpha: 1.0,
+            }))
+        ],
+
+        #QuitGameButton
+        bevy_ui::widget::button::Button
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Px(260.0),
+            height: bevy_ui::geometry::Val::Px(48.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+            align_items: bevy_ui::ui_node::AlignItems::Center,
+            justify_content: bevy_ui::ui_node::JustifyContent::Center,
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.08,
+            green: 0.12,
+            blue: 0.18,
+            alpha: 0.96,
+        }))
+        foundation_runtime_library::menu::FoundationMenuButton {
+            action: "exit",
+            scene_key: "",
+            stack_key: "",
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Quit Game")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.92,
+                green: 0.96,
+                blue: 1.0,
+                alpha: 1.0,
+            }))
+        ],
+
+        #CurrentSavePanel
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Px(260.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+            align_items: bevy_ui::ui_node::AlignItems::Stretch,
+            justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+            row_gap: bevy_ui::geometry::Val::Px(9.0),
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.03,
+            green: 0.05,
+            blue: 0.08,
+            alpha: 0.88,
+        }))
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Current Save")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.18,
+                green: 0.78,
+                blue: 0.86,
+                alpha: 1.0,
+            })),
+
+            #ColonyStat
+            bevy_ui::ui_node::Node {
+                width: bevy_ui::geometry::Val::Percent(100.0),
+                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+                align_items: bevy_ui::ui_node::AlignItems::Center,
+                justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+                column_gap: bevy_ui::geometry::Val::Px(12.0),
+            }
+            bevy_ecs::hierarchy::Children [
+                bevy_ui::widget::text::Text("Colony")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.5,
+                    green: 0.58,
+                    blue: 0.68,
+                    alpha: 1.0,
+                })),
+
+                bevy_ui::widget::text::Text("The Beacon - Sector 4")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.92,
+                    green: 0.96,
+                    blue: 1.0,
+                    alpha: 1.0,
+                }))
+            ],
+
+            #PlayTimeStat
+            bevy_ui::ui_node::Node {
+                width: bevy_ui::geometry::Val::Percent(100.0),
+                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+                align_items: bevy_ui::ui_node::AlignItems::Center,
+                justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+                column_gap: bevy_ui::geometry::Val::Px(12.0),
+            }
+            bevy_ecs::hierarchy::Children [
+                bevy_ui::widget::text::Text("Play Time")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.5,
+                    green: 0.58,
+                    blue: 0.68,
+                    alpha: 1.0,
+                })),
+
+                bevy_ui::widget::text::Text("14h 22m")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.92,
+                    green: 0.96,
+                    blue: 1.0,
+                    alpha: 1.0,
+                }))
+            ],
+
+            #ColonistsStat
+            bevy_ui::ui_node::Node {
+                width: bevy_ui::geometry::Val::Percent(100.0),
+                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+                align_items: bevy_ui::ui_node::AlignItems::Center,
+                justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+                column_gap: bevy_ui::geometry::Val::Px(12.0),
+            }
+            bevy_ecs::hierarchy::Children [
+                bevy_ui::widget::text::Text("Colonists")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.5,
+                    green: 0.58,
+                    blue: 0.68,
+                    alpha: 1.0,
+                })),
+
+                bevy_ui::widget::text::Text("12 / 15")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.92,
+                    green: 0.96,
+                    blue: 1.0,
+                    alpha: 1.0,
+                }))
+            ],
+
+            #LastExpeditionStat
+            bevy_ui::ui_node::Node {
+                width: bevy_ui::geometry::Val::Percent(100.0),
+                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+                align_items: bevy_ui::ui_node::AlignItems::Center,
+                justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+                column_gap: bevy_ui::geometry::Val::Px(12.0),
+            }
+            bevy_ecs::hierarchy::Children [
+                bevy_ui::widget::text::Text("Last Expedition")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.5,
+                    green: 0.58,
+                    blue: 0.68,
+                    alpha: 1.0,
+                })),
+
+                bevy_ui::widget::text::Text("Rusting Factory - Success")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.92,
+                    green: 0.96,
+                    blue: 1.0,
+                    alpha: 1.0,
+                }))
+            ]
+        ],
+
+        bevy_ui::widget::text::Text("prototype build 0.0.1")
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
+        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.5,
+            green: 0.58,
+            blue: 0.68,
             alpha: 1.0,
         }))
     ],
 
-    bevy_ui::widget::button::Button
+    #MainMenuBackdropCaption
     bevy_ui::ui_node::Node {
-        width: bevy_ui::geometry::Val::Px(260.0),
-        height: bevy_ui::geometry::Val::Px(56.0),
+        width: bevy_ui::geometry::Val::Percent(100.0),
+        height: bevy_ui::geometry::Val::Px(72.0),
+        flex_direction: bevy_ui::ui_node::FlexDirection::Row,
         align_items: bevy_ui::ui_node::AlignItems::Center,
         justify_content: bevy_ui::ui_node::JustifyContent::Center,
     }
     bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.15,
-        green: 0.15,
-        blue: 0.18,
-        alpha: 1.0,
+        red: 0.01,
+        green: 0.02,
+        blue: 0.04,
+        alpha: 0.45,
     }))
-    foundation_runtime_library::menu::FoundationMenuButton {
-        action: "open_overlay_scene",
-        scene_key: "last-beacon/options_menu",
-        stack_key: "options",
-    }
     bevy_ecs::hierarchy::Children [
-        bevy_ui::widget::text::Text("Options")
-        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(28.0) }
+        bevy_ui::widget::text::Text("3D Beacon background - current prototype flow")
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
         bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-            red: 1.0,
-            green: 1.0,
-            blue: 1.0,
-            alpha: 1.0,
-        }))
-    ],
-
-    bevy_ui::widget::button::Button
-    bevy_ui::ui_node::Node {
-        width: bevy_ui::geometry::Val::Px(260.0),
-        height: bevy_ui::geometry::Val::Px(56.0),
-        align_items: bevy_ui::ui_node::AlignItems::Center,
-        justify_content: bevy_ui::ui_node::JustifyContent::Center,
-    }
-    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.15,
-        green: 0.15,
-        blue: 0.18,
-        alpha: 1.0,
-    }))
-    foundation_runtime_library::menu::FoundationMenuButton {
-        action: "open_scene",
-        scene_key: "last-beacon/credits",
-        stack_key: "credits",
-    }
-    bevy_ecs::hierarchy::Children [
-        bevy_ui::widget::text::Text("Credits")
-        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(28.0) }
-        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-            red: 1.0,
-            green: 1.0,
-            blue: 1.0,
-            alpha: 1.0,
-        }))
-    ],
-
-    bevy_ui::widget::button::Button
-    bevy_ui::ui_node::Node {
-        width: bevy_ui::geometry::Val::Px(260.0),
-        height: bevy_ui::geometry::Val::Px(56.0),
-        align_items: bevy_ui::ui_node::AlignItems::Center,
-        justify_content: bevy_ui::ui_node::JustifyContent::Center,
-    }
-    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.15,
-        green: 0.15,
-        blue: 0.18,
-        alpha: 1.0,
-    }))
-    foundation_runtime_library::menu::FoundationMenuButton {
-        action: "exit",
-        scene_key: "",
-        stack_key: "",
-    }
-    bevy_ecs::hierarchy::Children [
-        bevy_ui::widget::text::Text("Exit")
-        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(28.0) }
-        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-            red: 1.0,
-            green: 1.0,
-            blue: 1.0,
+            red: 0.5,
+            green: 0.58,
+            blue: 0.68,
             alpha: 1.0,
         }))
     ]

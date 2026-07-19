@@ -12,8 +12,20 @@ pub const PIXEL_PERFECT_SPLASH_SCENE: &str = "last-beacon/splash_pixel_perfect";
 pub const BEVY_SPLASH_SCENE: &str = "last-beacon/splash_bevy";
 /// Scene key for the example main menu.
 pub const MAIN_MENU_SCENE: &str = "last-beacon/main_menu";
-/// Scene key for the stack-based options menu.
+/// Scene key for the stack-based settings menu.
 pub const OPTIONS_MENU_SCENE: &str = "last-beacon/options_menu";
+/// Scene key for the Beacon dashboard.
+pub const DASHBOARD_SCENE: &str = "last-beacon/dashboard";
+/// Scene key for the Beacon hangar.
+pub const HANGAR_SCENE: &str = "last-beacon/hangar";
+/// Scene key for the Beacon garage.
+pub const GARAGE_SCENE: &str = "last-beacon/garage";
+/// Scene key for mission control.
+pub const MISSION_CONTROL_SCENE: &str = "last-beacon/mission_control";
+/// Scene key for the fabrication bay.
+pub const FABRICATION_SCENE: &str = "last-beacon/fabrication";
+/// Scene key for silo upgrades.
+pub const SILO_UPGRADES_SCENE: &str = "last-beacon/silo_upgrades";
 /// Scene key for the scrolling credits scene.
 pub const CREDITS_SCENE: &str = "last-beacon/credits";
 /// Scene key for the small sample gameplay level.
@@ -31,6 +43,12 @@ pub fn register_last_beacon_bsn_scenes(mut registry: ResMut<FoundationBsnSceneRe
     registry.register_scene(BEVY_SPLASH_SCENE, "scenes/bevy_splash.bsn");
     registry.register_scene(MAIN_MENU_SCENE, "scenes/main_menu.bsn");
     registry.register_scene(OPTIONS_MENU_SCENE, "scenes/options_menu.bsn");
+    registry.register_scene(DASHBOARD_SCENE, "scenes/dashboard.bsn");
+    registry.register_scene(HANGAR_SCENE, "scenes/hangar.bsn");
+    registry.register_scene(GARAGE_SCENE, "scenes/garage.bsn");
+    registry.register_scene(MISSION_CONTROL_SCENE, "scenes/mission_control.bsn");
+    registry.register_scene(FABRICATION_SCENE, "scenes/fabrication.bsn");
+    registry.register_scene(SILO_UPGRADES_SCENE, "scenes/silo_upgrades.bsn");
     registry.register_scene(CREDITS_SCENE, "scenes/credits.bsn");
     registry.register_scene(GAMEPLAY_LEVEL_SCENE, "scenes/gameplay_level.bsn");
     registry.register_scene(PAUSE_MENU_SCENE, "scenes/pause_menu.bsn");
@@ -145,6 +163,12 @@ mod tests {
         assert_eq!(BEVY_SPLASH_SCENE, "last-beacon/splash_bevy");
         assert_eq!(MAIN_MENU_SCENE, "last-beacon/main_menu");
         assert_eq!(OPTIONS_MENU_SCENE, "last-beacon/options_menu");
+        assert_eq!(DASHBOARD_SCENE, "last-beacon/dashboard");
+        assert_eq!(HANGAR_SCENE, "last-beacon/hangar");
+        assert_eq!(GARAGE_SCENE, "last-beacon/garage");
+        assert_eq!(MISSION_CONTROL_SCENE, "last-beacon/mission_control");
+        assert_eq!(FABRICATION_SCENE, "last-beacon/fabrication");
+        assert_eq!(SILO_UPGRADES_SCENE, "last-beacon/silo_upgrades");
         assert_eq!(CREDITS_SCENE, "last-beacon/credits");
         assert_eq!(GAMEPLAY_LEVEL_SCENE, "last-beacon/gameplay_level");
         assert_eq!(PAUSE_MENU_SCENE, "last-beacon/pause_menu");
@@ -172,10 +196,20 @@ mod tests {
     fn scene_registry_maps_keys_to_bsn_assets() {
         let mut registry = FoundationBsnSceneRegistry::default();
         registry.register_scene(MAIN_MENU_SCENE, "scenes/main_menu.bsn");
+        registry.register_scene(DASHBOARD_SCENE, "scenes/dashboard.bsn");
+        registry.register_scene(SILO_UPGRADES_SCENE, "scenes/silo_upgrades.bsn");
 
         assert_eq!(
             registry.resolve_scene_path(MAIN_MENU_SCENE),
             "scenes/main_menu.bsn"
+        );
+        assert_eq!(
+            registry.resolve_scene_path(DASHBOARD_SCENE),
+            "scenes/dashboard.bsn"
+        );
+        assert_eq!(
+            registry.resolve_scene_path(SILO_UPGRADES_SCENE),
+            "scenes/silo_upgrades.bsn"
         );
     }
 }

@@ -9,11 +9,11 @@
 - Root branch base verification: `Verified against dev at c3aa296820dc54dc69e38e88dc065b84b878e208 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Planned`
+- Overall status: `Implementation in progress`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Ready for user review before gpt-5.4 implementation`
+- Current handoff state: `Implementation in progress with gpt-5.4`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,7 +22,7 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Planning docs uncommitted; implementation not started.`
+- Root commit/push state: `Planning commit 965d203 pushed; implementation complete and awaiting final commit/push.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is available on local branch feature/ui-prototype at f4d2abb Add UI prototype, but is not part of this feature branch from dev.`
@@ -49,124 +49,124 @@
   - Status: Complete
   - Repository: `root`
   - Notes: Created `docs/plans/bevy-ui-scenes/plan.md` and this tracker.
-- [ ] User approval to begin implementation.
-  - Status: Pending
+- [x] User approval to begin implementation.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Required before code or BSN implementation edits.
+  - Notes: User approved the plan and asked that no pull request be created at the end so they can review the branch first.
 
 ### Validation
 - Game validation: `N/A for planning-only changes`
 - Engine validation: `N/A`
 - Documentation generation: `Pending for implementation; planning docs created manually.`
-- User confirmation: `Pending`
+- User confirmation: `Received on 2026-07-19`
 
 ## Phase 2: Scene Catalog And Navigation
-**Status:** Planned  
+**Status:** Awaiting commit  
 **Goal:** Register all new scene keys and establish the intended menu/Beacon/gameplay navigation flow.
 
 ### Tasks
-- [ ] Update `game/src/scenes/mod.rs` with new scene constants and registry entries.
-  - Status: Planned
+- [x] Update `game/src/scenes/mod.rs` with new scene constants and registry entries.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Add Dashboard, Hangar, Garage, Mission Control, Fabrication, and Silo Upgrades scene keys.
-- [ ] Update Rust tests for required scene keys and representative registry mappings.
-  - Status: Planned
+  - Notes: Added Dashboard, Hangar, Garage, Mission Control, Fabrication, and Silo Upgrades scene keys and BSN registrations.
+- [x] Update Rust tests for required scene keys and representative registry mappings.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Preserve assertions for splash, credits, gameplay, main menu, settings/options, and pause.
-- [ ] Decide final Main Menu button routing.
-  - Status: Planned
+  - Notes: Preserved splash, credits, gameplay, main menu, settings/options, and pause assertions and added representative new scene mappings.
+- [x] Decide final Main Menu button routing.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Proposed default is Continue/New Game to Dashboard and Quick Run to current gameplay level.
+  - Notes: Continue/New Game open Dashboard, Quick Run opens the current gameplay level, Settings opens as an overlay, and Credits opens the existing credits scene.
 
 ### Validation
-- Game validation: `Pending`
+- Game validation: `Passed via scripts/validate.cmd on 2026-07-19`
 - Engine validation: `N/A`
-- Documentation generation: `Pending`
-- User confirmation: `Not required after implementation approval unless routing question remains unresolved`
+- Documentation generation: `Passed via cargo doc --manifest-path game/Cargo.toml --all-features --no-deps on 2026-07-19`
+- User confirmation: `Implementation approval received; no additional routing confirmation required`
 
 ## Phase 3: Prototype-Matched Static UI Scenes
-**Status:** Planned  
+**Status:** Awaiting commit  
 **Goal:** Replace old UI BSN assets and add new static UI BSN assets that closely match the prototype layout with mock data.
 
 ### Tasks
-- [ ] Replace `game/assets/scenes/main_menu.bsn` with prototype-style Main Menu.
-  - Status: Planned
+- [x] Replace `game/assets/scenes/main_menu.bsn` with prototype-style Main Menu.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Left menu rail, current-save mock panel, credits/settings/gameplay/dashboard flow.
-- [ ] Replace `game/assets/scenes/options_menu.bsn` with prototype-style Settings Menu.
-  - Status: Planned
+  - Notes: Added left menu rail, current-save mock panel, credits/settings/gameplay/dashboard flow, and simple 3D background component.
+- [x] Replace `game/assets/scenes/options_menu.bsn` with prototype-style Settings Menu.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Static mock settings groups and tabs/sections; no real settings persistence.
-- [ ] Add Dashboard scene BSN.
-  - Status: Planned
+  - Notes: Added static mock settings groups and tabs/sections; no real settings persistence.
+- [x] Add Dashboard scene BSN.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Resource, colony needs, and equipped robot panels over gameplay/simple 3D background.
-- [ ] Add Hangar scene BSN.
-  - Status: Planned
+  - Notes: Added resources, colony needs, equipped robot panels, and simple 3D background component.
+- [x] Add Hangar scene BSN.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Deployment/map-area placeholder should be a UI placeholder only; Launch Expedition opens current gameplay level.
-- [ ] Add Garage scene BSN.
-  - Status: Planned
+  - Notes: Added deployment display placeholder and Launch Expedition button to the current gameplay level.
+- [x] Add Garage scene BSN.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Robot roster cards and selected robot mock stats.
-- [ ] Add Mission Control scene BSN.
-  - Status: Planned
+  - Notes: Added robot roster cards and selected robot mock stats.
+- [x] Add Mission Control scene BSN.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Static main/side/passive mission lists and selected mission detail panel.
-- [ ] Add Fabrication scene BSN.
-  - Status: Planned
+  - Notes: Added static main/side/passive mission lists and selected mission detail panel.
+- [x] Add Fabrication scene BSN.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Static module browser, robot stat deltas, and feature list.
-- [ ] Add Silo Upgrades scene BSN.
-  - Status: Planned
+  - Notes: Added static module browser, robot stat deltas, and feature list.
+- [x] Add Silo Upgrades scene BSN.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Static upgrade tree/cards and selected-node detail panel.
-- [ ] Replace `game/assets/scenes/pause_menu.bsn` with prototype-style Pause Menu.
-  - Status: Planned
+  - Notes: Added static upgrade tree and selected-node detail panel.
+- [x] Replace `game/assets/scenes/pause_menu.bsn` with prototype-style Pause Menu.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Resume, abandon/save-to-menu/settings buttons and current expedition mock stats.
-- [ ] Preserve splash screens, credits scene, and current gameplay level.
-  - Status: Planned
+  - Notes: Added Resume, Abandon Run, Settings, Save and Quit to Menu, Save and Quit Game, and current expedition mock stats. The pause scene does not spawn its own 3D background so the current gameplay level remains visible underneath.
+- [x] Preserve splash screens, credits scene, and current gameplay level.
+  - Status: Complete
   - Repository: `root`
-  - Notes: `gameplay_level.bsn` should still use current gameplay level and open the new pause menu.
+  - Notes: `gameplay_level.bsn`, splash BSN files, and credits BSN file were not changed; gameplay still opens `last-beacon/pause_menu`.
 
 ### Validation
-- Game validation: `Pending`
+- Game validation: `Passed via scripts/validate.cmd on 2026-07-19`
 - Engine validation: `N/A`
-- Documentation generation: `Pending`
-- User confirmation: `Manual scene-flow confirmation required when practical`
+- Documentation generation: `Passed via cargo doc --manifest-path game/Cargo.toml --all-features --no-deps on 2026-07-19`
+- User confirmation: `Runtime smoke checks launched each new scene with --scene and found no BSN parse/load errors before timeout termination.`
 
 ## Phase 4: Validation, Commit, And Push
-**Status:** Planned  
+**Status:** In progress  
 **Goal:** Prove the feature builds, document validation, and prepare the branch for pull request review.
 
 ### Tasks
-- [ ] Run focused Rust checks.
-  - Status: Planned
+- [x] Run focused Rust checks.
+  - Status: Complete
   - Repository: `root`
-  - Notes: `cargo fmt`, `cargo clippy`, `cargo test`, `cargo build`, and `cargo doc` with `--manifest-path game/Cargo.toml`.
-- [ ] Run root game validation.
-  - Status: Planned
+  - Notes: Passed `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo build --manifest-path game/Cargo.toml --all-features`, and `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`.
+- [x] Run root game validation.
+  - Status: Complete
   - Repository: `root`
-  - Notes: `scripts/validate.cmd` unless a user-approved waiver is recorded.
-- [ ] Manually verify scene flow when practical.
-  - Status: Planned
+  - Notes: Passed `scripts/validate.cmd`.
+- [x] Manually verify scene flow when practical.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Launch Main Menu and Gameplay Level with `--scene` overrides; verify Pause Menu from gameplay.
+  - Notes: Smoke-launched Main Menu, Settings Menu, Dashboard, Hangar, Garage, Mission Control, Fabrication, Silo Upgrades, and Gameplay Level with `cargo run --manifest-path game/Cargo.toml -- --log-inline --scene <scene>`. Runs were terminated by timeout after startup and showed no BSN parse/load errors.
 - [ ] Commit completed work with required commit message format.
-  - Status: Planned
+  - Status: Pending
   - Repository: `root`
   - Notes: Include changed file list in commit body.
 - [ ] Push `feature/bevy-ui-scenes` to origin.
-  - Status: Planned
+  - Status: Pending
   - Repository: `root`
-  - Notes: Required because origin is configured.
+  - Notes: Required because origin is configured. Do not create a pull request; user wants to review first.
 
 ### Validation
-- Game validation: `Pending`
+- Game validation: `Passed scripts/validate.cmd on 2026-07-19`
 - Engine validation: `N/A`
-- Documentation generation: `Pending`
-- User confirmation: `Pending final implementation review/acceptance`
+- Documentation generation: `Passed cargo doc --manifest-path game/Cargo.toml --all-features --no-deps on 2026-07-19`
+- User confirmation: `Pending final implementation review/acceptance; no pull request will be created before user review.`
 
 ## Implementation / Review Handoff Notes
 - Use `gpt-5.4` for implementation and `gpt-5.5` for optional final review.
@@ -190,3 +190,5 @@
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
+- `2026-07-19`: User approved implementation and requested that no pull request be created before their review.
+- `2026-07-19`: Implemented registered Bevy/BSN UI scenes, replaced the old Main Menu/Settings/Pause assets, preserved splash/credits/current gameplay level, and validated focused checks plus root validation.
