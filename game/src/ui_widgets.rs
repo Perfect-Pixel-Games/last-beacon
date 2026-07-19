@@ -4,7 +4,7 @@
 //! lightweight widget slots. This keeps scene files focused on layout while common
 //! visual pieces live under `assets/ui/widgets/`.
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use bevy::{
     prelude::*,
@@ -35,6 +35,83 @@ pub struct LastBeaconBeaconPrimaryButton;
 #[reflect(Component, Default)]
 pub struct LastBeaconBeaconTabButton;
 
+/// Applies the reusable Last Beacon button visual treatment.
+#[derive(Clone, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiButton {
+    /// Button variant: `primary`, `secondary`, or `tertiary`.
+    pub variant: String,
+}
+
+impl Default for LastBeaconUiButton {
+    fn default() -> Self {
+        Self {
+            variant: "secondary".to_string(),
+        }
+    }
+}
+
+/// Applies reusable Last Beacon tab behavior and visual treatment.
+#[derive(Clone, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiTab {
+    /// Selection group this tab belongs to.
+    pub group: String,
+    /// Stable tab identifier within the group.
+    pub tab: String,
+    /// Whether this tab should be selected before the user interacts with the group.
+    pub selected: bool,
+}
+
+impl Default for LastBeaconUiTab {
+    fn default() -> Self {
+        Self {
+            group: "default".to_string(),
+            tab: "default".to_string(),
+            selected: false,
+        }
+    }
+}
+
+/// Remembers selected tabs for authored reusable tab groups.
+#[derive(Clone, Debug, Default, Resource)]
+pub struct LastBeaconUiTabSelections {
+    selected_tabs: HashMap<String, String>,
+}
+
+type LastBeaconUiTabInteractionQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (&'static LastBeaconUiTab, &'static Interaction),
+    (Changed<Interaction>, With<Button>),
+>;
+
+type LastBeaconUiButtonStyleQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (
+        &'static LastBeaconUiButton,
+        &'static Interaction,
+        &'static mut BackgroundColor,
+        &'static mut BorderColor,
+        Option<&'static Children>,
+    ),
+    (With<Button>, Without<LastBeaconUiTab>),
+>;
+
+type LastBeaconUiTabStyleQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (
+        &'static LastBeaconUiTab,
+        &'static Interaction,
+        &'static mut BackgroundColor,
+        &'static mut BorderColor,
+        Option<&'static Children>,
+    ),
+    (With<Button>, Without<LastBeaconUiButton>),
+>;
+
 type MainMenuPrimaryButtonStyleQuery<'world, 'state> = Query<
     'world,
     'state,
@@ -43,6 +120,8 @@ type MainMenuPrimaryButtonStyleQuery<'world, 'state> = Query<
         With<LastBeaconMainMenuPrimaryButton>,
         Without<LastBeaconBeaconPrimaryButton>,
         Without<LastBeaconBeaconTabButton>,
+        Without<LastBeaconUiButton>,
+        Without<LastBeaconUiTab>,
     ),
 >;
 
@@ -54,6 +133,8 @@ type BeaconPrimaryButtonStyleQuery<'world, 'state> = Query<
         With<LastBeaconBeaconPrimaryButton>,
         Without<LastBeaconMainMenuPrimaryButton>,
         Without<LastBeaconBeaconTabButton>,
+        Without<LastBeaconUiButton>,
+        Without<LastBeaconUiTab>,
     ),
 >;
 
@@ -65,6 +146,8 @@ type BeaconTabButtonStyleQuery<'world, 'state> = Query<
         With<LastBeaconBeaconTabButton>,
         Without<LastBeaconMainMenuPrimaryButton>,
         Without<LastBeaconBeaconPrimaryButton>,
+        Without<LastBeaconUiButton>,
+        Without<LastBeaconUiTab>,
     ),
 >;
 
@@ -115,12 +198,50 @@ pub fn apply_last_beacon_ui_font(
     }
 }
 
+/// Updates remembered tab selection when a reusable tab is clicked.
+pub fn update_last_beacon_ui_tab_selection(
+    mut tab_selections: ResMut<LastBeaconUiTabSelections>,
+    tabs: LastBeaconUiTabInteractionQuery,
+) {
+    for (tab, tab_interaction) in &tabs {
+        if *tab_interaction == Interaction::Pressed {
+            tab_selections
+                .selected_tabs
+                .insert(tab.group.clone(), tab.tab.clone());
+        }
+    }
+}
+
 /// Restores prototype-authored button colors after generic Foundation interaction styling.
 pub fn enforce_last_beacon_button_styles(
+    mut ui_buttons: LastBeaconUiButtonStyleQuery,
+    mut ui_tabs: LastBeaconUiTabStyleQuery,
+    tab_selections: Res<LastBeaconUiTabSelections>,
+    mut text_colors: Query<&mut TextColor>,
     mut main_menu_primary_buttons: MainMenuPrimaryButtonStyleQuery,
     mut beacon_primary_buttons: BeaconPrimaryButtonStyleQuery,
     mut beacon_tab_buttons: BeaconTabButtonStyleQuery,
 ) {
+    for (button, button_interaction, mut button_background, mut button_border, button_children) in
+        &mut ui_buttons
+    {
+        let button_style = reusable_button_style(&button.variant, *button_interaction);
+        *button_background = BackgroundColor(button_style.background_color);
+        *button_border = BorderColor::all(button_style.border_color);
+        apply_text_color(button_children, button_style.text_color, &mut text_colors);
+    }
+
+    for (tab, tab_interaction, mut tab_background, mut tab_border, tab_children) in &mut ui_tabs {
+        let selected_tab = tab_selections.selected_tabs.get(&tab.group);
+        let is_selected = selected_tab
+            .map(|selected_tab| selected_tab == &tab.tab)
+            .unwrap_or(tab.selected);
+        let tab_style = reusable_tab_style(is_selected, *tab_interaction);
+        *tab_background = BackgroundColor(tab_style.background_color);
+        *tab_border = BorderColor::all(tab_style.border_color);
+        apply_text_color(tab_children, tab_style.text_color, &mut text_colors);
+    }
+
     let prototype_menu_accent = Color::srgb(0.984, 0.749, 0.141);
     for mut button_background in &mut main_menu_primary_buttons {
         *button_background = BackgroundColor(prototype_menu_accent);
@@ -134,6 +255,110 @@ pub fn enforce_last_beacon_button_styles(
     let transparent_background = Color::srgba(0.0, 0.0, 0.0, 0.0);
     for mut button_background in &mut beacon_tab_buttons {
         *button_background = BackgroundColor(transparent_background);
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+struct LastBeaconWidgetStyle {
+    background_color: Color,
+    border_color: Color,
+    text_color: Color,
+}
+
+fn reusable_button_style(variant: &str, interaction: Interaction) -> LastBeaconWidgetStyle {
+    let normalized_variant = variant.trim().to_ascii_lowercase();
+    match (normalized_variant.as_str(), interaction) {
+        ("primary", Interaction::Pressed) => LastBeaconWidgetStyle {
+            background_color: Color::srgb(0.028, 0.628, 0.718),
+            border_color: Color::srgb(0.028, 0.628, 0.718),
+            text_color: Color::srgb(0.008, 0.024, 0.09),
+        },
+        ("primary", Interaction::Hovered) => LastBeaconWidgetStyle {
+            background_color: Color::srgb(0.404, 0.91, 0.965),
+            border_color: Color::srgb(0.404, 0.91, 0.965),
+            text_color: Color::srgb(0.008, 0.024, 0.09),
+        },
+        ("primary", _) => LastBeaconWidgetStyle {
+            background_color: Color::srgb(0.133, 0.827, 0.933),
+            border_color: Color::srgb(0.133, 0.827, 0.933),
+            text_color: Color::srgb(0.008, 0.024, 0.09),
+        },
+        ("tertiary", Interaction::Pressed) => LastBeaconWidgetStyle {
+            background_color: Color::srgba(0.133, 0.827, 0.933, 0.18),
+            border_color: Color::srgb(0.133, 0.827, 0.933),
+            text_color: Color::srgb(0.133, 0.827, 0.933),
+        },
+        ("tertiary", Interaction::Hovered) => LastBeaconWidgetStyle {
+            background_color: Color::srgba(0.133, 0.827, 0.933, 0.1),
+            border_color: Color::srgb(0.133, 0.827, 0.933),
+            text_color: Color::srgb(0.404, 0.91, 0.965),
+        },
+        ("tertiary", _) => LastBeaconWidgetStyle {
+            background_color: Color::srgba(0.0, 0.0, 0.0, 0.0),
+            border_color: Color::srgb(0.278, 0.333, 0.412),
+            text_color: Color::srgb(0.58, 0.639, 0.722),
+        },
+        (_, Interaction::Pressed) => LastBeaconWidgetStyle {
+            background_color: Color::srgb(0.2, 0.255, 0.333),
+            border_color: Color::srgb(0.58, 0.639, 0.722),
+            text_color: Color::srgb(0.945, 0.961, 0.976),
+        },
+        (_, Interaction::Hovered) => LastBeaconWidgetStyle {
+            background_color: Color::srgb(0.2, 0.255, 0.333),
+            border_color: Color::srgb(0.796, 0.835, 0.882),
+            text_color: Color::srgb(0.945, 0.961, 0.976),
+        },
+        (_, _) => LastBeaconWidgetStyle {
+            background_color: Color::srgb(0.118, 0.161, 0.231),
+            border_color: Color::srgb(0.278, 0.333, 0.412),
+            text_color: Color::srgb(0.945, 0.961, 0.976),
+        },
+    }
+}
+
+fn reusable_tab_style(is_selected: bool, interaction: Interaction) -> LastBeaconWidgetStyle {
+    match (is_selected, interaction) {
+        (true, Interaction::Pressed) => LastBeaconWidgetStyle {
+            background_color: Color::srgba(0.133, 0.827, 0.933, 0.22),
+            border_color: Color::srgb(0.133, 0.827, 0.933),
+            text_color: Color::srgb(0.133, 0.827, 0.933),
+        },
+        (true, _) => LastBeaconWidgetStyle {
+            background_color: Color::srgba(0.133, 0.827, 0.933, 0.12),
+            border_color: Color::srgb(0.133, 0.827, 0.933),
+            text_color: Color::srgb(0.133, 0.827, 0.933),
+        },
+        (false, Interaction::Pressed) => LastBeaconWidgetStyle {
+            background_color: Color::srgba(0.133, 0.827, 0.933, 0.16),
+            border_color: Color::srgb(0.133, 0.827, 0.933),
+            text_color: Color::srgb(0.133, 0.827, 0.933),
+        },
+        (false, Interaction::Hovered) => LastBeaconWidgetStyle {
+            background_color: Color::srgba(0.133, 0.827, 0.933, 0.08),
+            border_color: Color::srgb(0.278, 0.333, 0.412),
+            text_color: Color::srgb(0.945, 0.961, 0.976),
+        },
+        (false, _) => LastBeaconWidgetStyle {
+            background_color: Color::srgba(0.0, 0.0, 0.0, 0.0),
+            border_color: Color::srgba(0.0, 0.0, 0.0, 0.0),
+            text_color: Color::srgb(0.58, 0.639, 0.722),
+        },
+    }
+}
+
+fn apply_text_color(
+    children: Option<&Children>,
+    text_color: Color,
+    text_colors: &mut Query<&mut TextColor>,
+) {
+    let Some(children) = children else {
+        return;
+    };
+
+    for child_entity in children.iter() {
+        if let Ok(mut child_text_color) = text_colors.get_mut(child_entity) {
+            *child_text_color = TextColor(text_color);
+        }
     }
 }
 

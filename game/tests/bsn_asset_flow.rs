@@ -6,7 +6,7 @@ use last_beacon::{
     asset_root,
     ui_widgets::{
         LastBeaconBeaconPrimaryButton, LastBeaconBeaconTabButton, LastBeaconBsnWidget,
-        LastBeaconMainMenuPrimaryButton,
+        LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiTab,
     },
 };
 
@@ -44,10 +44,10 @@ fn converted_bsn_scene_assets_load_as_scene_patches() {
         "scenes/credits.bsn",
         "scenes/gameplay_level.bsn",
         "scenes/pause_menu.bsn",
-        "ui/widgets/common/menu_primary_button.bsn",
-        "ui/widgets/common/menu_secondary_button.bsn",
-        "ui/widgets/common/beacon_primary_button.bsn",
-        "ui/widgets/common/beacon_tabs.bsn",
+        "ui/widgets/common/primary_button.bsn",
+        "ui/widgets/common/secondary_button.bsn",
+        "ui/widgets/common/tertiary_button.bsn",
+        "ui/widgets/common/tabs.bsn",
         "ui/widgets/common/stat_rows_panel.bsn",
         "ui/widgets/main_menu/brand.bsn",
         "ui/widgets/main_menu/continue_button.bsn",
@@ -158,5 +158,7 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<LastBeaconBsnWidget>()
         .register_type::<LastBeaconMainMenuPrimaryButton>()
         .register_type::<LastBeaconBeaconPrimaryButton>()
-        .register_type::<LastBeaconBeaconTabButton>();
+        .register_type::<LastBeaconBeaconTabButton>()
+        .register_type::<LastBeaconUiButton>()
+        .register_type::<LastBeaconUiTab>();
 }

@@ -125,9 +125,12 @@ impl Plugin for LastBeaconPlugin {
         })
         .register_type::<SpinningCube>()
         .register_type::<ui_widgets::LastBeaconBsnWidget>()
+        .init_resource::<ui_widgets::LastBeaconUiTabSelections>()
         .register_type::<ui_widgets::LastBeaconMainMenuPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconTabButton>()
+        .register_type::<ui_widgets::LastBeaconUiButton>()
+        .register_type::<ui_widgets::LastBeaconUiTab>()
         .add_systems(
             Startup,
             (
@@ -142,6 +145,7 @@ impl Plugin for LastBeaconPlugin {
                 scenes::spawn_requested_last_beacon_scene_drivers,
                 ui_widgets::queue_last_beacon_bsn_widgets,
                 ui_widgets::apply_last_beacon_ui_font,
+                ui_widgets::update_last_beacon_ui_tab_selection,
                 exit_game_on_foundation_exit_request,
                 spin_cube.run_if(foundation_is_not_paused),
             ),

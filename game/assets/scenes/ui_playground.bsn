@@ -65,7 +65,7 @@ bevy_ecs::hierarchy::Children [
                 alpha: 1.0,
             })),
 
-            bevy_ui::widget::text::Text("Reusable buttons, tabs, panels, and stat rows")
+            bevy_ui::widget::text::Text("Reusable primary, secondary, tertiary, tabs, panels, and stat rows")
             bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
             bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
                 red: 0.58,
@@ -190,13 +190,13 @@ bevy_ecs::hierarchy::Children [
             })),
 
             #MenuPrimaryButtonSample
-            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/menu_primary_button.bsn" },
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/primary_button.bsn" },
 
             #MenuSecondaryButtonSample
-            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/menu_secondary_button.bsn" },
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/secondary_button.bsn" },
 
             #BeaconPrimaryButtonSample
-            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/beacon_primary_button.bsn" }
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/tertiary_button.bsn" }
         ],
 
         #NavigationWidgetGallery
@@ -248,7 +248,7 @@ bevy_ecs::hierarchy::Children [
             })),
 
             #BeaconTabsSample
-            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/beacon_tabs.bsn" }
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/tabs.bsn" }
         ],
 
         #PanelWidgetGallery
