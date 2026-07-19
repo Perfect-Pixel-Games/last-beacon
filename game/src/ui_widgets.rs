@@ -25,6 +25,49 @@ pub struct LastBeaconBsnWidget {
 #[reflect(Component, Default)]
 pub struct LastBeaconMainMenuPrimaryButton;
 
+/// Marks a Beacon primary action that should keep the prototype's cyan style.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconBeaconPrimaryButton;
+
+/// Marks a Beacon navigation tab whose transparent background should not be overwritten.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconBeaconTabButton;
+
+type MainMenuPrimaryButtonStyleQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    &'static mut BackgroundColor,
+    (
+        With<LastBeaconMainMenuPrimaryButton>,
+        Without<LastBeaconBeaconPrimaryButton>,
+        Without<LastBeaconBeaconTabButton>,
+    ),
+>;
+
+type BeaconPrimaryButtonStyleQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    &'static mut BackgroundColor,
+    (
+        With<LastBeaconBeaconPrimaryButton>,
+        Without<LastBeaconMainMenuPrimaryButton>,
+        Without<LastBeaconBeaconTabButton>,
+    ),
+>;
+
+type BeaconTabButtonStyleQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    &'static mut BackgroundColor,
+    (
+        With<LastBeaconBeaconTabButton>,
+        Without<LastBeaconMainMenuPrimaryButton>,
+        Without<LastBeaconBeaconPrimaryButton>,
+    ),
+>;
+
 #[derive(Clone, Debug, Component)]
 struct LastBeaconBsnWidgetPending {
     asset_path: String,
@@ -73,12 +116,24 @@ pub fn apply_last_beacon_ui_font(
 }
 
 /// Restores prototype-authored button colors after generic Foundation interaction styling.
-pub fn enforce_main_menu_primary_button_style(
-    mut primary_buttons: Query<&mut BackgroundColor, With<LastBeaconMainMenuPrimaryButton>>,
+pub fn enforce_last_beacon_button_styles(
+    mut main_menu_primary_buttons: MainMenuPrimaryButtonStyleQuery,
+    mut beacon_primary_buttons: BeaconPrimaryButtonStyleQuery,
+    mut beacon_tab_buttons: BeaconTabButtonStyleQuery,
 ) {
     let prototype_menu_accent = Color::srgb(0.984, 0.749, 0.141);
-    for mut button_background in &mut primary_buttons {
+    for mut button_background in &mut main_menu_primary_buttons {
         *button_background = BackgroundColor(prototype_menu_accent);
+    }
+
+    let prototype_beacon_accent = Color::srgb(0.133, 0.827, 0.933);
+    for mut button_background in &mut beacon_primary_buttons {
+        *button_background = BackgroundColor(prototype_beacon_accent);
+    }
+
+    let transparent_background = Color::srgba(0.0, 0.0, 0.0, 0.0);
+    for mut button_background in &mut beacon_tab_buttons {
+        *button_background = BackgroundColor(transparent_background);
     }
 }
 

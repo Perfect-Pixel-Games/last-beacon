@@ -6,645 +6,828 @@ bevy_ui::ui_node::Node {
     align_items: bevy_ui::ui_node::AlignItems::Stretch,
     justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
 }
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.008, green: 0.024, blue: 0.09, alpha: 1.0 }))
 foundation_runtime_library::menu::FoundationSimpleGameplayLevel { cube_size: 2.0 }
 bevy_ecs::hierarchy::Children [
-    #BeaconHeader
-    bevy_ui::ui_node::Node {
-        width: bevy_ui::geometry::Val::Percent(100.0),
-        height: bevy_ui::geometry::Val::Px(76.0),
-        flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-        align_items: bevy_ui::ui_node::AlignItems::Center,
-        justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-        column_gap: bevy_ui::geometry::Val::Px(12.0),
-    }
-    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.01,
-        green: 0.02,
-        blue: 0.04,
-        alpha: 0.84,
-    }))
-    bevy_ecs::hierarchy::Children [
-        bevy_ui::widget::text::Text("LAST BEACON")
-        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(22.0) }
-        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-            red: 0.92,
-            green: 0.96,
-            blue: 1.0,
-            alpha: 1.0,
-        })),
+#BeaconSceneCaption
+bevy_ui::ui_node::Node {
+    position_type: bevy_ui::ui_node::PositionType::Absolute,
+    left: bevy_ui::geometry::Val::Px(12.0),
+    bottom: bevy_ui::geometry::Val::Px(12.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(8.0), right: bevy_ui::geometry::Val::Px(8.0), top: bevy_ui::geometry::Val::Px(4.0), bottom: bevy_ui::geometry::Val::Px(4.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.008, green: 0.024, blue: 0.09, alpha: 0.7 }))
+bevy_ecs::hierarchy::Children [
+#BeaconSceneCaptionText
+bevy_ui::widget::text::Text("CAMERA: GARAGE BAY — SELECTED ROBOT CENTERED, OTHERS SURROUNDING")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(10.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.392, green: 0.455, blue: 0.545, alpha: 1.0 }))
+],
 
-        #BeaconTopNav
-        bevy_ui::ui_node::Node {
-            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-            align_items: bevy_ui::ui_node::AlignItems::Center,
-            justify_content: bevy_ui::ui_node::JustifyContent::Center,
-            column_gap: bevy_ui::geometry::Val::Px(8.0),
-        }
-        bevy_ecs::hierarchy::Children [
-            #DashboardButton
-            bevy_ui::widget::button::Button
-            bevy_ui::ui_node::Node {
-                width: bevy_ui::geometry::Val::Px(190.0),
-                height: bevy_ui::geometry::Val::Px(48.0),
-                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                align_items: bevy_ui::ui_node::AlignItems::Center,
-                justify_content: bevy_ui::ui_node::JustifyContent::Center,
-            }
-            bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.08,
-                green: 0.12,
-                blue: 0.18,
-                alpha: 0.96,
-            }))
-            foundation_runtime_library::menu::FoundationMenuButton {
-                action: "clear_and_open_scene",
-                scene_key: "last-beacon/dashboard",
-                stack_key: "dashboard",
-            }
-            bevy_ecs::hierarchy::Children [
-                bevy_ui::widget::text::Text("Dashboard")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.92,
-                    green: 0.96,
-                    blue: 1.0,
-                    alpha: 1.0,
-                }))
-            ],
+#BeaconHeader
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(60.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+}
+bevy_ecs::hierarchy::Children [
+#HeaderSpacer
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(260.0),
+    height: bevy_ui::geometry::Val::Px(1.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+},
 
-            #HangarButton
-            bevy_ui::widget::button::Button
-            bevy_ui::ui_node::Node {
-                width: bevy_ui::geometry::Val::Px(190.0),
-                height: bevy_ui::geometry::Val::Px(48.0),
-                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                align_items: bevy_ui::ui_node::AlignItems::Center,
-                justify_content: bevy_ui::ui_node::JustifyContent::Center,
-            }
-            bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.08,
-                green: 0.12,
-                blue: 0.18,
-                alpha: 0.96,
-            }))
-            foundation_runtime_library::menu::FoundationMenuButton {
-                action: "clear_and_open_scene",
-                scene_key: "last-beacon/hangar",
-                stack_key: "hangar",
-            }
-            bevy_ecs::hierarchy::Children [
-                bevy_ui::widget::text::Text("Hangar")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.92,
-                    green: 0.96,
-                    blue: 1.0,
-                    alpha: 1.0,
-                }))
-            ],
+#BeaconTopNav
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    column_gap: bevy_ui::geometry::Val::Px(4.0),
+}
+bevy_ecs::hierarchy::Children [
+#dashboardTab
+bevy_ui::widget::button::Button
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(116.0),
+    height: bevy_ui::geometry::Val::Px(42.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(10.0), right: bevy_ui::geometry::Val::Px(10.0), top: bevy_ui::geometry::Val::Px(12.0), bottom: bevy_ui::geometry::Val::Px(10.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), }
+last_beacon::ui_widgets::LastBeaconBeaconTabButton
+foundation_runtime_library::menu::FoundationMenuButton {
+    action: "clear_and_open_scene",
+    scene_key: "last-beacon/dashboard",
+    stack_key: "dashboard",
+}
+bevy_ecs::hierarchy::Children [
+#dashboardTabText
+bevy_ui::widget::text::Text("DASHBOARD")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
 
-            #GarageButton
-            bevy_ui::widget::button::Button
-            bevy_ui::ui_node::Node {
-                width: bevy_ui::geometry::Val::Px(190.0),
-                height: bevy_ui::geometry::Val::Px(48.0),
-                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                align_items: bevy_ui::ui_node::AlignItems::Center,
-                justify_content: bevy_ui::ui_node::JustifyContent::Center,
-            }
-            bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.05,
-                green: 0.34,
-                blue: 0.4,
-                alpha: 0.98,
-            }))
-            foundation_runtime_library::menu::FoundationMenuButton {
-                action: "clear_and_open_scene",
-                scene_key: "last-beacon/garage",
-                stack_key: "garage",
-            }
-            bevy_ecs::hierarchy::Children [
-                bevy_ui::widget::text::Text("Garage")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.92,
-                    green: 0.96,
-                    blue: 1.0,
-                    alpha: 1.0,
-                }))
-            ],
+#hangarTab
+bevy_ui::widget::button::Button
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(116.0),
+    height: bevy_ui::geometry::Val::Px(42.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(10.0), right: bevy_ui::geometry::Val::Px(10.0), top: bevy_ui::geometry::Val::Px(12.0), bottom: bevy_ui::geometry::Val::Px(10.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), }
+last_beacon::ui_widgets::LastBeaconBeaconTabButton
+foundation_runtime_library::menu::FoundationMenuButton {
+    action: "clear_and_open_scene",
+    scene_key: "last-beacon/hangar",
+    stack_key: "hangar",
+}
+bevy_ecs::hierarchy::Children [
+#hangarTabText
+bevy_ui::widget::text::Text("HANGAR")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
 
-            #MissionControlButton
-            bevy_ui::widget::button::Button
-            bevy_ui::ui_node::Node {
-                width: bevy_ui::geometry::Val::Px(190.0),
-                height: bevy_ui::geometry::Val::Px(48.0),
-                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                align_items: bevy_ui::ui_node::AlignItems::Center,
-                justify_content: bevy_ui::ui_node::JustifyContent::Center,
-            }
-            bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.08,
-                green: 0.12,
-                blue: 0.18,
-                alpha: 0.96,
-            }))
-            foundation_runtime_library::menu::FoundationMenuButton {
-                action: "clear_and_open_scene",
-                scene_key: "last-beacon/mission_control",
-                stack_key: "mission-control",
-            }
-            bevy_ecs::hierarchy::Children [
-                bevy_ui::widget::text::Text("Mission Control")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.92,
-                    green: 0.96,
-                    blue: 1.0,
-                    alpha: 1.0,
-                }))
-            ],
+#garageTab
+bevy_ui::widget::button::Button
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(116.0),
+    height: bevy_ui::geometry::Val::Px(42.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(10.0), right: bevy_ui::geometry::Val::Px(10.0), top: bevy_ui::geometry::Val::Px(12.0), bottom: bevy_ui::geometry::Val::Px(10.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }), }
+last_beacon::ui_widgets::LastBeaconBeaconTabButton
+foundation_runtime_library::menu::FoundationMenuButton {
+    action: "clear_and_open_scene",
+    scene_key: "last-beacon/garage",
+    stack_key: "garage",
+}
+bevy_ecs::hierarchy::Children [
+#garageTabText
+bevy_ui::widget::text::Text("GARAGE")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }))
+],
 
-            #FabricationButton
-            bevy_ui::widget::button::Button
-            bevy_ui::ui_node::Node {
-                width: bevy_ui::geometry::Val::Px(190.0),
-                height: bevy_ui::geometry::Val::Px(48.0),
-                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                align_items: bevy_ui::ui_node::AlignItems::Center,
-                justify_content: bevy_ui::ui_node::JustifyContent::Center,
-            }
-            bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.08,
-                green: 0.12,
-                blue: 0.18,
-                alpha: 0.96,
-            }))
-            foundation_runtime_library::menu::FoundationMenuButton {
-                action: "clear_and_open_scene",
-                scene_key: "last-beacon/fabrication",
-                stack_key: "fabrication",
-            }
-            bevy_ecs::hierarchy::Children [
-                bevy_ui::widget::text::Text("Fabrication")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.92,
-                    green: 0.96,
-                    blue: 1.0,
-                    alpha: 1.0,
-                }))
-            ],
+#missionsTab
+bevy_ui::widget::button::Button
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(156.0),
+    height: bevy_ui::geometry::Val::Px(42.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(10.0), right: bevy_ui::geometry::Val::Px(10.0), top: bevy_ui::geometry::Val::Px(12.0), bottom: bevy_ui::geometry::Val::Px(10.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), }
+last_beacon::ui_widgets::LastBeaconBeaconTabButton
+foundation_runtime_library::menu::FoundationMenuButton {
+    action: "clear_and_open_scene",
+    scene_key: "last-beacon/mission_control",
+    stack_key: "missions",
+}
+bevy_ecs::hierarchy::Children [
+#missionsTabText
+bevy_ui::widget::text::Text("MISSION CONTROL")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
 
-            #SiloUpgradesButton
-            bevy_ui::widget::button::Button
-            bevy_ui::ui_node::Node {
-                width: bevy_ui::geometry::Val::Px(190.0),
-                height: bevy_ui::geometry::Val::Px(48.0),
-                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                align_items: bevy_ui::ui_node::AlignItems::Center,
-                justify_content: bevy_ui::ui_node::JustifyContent::Center,
-            }
-            bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.08,
-                green: 0.12,
-                blue: 0.18,
-                alpha: 0.96,
-            }))
-            foundation_runtime_library::menu::FoundationMenuButton {
-                action: "clear_and_open_scene",
-                scene_key: "last-beacon/silo_upgrades",
-                stack_key: "silo-upgrades",
-            }
-            bevy_ecs::hierarchy::Children [
-                bevy_ui::widget::text::Text("Silo Upgrades")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.92,
-                    green: 0.96,
-                    blue: 1.0,
-                    alpha: 1.0,
-                }))
-            ]
-        ],
+#fabricationTab
+bevy_ui::widget::button::Button
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(116.0),
+    height: bevy_ui::geometry::Val::Px(42.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(10.0), right: bevy_ui::geometry::Val::Px(10.0), top: bevy_ui::geometry::Val::Px(12.0), bottom: bevy_ui::geometry::Val::Px(10.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), }
+last_beacon::ui_widgets::LastBeaconBeaconTabButton
+foundation_runtime_library::menu::FoundationMenuButton {
+    action: "clear_and_open_scene",
+    scene_key: "last-beacon/fabrication",
+    stack_key: "fabrication",
+}
+bevy_ecs::hierarchy::Children [
+#fabricationTabText
+bevy_ui::widget::text::Text("FABRICATION")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
 
-        #ResourceChips
-        bevy_ui::ui_node::Node {
-            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-            align_items: bevy_ui::ui_node::AlignItems::Center,
-            justify_content: bevy_ui::ui_node::JustifyContent::FlexEnd,
-            column_gap: bevy_ui::geometry::Val::Px(10.0),
-        }
-        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-            red: 0.01,
-            green: 0.02,
-            blue: 0.04,
-            alpha: 0.84,
-        }))
-        bevy_ecs::hierarchy::Children [
-            bevy_ui::widget::text::Text("Scrap 1,240")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(13.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.92,
-                green: 0.96,
-                blue: 1.0,
-                alpha: 1.0,
-            })),
+#upgradesTab
+bevy_ui::widget::button::Button
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(140.0),
+    height: bevy_ui::geometry::Val::Px(42.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(10.0), right: bevy_ui::geometry::Val::Px(10.0), top: bevy_ui::geometry::Val::Px(12.0), bottom: bevy_ui::geometry::Val::Px(10.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }), }
+last_beacon::ui_widgets::LastBeaconBeaconTabButton
+foundation_runtime_library::menu::FoundationMenuButton {
+    action: "clear_and_open_scene",
+    scene_key: "last-beacon/silo_upgrades",
+    stack_key: "upgrades",
+}
+bevy_ecs::hierarchy::Children [
+#upgradesTabText
+bevy_ui::widget::text::Text("SILO UPGRADES")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+]
+],
 
-            bevy_ui::widget::text::Text("Power 82/100")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(13.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.18,
-                green: 0.78,
-                blue: 0.86,
-                alpha: 1.0,
-            })),
+#ResourceCluster
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexEnd,
+    column_gap: bevy_ui::geometry::Val::Px(12.0),
+}
+bevy_ecs::hierarchy::Children [
+#ResourceChipPanel
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    column_gap: bevy_ui::geometry::Val::Px(10.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(12.0), right: bevy_ui::geometry::Val::Px(12.0), top: bevy_ui::geometry::Val::Px(6.0), bottom: bevy_ui::geometry::Val::Px(6.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#ScrapResource
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    column_gap: bevy_ui::geometry::Val::Px(5.0),
+}
+bevy_ecs::hierarchy::Children [
+#ScrapResourceDot
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(6.0),
+    height: bevy_ui::geometry::Val::Px(6.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(3.0), top_right: bevy_ui::geometry::Val::Px(3.0), bottom_right: bevy_ui::geometry::Val::Px(3.0), bottom_left: bevy_ui::geometry::Val::Px(3.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
 
-            bevy_ui::widget::text::Text("Cores 3")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(13.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.96,
-                green: 0.66,
-                blue: 0.26,
-                alpha: 1.0,
-            })),
+#ScrapResourceAmount
+bevy_ui::widget::text::Text("2450")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.796, green: 0.835, blue: 0.882, alpha: 1.0 }))
+],
 
-            bevy_ui::widget::text::Text("Silo 4")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(13.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.18,
-                green: 0.78,
-                blue: 0.86,
-                alpha: 1.0,
-            }))
-        ]
-    ],
+#ElectricalResource
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    column_gap: bevy_ui::geometry::Val::Px(5.0),
+}
+bevy_ecs::hierarchy::Children [
+#ElectricalResourceDot
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(6.0),
+    height: bevy_ui::geometry::Val::Px(6.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(3.0), top_right: bevy_ui::geometry::Val::Px(3.0), bottom_right: bevy_ui::geometry::Val::Px(3.0), bottom_left: bevy_ui::geometry::Val::Px(3.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 })),
 
-    #GarageBody
-    bevy_ui::ui_node::Node {
-        width: bevy_ui::geometry::Val::Percent(100.0),
-        height: bevy_ui::geometry::Val::Percent(100.0),
-        flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-        align_items: bevy_ui::ui_node::AlignItems::FlexStart,
-        justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-        column_gap: bevy_ui::geometry::Val::Px(18.0),
-    }
-    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.0,
-        green: 0.0,
-        blue: 0.0,
-        alpha: 0.0,
-    }))
-    bevy_ecs::hierarchy::Children [
-        #GarageMain
-        bevy_ui::ui_node::Node {
-            width: bevy_ui::geometry::Val::Percent(100.0),
-            flex_direction: bevy_ui::ui_node::FlexDirection::Column,
-            align_items: bevy_ui::ui_node::AlignItems::Stretch,
-            justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-            row_gap: bevy_ui::geometry::Val::Px(14.0),
-        }
-        bevy_ecs::hierarchy::Children [
-            bevy_ui::widget::text::Text("Garage")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(30.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.92,
-                green: 0.96,
-                blue: 1.0,
-                alpha: 1.0,
-            })),
+#ElectricalResourceAmount
+bevy_ui::widget::text::Text("640")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.796, green: 0.835, blue: 0.882, alpha: 1.0 }))
+],
 
-            bevy_ui::widget::text::Text("Select a robot to equip for deployment.")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(15.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.5,
-                green: 0.58,
-                blue: 0.68,
-                alpha: 1.0,
-            })),
+#MechanicalResource
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    column_gap: bevy_ui::geometry::Val::Px(5.0),
+}
+bevy_ecs::hierarchy::Children [
+#MechanicalResourceDot
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(6.0),
+    height: bevy_ui::geometry::Val::Px(6.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(3.0), top_right: bevy_ui::geometry::Val::Px(3.0), bottom_right: bevy_ui::geometry::Val::Px(3.0), bottom_left: bevy_ui::geometry::Val::Px(3.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 })),
 
-            #RobotStatsAndRoster
-            bevy_ui::ui_node::Node {
-                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                align_items: bevy_ui::ui_node::AlignItems::FlexStart,
-                justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-                column_gap: bevy_ui::geometry::Val::Px(18.0),
-            }
-            bevy_ecs::hierarchy::Children [
-                #ScavengerMkIPanel
-                bevy_ui::ui_node::Node {
-                    width: bevy_ui::geometry::Val::Px(320.0),
-                    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
-                    align_items: bevy_ui::ui_node::AlignItems::Stretch,
-                    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
-                    row_gap: bevy_ui::geometry::Val::Px(9.0),
-                }
-                bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.03,
-                    green: 0.05,
-                    blue: 0.08,
-                    alpha: 0.88,
-                }))
-                bevy_ecs::hierarchy::Children [
-                    bevy_ui::widget::text::Text("Scavenger Mk.I")
-                    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-                    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                        red: 0.18,
-                        green: 0.78,
-                        blue: 0.86,
-                        alpha: 1.0,
-                    })),
+#MechanicalResourceAmount
+bevy_ui::widget::text::Text("310")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.796, green: 0.835, blue: 0.882, alpha: 1.0 }))
+],
 
-                    #HealthStat
-                    bevy_ui::ui_node::Node {
-                        width: bevy_ui::geometry::Val::Percent(100.0),
-                        flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                        align_items: bevy_ui::ui_node::AlignItems::Center,
-                        justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-                        column_gap: bevy_ui::geometry::Val::Px(12.0),
-                    }
-                    bevy_ecs::hierarchy::Children [
-                        bevy_ui::widget::text::Text("Health")
-                        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                            red: 0.5,
-                            green: 0.58,
-                            blue: 0.68,
-                            alpha: 1.0,
-                        })),
+#ChemicalResource
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    column_gap: bevy_ui::geometry::Val::Px(5.0),
+}
+bevy_ecs::hierarchy::Children [
+#ChemicalResourceDot
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(6.0),
+    height: bevy_ui::geometry::Val::Px(6.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(3.0), top_right: bevy_ui::geometry::Val::Px(3.0), bottom_right: bevy_ui::geometry::Val::Px(3.0), bottom_left: bevy_ui::geometry::Val::Px(3.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.204, green: 0.827, blue: 0.6, alpha: 1.0 })),
 
-                        bevy_ui::widget::text::Text("72%")
-                        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                            red: 0.18,
-                            green: 0.78,
-                            blue: 0.86,
-                            alpha: 1.0,
-                        }))
-                    ],
+#ChemicalResourceAmount
+bevy_ui::widget::text::Text("85")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.796, green: 0.835, blue: 0.882, alpha: 1.0 }))
+],
 
-                    #WeightStat
-                    bevy_ui::ui_node::Node {
-                        width: bevy_ui::geometry::Val::Percent(100.0),
-                        flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                        align_items: bevy_ui::ui_node::AlignItems::Center,
-                        justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-                        column_gap: bevy_ui::geometry::Val::Px(12.0),
-                    }
-                    bevy_ecs::hierarchy::Children [
-                        bevy_ui::widget::text::Text("Weight")
-                        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                            red: 0.5,
-                            green: 0.58,
-                            blue: 0.68,
-                            alpha: 1.0,
-                        })),
+#ExoticResource
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    column_gap: bevy_ui::geometry::Val::Px(5.0),
+}
+bevy_ecs::hierarchy::Children [
+#ExoticResourceDot
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(6.0),
+    height: bevy_ui::geometry::Val::Px(6.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(3.0), top_right: bevy_ui::geometry::Val::Px(3.0), bottom_right: bevy_ui::geometry::Val::Px(3.0), bottom_left: bevy_ui::geometry::Val::Px(3.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.855, green: 0.275, blue: 0.937, alpha: 1.0 })),
 
-                        bevy_ui::widget::text::Text("340 kg")
-                        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                            red: 0.92,
-                            green: 0.96,
-                            blue: 1.0,
-                            alpha: 1.0,
-                        }))
-                    ],
+#ExoticResourceAmount
+bevy_ui::widget::text::Text("12")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.796, green: 0.835, blue: 0.882, alpha: 1.0 }))
+]
+],
 
-                    #PowerDrawStat
-                    bevy_ui::ui_node::Node {
-                        width: bevy_ui::geometry::Val::Percent(100.0),
-                        flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                        align_items: bevy_ui::ui_node::AlignItems::Center,
-                        justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-                        column_gap: bevy_ui::geometry::Val::Px(12.0),
-                    }
-                    bevy_ecs::hierarchy::Children [
-                        bevy_ui::widget::text::Text("Power Draw")
-                        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                            red: 0.5,
-                            green: 0.58,
-                            blue: 0.68,
-                            alpha: 1.0,
-                        })),
+#SiloLevelChip
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    column_gap: bevy_ui::geometry::Val::Px(6.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(12.0), right: bevy_ui::geometry::Val::Px(12.0), top: bevy_ui::geometry::Val::Px(6.0), bottom: bevy_ui::geometry::Val::Px(6.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#SiloLabel
+bevy_ui::widget::text::Text("SILO")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(10.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.392, green: 0.455, blue: 0.545, alpha: 1.0 })),
 
-                        bevy_ui::widget::text::Text("12 kW")
-                        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                            red: 0.92,
-                            green: 0.96,
-                            blue: 1.0,
-                            alpha: 1.0,
-                        }))
-                    ],
+#SiloLevel
+bevy_ui::widget::text::Text("12")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }))
+]
+]
+],
 
-                    #StorageStat
-                    bevy_ui::ui_node::Node {
-                        width: bevy_ui::geometry::Val::Percent(100.0),
-                        flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                        align_items: bevy_ui::ui_node::AlignItems::Center,
-                        justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-                        column_gap: bevy_ui::geometry::Val::Px(12.0),
-                    }
-                    bevy_ecs::hierarchy::Children [
-                        bevy_ui::widget::text::Text("Storage")
-                        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                            red: 0.5,
-                            green: 0.58,
-                            blue: 0.68,
-                            alpha: 1.0,
-                        })),
+#GarageBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+}
+bevy_ecs::hierarchy::Children [
+#GarageTop
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::FlexStart,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(24.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(24.0), bottom: bevy_ui::geometry::Val::Px(0.0), },
+}
+bevy_ecs::hierarchy::Children [
+#PageHeading
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::FlexStart,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(4.0),
+    margin: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(24.0), },
+}
+bevy_ecs::hierarchy::Children [
+#PageTitle
+bevy_ui::widget::text::Text("Garage")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(24.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 })),
 
-                        bevy_ui::widget::text::Text("18 slots")
-                        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                            red: 0.92,
-                            green: 0.96,
-                            blue: 1.0,
-                            alpha: 1.0,
-                        }))
-                    ]
-                ],
+#PageSubtitle
+bevy_ui::widget::text::Text("Select a robot to equip for deployment.")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
 
-                #RobotRoster
-                bevy_ui::ui_node::Node {
-                    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                    align_items: bevy_ui::ui_node::AlignItems::Center,
-                    justify_content: bevy_ui::ui_node::JustifyContent::FlexEnd,
-                    column_gap: bevy_ui::geometry::Val::Px(12.0),
-                }
-                bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.01,
-                    green: 0.02,
-                    blue: 0.04,
-                    alpha: 0.84,
-                }))
-                bevy_ecs::hierarchy::Children [
-                    #HaulerBeetlePanel
-                    bevy_ui::ui_node::Node {
-                        width: bevy_ui::geometry::Val::Px(190.0),
-                        flex_direction: bevy_ui::ui_node::FlexDirection::Column,
-                        align_items: bevy_ui::ui_node::AlignItems::Stretch,
-                        justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
-                        row_gap: bevy_ui::geometry::Val::Px(9.0),
-                    }
-                    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                        red: 0.03,
-                        green: 0.05,
-                        blue: 0.08,
-                        alpha: 0.88,
-                    }))
-                    bevy_ecs::hierarchy::Children [
-                        bevy_ui::widget::text::Text("Hauler Beetle")
-                        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-                        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                            red: 0.18,
-                            green: 0.78,
-                            blue: 0.86,
-                            alpha: 1.0,
-                        })),
+#RobotFloatingStats
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(288.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#RobotFloatingStatsHeader
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+}
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#RobotFloatingStatsTitle
+bevy_ui::widget::text::Text("SCAVENGER MK.I")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
 
-                        #HealthStat
-                        bevy_ui::ui_node::Node {
-                            width: bevy_ui::geometry::Val::Percent(100.0),
-                            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                            align_items: bevy_ui::ui_node::AlignItems::Center,
-                            justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-                            column_gap: bevy_ui::geometry::Val::Px(12.0),
-                        }
-                        bevy_ecs::hierarchy::Children [
-                            bevy_ui::widget::text::Text("Health")
-                            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                                red: 0.5,
-                                green: 0.58,
-                                blue: 0.68,
-                                alpha: 1.0,
-                            })),
+#RobotFloatingStatsBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(2.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(16.0), bottom: bevy_ui::geometry::Val::Px(16.0), },
+}
+bevy_ecs::hierarchy::Children [
+#HealthStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#HealthStatLabel
+bevy_ui::widget::text::Text("Health")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
 
-                            bevy_ui::widget::text::Text("91%")
-                            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                                red: 0.92,
-                                green: 0.96,
-                                blue: 1.0,
-                                alpha: 1.0,
-                            }))
-                        ],
+#HealthStatSlider
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(128.0),
+    height: bevy_ui::geometry::Val::Px(6.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(3.0), top_right: bevy_ui::geometry::Val::Px(3.0), bottom_right: bevy_ui::geometry::Val::Px(3.0), bottom_left: bevy_ui::geometry::Val::Px(3.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }))
+bevy_ecs::hierarchy::Children [
+#HealthStatSliderFill
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(72.0),
+    height: bevy_ui::geometry::Val::Px(6.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(3.0), top_right: bevy_ui::geometry::Val::Px(3.0), bottom_right: bevy_ui::geometry::Val::Px(3.0), bottom_left: bevy_ui::geometry::Val::Px(3.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+]
+],
 
-                        #EquippedStat
-                        bevy_ui::ui_node::Node {
-                            width: bevy_ui::geometry::Val::Percent(100.0),
-                            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                            align_items: bevy_ui::ui_node::AlignItems::Center,
-                            justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-                            column_gap: bevy_ui::geometry::Val::Px(12.0),
-                        }
-                        bevy_ecs::hierarchy::Children [
-                            bevy_ui::widget::text::Text("Equipped")
-                            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                                red: 0.5,
-                                green: 0.58,
-                                blue: 0.68,
-                                alpha: 1.0,
-                            })),
+#WeightStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#WeightStatLabel
+bevy_ui::widget::text::Text("Weight")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
 
-                            bevy_ui::widget::text::Text("No")
-                            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                                red: 0.92,
-                                green: 0.96,
-                                blue: 1.0,
-                                alpha: 1.0,
-                            }))
-                        ]
-                    ],
+#WeightStatValue
+bevy_ui::widget::text::Text("340 kg")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
 
-                    #ScoutMitePanel
-                    bevy_ui::ui_node::Node {
-                        width: bevy_ui::geometry::Val::Px(190.0),
-                        flex_direction: bevy_ui::ui_node::FlexDirection::Column,
-                        align_items: bevy_ui::ui_node::AlignItems::Stretch,
-                        justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
-                        row_gap: bevy_ui::geometry::Val::Px(9.0),
-                    }
-                    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                        red: 0.03,
-                        green: 0.05,
-                        blue: 0.08,
-                        alpha: 0.88,
-                    }))
-                    bevy_ecs::hierarchy::Children [
-                        bevy_ui::widget::text::Text("Scout Mite")
-                        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-                        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                            red: 0.18,
-                            green: 0.78,
-                            blue: 0.86,
-                            alpha: 1.0,
-                        })),
+#DrawStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#DrawStatLabel
+bevy_ui::widget::text::Text("Power Draw")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
 
-                        #HealthStat
-                        bevy_ui::ui_node::Node {
-                            width: bevy_ui::geometry::Val::Percent(100.0),
-                            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                            align_items: bevy_ui::ui_node::AlignItems::Center,
-                            justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-                            column_gap: bevy_ui::geometry::Val::Px(12.0),
-                        }
-                        bevy_ecs::hierarchy::Children [
-                            bevy_ui::widget::text::Text("Health")
-                            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                                red: 0.5,
-                                green: 0.58,
-                                blue: 0.68,
-                                alpha: 1.0,
-                            })),
+#DrawStatValue
+bevy_ui::widget::text::Text("12 kW")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
 
-                            bevy_ui::widget::text::Text("54%")
-                            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                                red: 0.92,
-                                green: 0.96,
-                                blue: 1.0,
-                                alpha: 1.0,
-                            }))
-                        ],
+#StorageStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#StorageStatLabel
+bevy_ui::widget::text::Text("Storage")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
 
-                        #EquippedStat
-                        bevy_ui::ui_node::Node {
-                            width: bevy_ui::geometry::Val::Percent(100.0),
-                            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
-                            align_items: bevy_ui::ui_node::AlignItems::Center,
-                            justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
-                            column_gap: bevy_ui::geometry::Val::Px(12.0),
-                        }
-                        bevy_ecs::hierarchy::Children [
-                            bevy_ui::widget::text::Text("Equipped")
-                            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                                red: 0.5,
-                                green: 0.58,
-                                blue: 0.68,
-                                alpha: 1.0,
-                            })),
+#StorageStatValue
+bevy_ui::widget::text::Text("18 slots")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+]
+]
+]
+],
 
-                            bevy_ui::widget::text::Text("No")
-                            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                                red: 0.92,
-                                green: 0.96,
-                                blue: 1.0,
-                                alpha: 1.0,
-                            }))
-                        ]
-                    ]
-                ]
-            ]
-        ]
-    ]
+#RobotRosterBar
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    column_gap: bevy_ui::geometry::Val::Px(12.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(16.0), bottom: bevy_ui::geometry::Val::Px(16.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(0.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.008, green: 0.024, blue: 0.09, alpha: 0.7 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#HaulerCard
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(190.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#HaulerCardHeader
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+}
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#HaulerCardTitle
+bevy_ui::widget::text::Text("HAULER BEETLE")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
+
+#HaulerCardBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(2.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(16.0), bottom: bevy_ui::geometry::Val::Px(16.0), },
+}
+bevy_ecs::hierarchy::Children [
+#HaulerHealth
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#HaulerHealthLabel
+bevy_ui::widget::text::Text("Health")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#HaulerHealthValue
+bevy_ui::widget::text::Text("91%")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
+
+#HaulerEquipped
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#HaulerEquippedLabel
+bevy_ui::widget::text::Text("Equipped")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#HaulerEquippedValue
+bevy_ui::widget::text::Text("No")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+]
+]
+],
+
+#ScoutCard
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(190.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#ScoutCardHeader
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+}
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#ScoutCardTitle
+bevy_ui::widget::text::Text("SCOUT MITE")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
+
+#ScoutCardBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(2.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(16.0), bottom: bevy_ui::geometry::Val::Px(16.0), },
+}
+bevy_ecs::hierarchy::Children [
+#ScoutHealth
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#ScoutHealthLabel
+bevy_ui::widget::text::Text("Health")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#ScoutHealthValue
+bevy_ui::widget::text::Text("54%")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
+
+#ScoutEquipped
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#ScoutEquippedLabel
+bevy_ui::widget::text::Text("Equipped")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#ScoutEquippedValue
+bevy_ui::widget::text::Text("No")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+]
+]
+],
+
+#ScavengerCard
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(190.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#ScavengerCardHeader
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+}
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#ScavengerCardTitle
+bevy_ui::widget::text::Text("SCAVENGER MK.I")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
+
+#ScavengerCardBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(2.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(16.0), bottom: bevy_ui::geometry::Val::Px(16.0), },
+}
+bevy_ecs::hierarchy::Children [
+#ScavengerHealth
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#ScavengerHealthLabel
+bevy_ui::widget::text::Text("Health")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#ScavengerHealthValue
+bevy_ui::widget::text::Text("72%")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }))
+],
+
+#ScavengerEquipped
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#ScavengerEquippedLabel
+bevy_ui::widget::text::Text("Equipped")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#ScavengerEquippedValue
+bevy_ui::widget::text::Text("Yes")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.133, green: 0.827, blue: 0.933, alpha: 1.0 }))
+]
+]
+]
+]
+]
 ]

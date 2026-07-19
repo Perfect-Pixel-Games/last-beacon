@@ -1,12 +1,22 @@
+use std::sync::Mutex;
+
 use bevy::{prelude::*, scene::ScenePatch};
 use foundation_runtime_library::prelude::*;
 use last_beacon::{
     asset_root,
-    ui_widgets::{LastBeaconBsnWidget, LastBeaconMainMenuPrimaryButton},
+    ui_widgets::{
+        LastBeaconBeaconPrimaryButton, LastBeaconBeaconTabButton, LastBeaconBsnWidget,
+        LastBeaconMainMenuPrimaryButton,
+    },
 };
+
+static BSN_ASSET_TEST_LOCK: Mutex<()> = Mutex::new(());
 
 #[test]
 fn converted_bsn_scene_assets_load_as_scene_patches() {
+    let _bsn_asset_test_guard = BSN_ASSET_TEST_LOCK
+        .lock()
+        .expect("BSN asset test lock should not be poisoned");
     let mut app = App::new();
     app.add_plugins(MinimalPlugins);
     app.add_plugins(bevy::asset::AssetPlugin {
@@ -45,24 +55,32 @@ fn converted_bsn_scene_assets_load_as_scene_patches() {
     ];
     let scene_handles = scene_asset_paths
         .into_iter()
-        .map(|scene_asset_path| asset_server.load::<ScenePatch>(scene_asset_path))
+        .map(|scene_asset_path| {
+            (
+                scene_asset_path,
+                asset_server.load::<ScenePatch>(scene_asset_path),
+            )
+        })
         .collect::<Vec<_>>();
 
-    for _frame_number in 0..60 {
+    for _frame_number in 0..120 {
         app.update();
     }
 
     let scene_assets = app.world().resource::<Assets<ScenePatch>>();
-    for scene_handle in scene_handles {
+    for (scene_asset_path, scene_handle) in scene_handles {
         assert!(
             scene_assets.get(&scene_handle).is_some(),
-            "the converted .bsn asset should load as a ScenePatch"
+            "the converted .bsn asset `{scene_asset_path}` should load as a ScenePatch"
         );
     }
 }
 
 #[test]
 fn converted_pixel_perfect_scene_spawns_authored_text_through_foundation_bridge() {
+    let _bsn_asset_test_guard = BSN_ASSET_TEST_LOCK
+        .lock()
+        .expect("BSN asset test lock should not be poisoned");
     let mut app = App::new();
     app.add_plugins(MinimalPlugins);
     app.add_plugins(bevy::asset::AssetPlugin {
@@ -131,5 +149,7 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<FoundationSplashUiRoot>()
         .register_type::<FoundationSplashText>()
         .register_type::<LastBeaconBsnWidget>()
-        .register_type::<LastBeaconMainMenuPrimaryButton>();
+        .register_type::<LastBeaconMainMenuPrimaryButton>()
+        .register_type::<LastBeaconBeaconPrimaryButton>()
+        .register_type::<LastBeaconBeaconTabButton>();
 }

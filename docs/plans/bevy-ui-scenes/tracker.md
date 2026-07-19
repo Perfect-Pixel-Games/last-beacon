@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Styling tweaks in progress`
+- Overall status: `Shared silo UI styling tweaks awaiting visual review`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Implementation tweaks in progress with gpt-5.4`
+- Current handoff state: `Shared silo UI tweaks implemented with gpt-5.4; awaiting user visual review`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,11 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Main Menu primary styling commit 9f712c3 pushed to origin/feature/bevy-ui-scenes.`
+- Root commit/push state: `Shared silo UI styling commit bf25e8b pending push; previous Main Menu primary styling commit 9f712c3 pushed to origin/feature/bevy-ui-scenes.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
+- Current tweak state: `Shared Beacon/silo UI chrome and styling pass approved by user for commit.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -187,6 +188,9 @@
 - The old scene name `options_menu` may remain as the internal key for Settings Menu to minimize engine/menu integration churn, even though the user-facing label should be Settings Menu.
 - Main Menu styling now starts a reusable BSN widget library under `game/assets/ui/widgets/main_menu/`. The first implementation adds game-owned `LastBeaconBsnWidget` slots so scenes can compose widget BSN assets without Foundation Engine changes.
 - Dedicated widget assets currently cover Main Menu brand, menu buttons, current save panel, and footer. Other scenes still use the earlier static layout and should be migrated as follow-up tweaks.
+- Shared silo UI pass is now targeting the Svelte website's Beacon layout: absolute 16:9 frame feel, centered top tab navigation, resource chip group, 2px slate panel borders, slate-900 panel fills, cyan active tab underline, compact uppercase labels, and floating/edge panels over the existing simple 3D stand-in.
+- Added game-owned Beacon button style markers so generic Foundation button interaction colors do not overwrite cyan primary actions or transparent Beacon top-nav tabs.
+- Updated BSN asset flow tests to register the new marker types, wait long enough for all BSN assets to load, and serialize the asset-flow tests because the Bevy asset pipeline is shared enough for these app-level tests to race when run concurrently.
 - Main Menu widgets were revised to match the Svelte prototype more closely: Tailwind slate palette values, `#fbbf24` menu accent, `rounded-sm`-style 2px radius, button border/padding proportions, rail width/padding/gaps, and NotoSans font application.
 - Continue is explicitly treated as the primary menu button and now has a game-owned style enforcement marker so generic Foundation button interaction styling cannot override its yellow background. The Main Menu left rail and viewport placeholder no longer author visible borders.
 - The Main Menu smoke run was terminated by timeout after startup and showed no BSN parse/load/apply errors; this confirms startup loading but is not a human visual review.
@@ -198,6 +202,10 @@
 - `2026-07-19`: Fetched latest origin and rebased `feature/bevy-ui-scenes` onto `origin/dev` at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 so the prototype merge is beneath the feature changes.
 - `2026-07-19`: Refined Main Menu widget colors, button shape, font handling, padding, margins, and panel sizing to better match the Svelte prototype; validation passed and commit `9fd1d5e Match main menu prototype style` was pushed.
 - `2026-07-19`: Made Continue persist as a yellow primary button with black text and removed visible borders from the Main Menu rail and viewport placeholder; focused validation passed and commit `9f712c3 Refine main menu primary styling` was pushed.
+- `2026-07-19`: User clarified that the shared silo UI should be fixed to match the website more closely; implementation resumed for Dashboard, Hangar, Garage, Mission Control, Fabrication, and Silo Upgrades shared chrome/styling.
+- `2026-07-19`: Reworked shared Beacon/silo scene chrome for Dashboard, Hangar, Garage, Mission Control, Fabrication, and Silo Upgrades to better match the Svelte website; passed `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, and `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`.
+- `2026-07-19`: User approved the shared Beacon/silo UI styling pass for commit.
+- `2026-07-19`: Committed shared Beacon/silo UI styling pass as `bf25e8b Match shared silo UI prototype style`; push pending.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
