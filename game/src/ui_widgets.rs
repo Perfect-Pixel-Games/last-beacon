@@ -11,8 +11,13 @@ use bevy::{
     input_focus::{FocusCause, InputFocus},
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
-    text::{EditableText, FontSource, TextCursorStyle, TextEdit, TextLayout, TextLayoutInfo},
-    ui::{widget::TextScroll, RelativeCursorPosition},
+    text::{
+        EditableText, FontSource, LineHeight, TextCursorStyle, TextEdit, TextLayout, TextLayoutInfo,
+    },
+    ui::{
+        widget::TextScroll, ComputedUiRenderTargetInfo, RelativeCursorPosition, UiGlobalTransform,
+    },
+    window::PrimaryWindow,
 };
 
 /// Requests that a reusable Last Beacon BSN widget asset be applied to this entity.
@@ -503,22 +508,39 @@ pub fn initialize_last_beacon_ui_text_inputs(
                 .insert(RelativeCursorPosition::default());
         }
 
+        let line_height = if text_input.multiline {
+            LineHeight::Px(16.0)
+        } else {
+            LineHeight::default()
+        };
+
         commands.entity(text_entity).insert((
             Node::default(),
             editable_text,
             TextScroll::default(),
             TextCursorStyle::default(),
             TextLayout::default(),
+            line_height,
         ));
     }
 }
 
 /// Focuses editable text when its authored input container is clicked.
+#[allow(clippy::too_many_arguments)]
 pub fn focus_last_beacon_ui_text_inputs(
     mut input_focus: ResMut<InputFocus>,
     text_inputs: LastBeaconUiTextInputFocusQuery,
     children_query: Query<&Children>,
     editable_text_query: Query<(), With<EditableText>>,
+    mut editable_text_position_query: Query<(
+        &mut EditableText,
+        &ComputedNode,
+        &ComputedUiRenderTargetInfo,
+        &UiGlobalTransform,
+        &TextScroll,
+    )>,
+    windows: Query<&Window, With<PrimaryWindow>>,
+    ui_scale: Res<UiScale>,
 ) {
     for (input_entity, _text_input, interaction, input_children) in &text_inputs {
         if *interaction != Interaction::Pressed {
@@ -537,6 +559,12 @@ pub fn focus_last_beacon_ui_text_inputs(
             text_entity
         };
         input_focus.set(text_entity, FocusCause::Pressed);
+        queue_text_input_click_placement(
+            text_entity,
+            &mut editable_text_position_query,
+            &windows,
+            ui_scale.0,
+        );
     }
 }
 
@@ -795,7 +823,7 @@ pub fn drag_last_beacon_ui_text_box_scrollbars(
         else {
             continue;
         };
-        let scroll_progress = (0.5 - normalized_cursor_position.y).clamp(0.0, 1.0);
+        let scroll_progress = (normalized_cursor_position.y + 0.5).clamp(0.0, 1.0);
         let max_scroll_y = text_box_max_scroll_y(text_layout, computed_node);
         let next_scroll_y = scroll_progress * max_scroll_y;
         text_scroll.0.y = next_scroll_y;
@@ -1154,6 +1182,40 @@ fn format_value(value: f32) -> String {
     } else {
         format!("{value:.1}")
     }
+}
+
+fn queue_text_input_click_placement(
+    text_entity: Entity,
+    editable_text_query: &mut Query<(
+        &mut EditableText,
+        &ComputedNode,
+        &ComputedUiRenderTargetInfo,
+        &UiGlobalTransform,
+        &TextScroll,
+    )>,
+    windows: &Query<&Window, With<PrimaryWindow>>,
+    ui_scale: f32,
+) {
+    let Ok(window) = windows.single() else {
+        return;
+    };
+    let Some(cursor_position) = window.cursor_position() else {
+        return;
+    };
+    let Ok((mut editable_text, computed_node, render_target_info, global_transform, text_scroll)) =
+        editable_text_query.get_mut(text_entity)
+    else {
+        return;
+    };
+    let Some(local_position) = global_transform.try_inverse().map(|inverse| {
+        inverse.transform_point2(cursor_position * render_target_info.scale_factor() / ui_scale)
+            - computed_node.content_box().min
+            + text_scroll.0
+    }) else {
+        return;
+    };
+
+    editable_text.queue_edit(TextEdit::MoveToPoint(local_position));
 }
 
 fn text_box_max_scroll_y(text_layout: &TextLayoutInfo, computed_node: &ComputedNode) -> f32 {
