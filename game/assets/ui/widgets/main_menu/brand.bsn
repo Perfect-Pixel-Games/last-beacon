@@ -1,0 +1,24 @@
+#MainMenuBrand
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(0.0),
+    margin: bevy_ui::geometry::UiRect {
+        left: bevy_ui::geometry::Val::Px(0.0),
+        right: bevy_ui::geometry::Val::Px(0.0),
+        top: bevy_ui::geometry::Val::Px(0.0),
+        bottom: bevy_ui::geometry::Val::Px(8.0),
+    },
+}
+bevy_ecs::hierarchy::Children [
+    bevy_ui::widget::text::Text("Last Beacon")
+    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(20.0) }
+    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 0.945,
+        green: 0.961,
+        blue: 0.976,
+        alpha: 1.0,
+    }))
+]

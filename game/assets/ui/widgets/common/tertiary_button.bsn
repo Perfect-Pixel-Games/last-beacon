@@ -1,0 +1,21 @@
+#TertiaryButton
+bevy_ui::widget::button::Button
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(38.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), }
+last_beacon::ui_widgets::LastBeaconUiButton { variant: "tertiary" }
+foundation_runtime_library::menu::FoundationMenuButton { action: "none", scene_key: "", stack_key: "" }
+bevy_ecs::hierarchy::Children [
+    bevy_ui::widget::text::Text("TERTIARY")
+    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+]

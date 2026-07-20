@@ -3,114 +3,338 @@ bevy_ui::ui_node::Node {
     width: bevy_ui::geometry::Val::Percent(100.0),
     height: bevy_ui::geometry::Val::Percent(100.0),
     flex_direction: bevy_ui::ui_node::FlexDirection::Column,
-    align_items: bevy_ui::ui_node::AlignItems::Center,
-    justify_content: bevy_ui::ui_node::JustifyContent::Center,
-    row_gap: bevy_ui::geometry::Val::Px(16.0),
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
 }
-bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-    red: 0.02,
-    green: 0.02,
-    blue: 0.04,
-    alpha: 0.92,
-}))
+last_beacon::LastBeaconHideWhenSettingsOpen
 bevy_ecs::hierarchy::Children [
-    bevy_ui::widget::text::Text("Paused")
-    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(64.0) }
-    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 1.0,
-        green: 1.0,
-        blue: 1.0,
-        alpha: 1.0,
-    })),
-
-    bevy_ui::widget::button::Button
+    #PauseMenuRail
     bevy_ui::ui_node::Node {
-        width: bevy_ui::geometry::Val::Px(260.0),
-        height: bevy_ui::geometry::Val::Px(56.0),
-        align_items: bevy_ui::ui_node::AlignItems::Center,
+        width: bevy_ui::geometry::Val::Px(340.0),
+        height: bevy_ui::geometry::Val::Percent(100.0),
+        flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+        align_items: bevy_ui::ui_node::AlignItems::Stretch,
         justify_content: bevy_ui::ui_node::JustifyContent::Center,
+        row_gap: bevy_ui::geometry::Val::Px(18.0),
+        padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(40.0), right: bevy_ui::geometry::Val::Px(40.0), top: bevy_ui::geometry::Val::Px(40.0), bottom: bevy_ui::geometry::Val::Px(40.0), },
     }
     bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.15,
-        green: 0.15,
-        blue: 0.18,
-        alpha: 1.0,
+        red: 0.01,
+        green: 0.02,
+        blue: 0.04,
+        alpha: 0.84,
     }))
-    foundation_runtime_library::menu::FoundationMenuButton {
-        action: "resume",
-        scene_key: "",
-        stack_key: "",
-    }
-    bevy_ecs::hierarchy::Children [
-        bevy_ui::widget::text::Text("Resume")
-        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(28.0) }
-        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-            red: 1.0,
-            green: 1.0,
-            blue: 1.0,
-            alpha: 1.0,
-        }))
-    ],
-
-    bevy_ui::widget::button::Button
-    bevy_ui::ui_node::Node {
-        width: bevy_ui::geometry::Val::Px(260.0),
-        height: bevy_ui::geometry::Val::Px(56.0),
-        align_items: bevy_ui::ui_node::AlignItems::Center,
-        justify_content: bevy_ui::ui_node::JustifyContent::Center,
-    }
-    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.15,
-        green: 0.15,
-        blue: 0.18,
-        alpha: 1.0,
-    }))
-    foundation_runtime_library::menu::FoundationMenuButton {
-        action: "open_overlay_scene",
-        scene_key: "last-beacon/options_menu",
-        stack_key: "options",
-    }
-    bevy_ecs::hierarchy::Children [
-        bevy_ui::widget::text::Text("Options")
-        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(28.0) }
-        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-            red: 1.0,
-            green: 1.0,
-            blue: 1.0,
-            alpha: 1.0,
-        }))
-    ],
-
-    bevy_ui::widget::button::Button
-    bevy_ui::ui_node::Node {
-        width: bevy_ui::geometry::Val::Px(260.0),
-        height: bevy_ui::geometry::Val::Px(56.0),
-        align_items: bevy_ui::ui_node::AlignItems::Center,
-        justify_content: bevy_ui::ui_node::JustifyContent::Center,
-    }
-    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.15,
-        green: 0.15,
-        blue: 0.18,
-        alpha: 1.0,
-    }))
-    foundation_runtime_library::menu::FoundationMenuButton {
-        action: "clear_and_open_scene",
-        scene_key: "last-beacon/main_menu",
-        stack_key: "main-menu",
-    }
-    bevy_ecs::hierarchy::Children [
-        bevy_ui::widget::text::Text("Main Menu")
-        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(28.0) }
-        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-            red: 1.0,
-            green: 1.0,
-            blue: 1.0,
-            alpha: 1.0,
-        }))
-    ],
-
-    #PauseEscapeHandler
     foundation_runtime_library::menu::FoundationCloseOnEscape
     foundation_runtime_library::menu::FoundationResumeOnEscape
+    bevy_ecs::hierarchy::Children [
+        bevy_ui::widget::text::Text("Paused")
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(30.0) }
+        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.92,
+            green: 0.96,
+            blue: 1.0,
+            alpha: 1.0,
+        })),
+
+        #ResumeButton
+        bevy_ui::widget::button::Button
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Percent(100.0),
+            height: bevy_ui::geometry::Val::Px(38.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+            align_items: bevy_ui::ui_node::AlignItems::Center,
+            justify_content: bevy_ui::ui_node::JustifyContent::Center,
+            padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+            border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+            border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
+        bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), }
+        last_beacon::ui_widgets::LastBeaconUiButton { variant: "primary" }
+        foundation_runtime_library::menu::FoundationMenuButton {
+            action: "resume",
+            scene_key: "",
+            stack_key: "",
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Resume")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.92,
+                green: 0.96,
+                blue: 1.0,
+                alpha: 1.0,
+            }))
+        ],
+
+        #AbandonRunButton
+        bevy_ui::widget::button::Button
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Percent(100.0),
+            height: bevy_ui::geometry::Val::Px(38.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+            align_items: bevy_ui::ui_node::AlignItems::Center,
+            justify_content: bevy_ui::ui_node::JustifyContent::Center,
+            padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+            border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+            border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }))
+        bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), }
+        last_beacon::ui_widgets::LastBeaconUiButton { variant: "secondary" }
+        foundation_runtime_library::menu::FoundationMenuButton {
+            action: "clear_and_open_scene",
+            scene_key: "last-beacon/beacon",
+            stack_key: "beacon-shell",
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Abandon Run")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.92,
+                green: 0.96,
+                blue: 1.0,
+                alpha: 1.0,
+            }))
+        ],
+
+        #SettingsButton
+        bevy_ui::widget::button::Button
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Percent(100.0),
+            height: bevy_ui::geometry::Val::Px(38.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+            align_items: bevy_ui::ui_node::AlignItems::Center,
+            justify_content: bevy_ui::ui_node::JustifyContent::Center,
+            padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+            border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+            border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }))
+        bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), }
+        last_beacon::ui_widgets::LastBeaconUiButton { variant: "secondary" }
+        foundation_runtime_library::menu::FoundationMenuButton {
+            action: "open_overlay_scene",
+            scene_key: "last-beacon/options_menu",
+            stack_key: "settings",
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Settings")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.92,
+                green: 0.96,
+                blue: 1.0,
+                alpha: 1.0,
+            }))
+        ],
+
+        #SaveandQuittoMenuButton
+        bevy_ui::widget::button::Button
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Percent(100.0),
+            height: bevy_ui::geometry::Val::Px(38.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+            align_items: bevy_ui::ui_node::AlignItems::Center,
+            justify_content: bevy_ui::ui_node::JustifyContent::Center,
+            padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+            border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+            border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }))
+        bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), }
+        last_beacon::ui_widgets::LastBeaconUiButton { variant: "secondary" }
+        foundation_runtime_library::menu::FoundationMenuButton {
+            action: "clear_and_open_scene",
+            scene_key: "last-beacon/main_menu",
+            stack_key: "main-menu",
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Save and Quit to Menu")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.92,
+                green: 0.96,
+                blue: 1.0,
+                alpha: 1.0,
+            }))
+        ],
+
+        #SaveandQuitGameButton
+        bevy_ui::widget::button::Button
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Percent(100.0),
+            height: bevy_ui::geometry::Val::Px(38.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+            align_items: bevy_ui::ui_node::AlignItems::Center,
+            justify_content: bevy_ui::ui_node::JustifyContent::Center,
+            padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+            border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+            border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
+        bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), }
+        last_beacon::ui_widgets::LastBeaconUiButton { variant: "tertiary" }
+        foundation_runtime_library::menu::FoundationMenuButton {
+            action: "exit",
+            scene_key: "",
+            stack_key: "",
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Save and Quit Game")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.92,
+                green: 0.96,
+                blue: 1.0,
+                alpha: 1.0,
+            }))
+        ],
+
+        #CurrentExpeditionPanel
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Px(260.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+            align_items: bevy_ui::ui_node::AlignItems::Stretch,
+            justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+            row_gap: bevy_ui::geometry::Val::Px(9.0),
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.03,
+            green: 0.05,
+            blue: 0.08,
+            alpha: 0.88,
+        }))
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("Current Expedition")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.984,
+                green: 0.749,
+                blue: 0.141,
+                alpha: 1.0,
+            })),
+
+            #LocationStat
+            bevy_ui::ui_node::Node {
+                width: bevy_ui::geometry::Val::Percent(100.0),
+                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+                align_items: bevy_ui::ui_node::AlignItems::Center,
+                justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+                column_gap: bevy_ui::geometry::Val::Px(12.0),
+            }
+            bevy_ecs::hierarchy::Children [
+                bevy_ui::widget::text::Text("Location")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.5,
+                    green: 0.58,
+                    blue: 0.68,
+                    alpha: 1.0,
+                })),
+
+                bevy_ui::widget::text::Text("Rusting Factory")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.92,
+                    green: 0.96,
+                    blue: 1.0,
+                    alpha: 1.0,
+                }))
+            ],
+
+            #ElapsedTimeStat
+            bevy_ui::ui_node::Node {
+                width: bevy_ui::geometry::Val::Percent(100.0),
+                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+                align_items: bevy_ui::ui_node::AlignItems::Center,
+                justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+                column_gap: bevy_ui::geometry::Val::Px(12.0),
+            }
+            bevy_ecs::hierarchy::Children [
+                bevy_ui::widget::text::Text("Elapsed Time")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.5,
+                    green: 0.58,
+                    blue: 0.68,
+                    alpha: 1.0,
+                })),
+
+                bevy_ui::widget::text::Text("8m 42s")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.92,
+                    green: 0.96,
+                    blue: 1.0,
+                    alpha: 1.0,
+                }))
+            ],
+
+            #RobotHealthStat
+            bevy_ui::ui_node::Node {
+                width: bevy_ui::geometry::Val::Percent(100.0),
+                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+                align_items: bevy_ui::ui_node::AlignItems::Center,
+                justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+                column_gap: bevy_ui::geometry::Val::Px(12.0),
+            }
+            bevy_ecs::hierarchy::Children [
+                bevy_ui::widget::text::Text("Robot Health")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.5,
+                    green: 0.58,
+                    blue: 0.68,
+                    alpha: 1.0,
+                })),
+
+                bevy_ui::widget::text::Text("72%")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.984,
+                    green: 0.749,
+                    blue: 0.141,
+                    alpha: 1.0,
+                }))
+            ],
+
+            #CargoStat
+            bevy_ui::ui_node::Node {
+                width: bevy_ui::geometry::Val::Percent(100.0),
+                flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+                align_items: bevy_ui::ui_node::AlignItems::Center,
+                justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+                column_gap: bevy_ui::geometry::Val::Px(12.0),
+            }
+            bevy_ecs::hierarchy::Children [
+                bevy_ui::widget::text::Text("Cargo")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.5,
+                    green: 0.58,
+                    blue: 0.68,
+                    alpha: 1.0,
+                })),
+
+                bevy_ui::widget::text::Text("11 / 18 slots")
+                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                    red: 0.92,
+                    green: 0.96,
+                    blue: 1.0,
+                    alpha: 1.0,
+                }))
+            ]
+        ],
+
+        bevy_ui::widget::text::Text("prototype build 0.0.1")
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
+        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.5,
+            green: 0.58,
+            blue: 0.68,
+            alpha: 1.0,
+        }))
+    ]
 ]

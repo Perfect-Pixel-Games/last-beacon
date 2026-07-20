@@ -12,14 +12,42 @@ pub const PIXEL_PERFECT_SPLASH_SCENE: &str = "last-beacon/splash_pixel_perfect";
 pub const BEVY_SPLASH_SCENE: &str = "last-beacon/splash_bevy";
 /// Scene key for the example main menu.
 pub const MAIN_MENU_SCENE: &str = "last-beacon/main_menu";
-/// Scene key for the stack-based options menu.
+/// Scene key for the stack-based settings menu.
 pub const OPTIONS_MENU_SCENE: &str = "last-beacon/options_menu";
+/// Scene key for the persistent Beacon shell.
+pub const BEACON_SCENE: &str = "last-beacon/beacon";
+/// Stable stack key for the persistent Beacon shell.
+pub const BEACON_SHELL_STACK_KEY: &str = "beacon-shell";
+/// Stable stack key for the currently selected Beacon page.
+pub const BEACON_PAGE_STACK_KEY: &str = "beacon-page";
+/// Scene key for the Beacon dashboard.
+pub const DASHBOARD_SCENE: &str = "last-beacon/dashboard";
+/// Scene key for the Beacon hangar.
+pub const HANGAR_SCENE: &str = "last-beacon/hangar";
+/// Scene key for the Beacon garage.
+pub const GARAGE_SCENE: &str = "last-beacon/garage";
+/// Scene key for mission control.
+pub const MISSION_CONTROL_SCENE: &str = "last-beacon/mission_control";
+/// Scene key for the fabrication bay.
+pub const FABRICATION_SCENE: &str = "last-beacon/fabrication";
+/// Scene key for the reusable UI widget playground.
+pub const UI_PLAYGROUND_SCENE: &str = "last-beacon/ui_playground";
+/// Scene key for silo upgrades.
+pub const SILO_UPGRADES_SCENE: &str = "last-beacon/silo_upgrades";
 /// Scene key for the scrolling credits scene.
 pub const CREDITS_SCENE: &str = "last-beacon/credits";
 /// Scene key for the small sample gameplay level.
 pub const GAMEPLAY_LEVEL_SCENE: &str = "last-beacon/gameplay_level";
 /// Scene key for the gameplay pause menu.
 pub const PAUSE_MENU_SCENE: &str = "last-beacon/pause_menu";
+
+/// Button data that replaces the current Beacon page while leaving the shell in place.
+#[derive(Clone, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconBeaconPageButton {
+    /// Scene key for the page that should become the selected Beacon tab content.
+    pub scene_key: String,
+}
 
 /// Registers LastBeacon scene-stack keys with their `.bsn` asset files.
 pub fn register_last_beacon_bsn_scenes(mut registry: ResMut<FoundationBsnSceneRegistry>) {
@@ -31,6 +59,14 @@ pub fn register_last_beacon_bsn_scenes(mut registry: ResMut<FoundationBsnSceneRe
     registry.register_scene(BEVY_SPLASH_SCENE, "scenes/bevy_splash.bsn");
     registry.register_scene(MAIN_MENU_SCENE, "scenes/main_menu.bsn");
     registry.register_scene(OPTIONS_MENU_SCENE, "scenes/options_menu.bsn");
+    registry.register_scene(BEACON_SCENE, "scenes/beacon.bsn");
+    registry.register_scene(DASHBOARD_SCENE, "scenes/dashboard.bsn");
+    registry.register_scene(HANGAR_SCENE, "scenes/hangar.bsn");
+    registry.register_scene(GARAGE_SCENE, "scenes/garage.bsn");
+    registry.register_scene(MISSION_CONTROL_SCENE, "scenes/mission_control.bsn");
+    registry.register_scene(FABRICATION_SCENE, "scenes/fabrication.bsn");
+    registry.register_scene(UI_PLAYGROUND_SCENE, "scenes/ui_playground.bsn");
+    registry.register_scene(SILO_UPGRADES_SCENE, "scenes/silo_upgrades.bsn");
     registry.register_scene(CREDITS_SCENE, "scenes/credits.bsn");
     registry.register_scene(GAMEPLAY_LEVEL_SCENE, "scenes/gameplay_level.bsn");
     registry.register_scene(PAUSE_MENU_SCENE, "scenes/pause_menu.bsn");
@@ -70,6 +106,7 @@ fn default_startup_scene_commands() -> Vec<SceneCommand> {
 pub fn spawn_requested_last_beacon_scene_drivers(
     mut commands: Commands,
     mut scene_requests: MessageReader<SceneLoadRequested>,
+    mut scene_commands: MessageWriter<SceneCommand>,
 ) {
     for scene_request in scene_requests.read() {
         let scene_owner = SceneOwner {
@@ -98,6 +135,9 @@ pub fn spawn_requested_last_beacon_scene_drivers(
                     scene_owner,
                 );
             }
+            Some(BEACON_SCENE) => {
+                open_beacon_page(&mut scene_commands, DASHBOARD_SCENE);
+            }
             Some(foundation_runtime_scene_key)
                 if foundation_runtime_scene_key.starts_with("foundation/") => {}
             _ => {}
@@ -125,6 +165,41 @@ fn spawn_splash_driver(
     commands.spawn((Name::new(splash_name), splash_screen, scene_owner));
 }
 
+/// Replaces the current Beacon page stack entry with a new non-blocking page scene.
+pub fn navigate_last_beacon_beacon_pages(
+    mut scene_commands: MessageWriter<SceneCommand>,
+    buttons: Query<(&LastBeaconBeaconPageButton, &Interaction), Changed<Interaction>>,
+) {
+    for (button, button_interaction) in &buttons {
+        if *button_interaction != Interaction::Pressed {
+            continue;
+        }
+
+        let page_scene_key = button.scene_key.trim();
+        if page_scene_key.is_empty() {
+            warn!("LastBeaconBeaconPageButton has an empty scene_key");
+            continue;
+        }
+
+        open_beacon_page(&mut scene_commands, page_scene_key);
+    }
+}
+
+fn open_beacon_page(scene_commands: &mut MessageWriter<SceneCommand>, page_scene_key: &str) {
+    // Keep the shared Beacon shell alive while replacing only the content layer.
+    scene_commands.write(SceneCommand::Close(SceneTarget::Key(SceneKey::new(
+        BEACON_PAGE_STACK_KEY,
+    ))));
+
+    let page_scene_options = OpenSceneOptions::default()
+        .with_key(BEACON_PAGE_STACK_KEY)
+        .with_presentation(ScenePresentation::NON_BLOCKING_OVERLAY);
+    scene_commands.write(SceneCommand::open_with_options(
+        SceneSource::bsn_scene(page_scene_key),
+        page_scene_options,
+    ));
+}
+
 fn scene_source_key(scene_source: &SceneSource) -> Option<String> {
     match scene_source {
         SceneSource::BsnScene { key } => Some(key.clone()),
@@ -145,6 +220,16 @@ mod tests {
         assert_eq!(BEVY_SPLASH_SCENE, "last-beacon/splash_bevy");
         assert_eq!(MAIN_MENU_SCENE, "last-beacon/main_menu");
         assert_eq!(OPTIONS_MENU_SCENE, "last-beacon/options_menu");
+        assert_eq!(BEACON_SCENE, "last-beacon/beacon");
+        assert_eq!(BEACON_SHELL_STACK_KEY, "beacon-shell");
+        assert_eq!(BEACON_PAGE_STACK_KEY, "beacon-page");
+        assert_eq!(DASHBOARD_SCENE, "last-beacon/dashboard");
+        assert_eq!(HANGAR_SCENE, "last-beacon/hangar");
+        assert_eq!(GARAGE_SCENE, "last-beacon/garage");
+        assert_eq!(MISSION_CONTROL_SCENE, "last-beacon/mission_control");
+        assert_eq!(FABRICATION_SCENE, "last-beacon/fabrication");
+        assert_eq!(UI_PLAYGROUND_SCENE, "last-beacon/ui_playground");
+        assert_eq!(SILO_UPGRADES_SCENE, "last-beacon/silo_upgrades");
         assert_eq!(CREDITS_SCENE, "last-beacon/credits");
         assert_eq!(GAMEPLAY_LEVEL_SCENE, "last-beacon/gameplay_level");
         assert_eq!(PAUSE_MENU_SCENE, "last-beacon/pause_menu");
@@ -172,10 +257,30 @@ mod tests {
     fn scene_registry_maps_keys_to_bsn_assets() {
         let mut registry = FoundationBsnSceneRegistry::default();
         registry.register_scene(MAIN_MENU_SCENE, "scenes/main_menu.bsn");
+        registry.register_scene(BEACON_SCENE, "scenes/beacon.bsn");
+        registry.register_scene(DASHBOARD_SCENE, "scenes/dashboard.bsn");
+        registry.register_scene(SILO_UPGRADES_SCENE, "scenes/silo_upgrades.bsn");
+        registry.register_scene(UI_PLAYGROUND_SCENE, "scenes/ui_playground.bsn");
 
         assert_eq!(
             registry.resolve_scene_path(MAIN_MENU_SCENE),
             "scenes/main_menu.bsn"
+        );
+        assert_eq!(
+            registry.resolve_scene_path(BEACON_SCENE),
+            "scenes/beacon.bsn"
+        );
+        assert_eq!(
+            registry.resolve_scene_path(DASHBOARD_SCENE),
+            "scenes/dashboard.bsn"
+        );
+        assert_eq!(
+            registry.resolve_scene_path(SILO_UPGRADES_SCENE),
+            "scenes/silo_upgrades.bsn"
+        );
+        assert_eq!(
+            registry.resolve_scene_path(UI_PLAYGROUND_SCENE),
+            "scenes/ui_playground.bsn"
         );
     }
 }

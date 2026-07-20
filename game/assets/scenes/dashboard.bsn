@@ -1,0 +1,427 @@
+#LastBeaconDashboardPage
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Percent(100.0),
+    position_type: bevy_ui::ui_node::PositionType::Absolute,
+    left: bevy_ui::geometry::Val::Px(0.0),
+    top: bevy_ui::geometry::Val::Px(60.0),
+    right: bevy_ui::geometry::Val::Px(0.0),
+    bottom: bevy_ui::geometry::Val::Px(0.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+}
+bevy_ecs::hierarchy::Children [
+#DashboardBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::FlexStart,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+}
+bevy_ecs::hierarchy::Children [
+#DashboardLeftColumn
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(288.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(16.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(24.0), right: bevy_ui::geometry::Val::Px(24.0), top: bevy_ui::geometry::Val::Px(24.0), bottom: bevy_ui::geometry::Val::Px(24.0), },
+}
+bevy_ecs::hierarchy::Children [
+#PageHeading
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::FlexStart,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(4.0),
+    margin: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(24.0), },
+}
+bevy_ecs::hierarchy::Children [
+#PageTitle
+bevy_ui::widget::text::Text("Beacon Dashboard")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(24.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 })),
+
+#PageSubtitle
+bevy_ui::widget::text::Text("Sector 4 — Day 14")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
+
+#ResourcesPanel
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#ResourcesPanelHeader
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+}
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#ResourcesPanelTitle
+bevy_ui::widget::text::Text("RESOURCES")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
+
+#ResourcesPanelBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(2.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(16.0), bottom: bevy_ui::geometry::Val::Px(16.0), },
+}
+bevy_ecs::hierarchy::Children [
+#ScrapStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#ScrapStatLabel
+bevy_ui::widget::text::Text("Scrap")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#ScrapStatValue
+bevy_ui::widget::text::Text("1,240")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
+
+#PowerStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#PowerStatLabel
+bevy_ui::widget::text::Text("Power")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#PowerStatValue
+bevy_ui::widget::text::Text("82 / 100")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
+],
+
+#ComponentsStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#ComponentsStatLabel
+bevy_ui::widget::text::Text("Components")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#ComponentsStatValue
+bevy_ui::widget::text::Text("36")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
+
+#RareCoresStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#RareCoresStatLabel
+bevy_ui::widget::text::Text("Rare Cores")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#RareCoresStatValue
+bevy_ui::widget::text::Text("3")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
+]
+]
+],
+
+#ColonyNeedsPanel
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#ColonyNeedsPanelHeader
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+}
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#ColonyNeedsPanelTitle
+bevy_ui::widget::text::Text("COLONY NEEDS")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
+
+#ColonyNeedsPanelBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(2.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(16.0), bottom: bevy_ui::geometry::Val::Px(16.0), },
+}
+bevy_ecs::hierarchy::Children [
+#FoodStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#FoodStatLabel
+bevy_ui::widget::text::Text("Food")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#FoodStatValue
+bevy_ui::widget::text::Text("Stable")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
+],
+
+#OxygenStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#OxygenStatLabel
+bevy_ui::widget::text::Text("Oxygen")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#OxygenStatValue
+bevy_ui::widget::text::Text("Stable")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
+],
+
+#MoraleStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#MoraleStatLabel
+bevy_ui::widget::text::Text("Morale")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#MoraleStatValue
+bevy_ui::widget::text::Text("Good")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
+],
+
+#HousingStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#HousingStatLabel
+bevy_ui::widget::text::Text("Housing")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#HousingStatValue
+bevy_ui::widget::text::Text("12 / 15")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+]
+]
+],
+
+#EquippedRobotPanel
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#EquippedRobotPanelHeader
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+}
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#EquippedRobotPanelTitle
+bevy_ui::widget::text::Text("EQUIPPED ROBOT")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
+
+#EquippedRobotPanelBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(2.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(16.0), bottom: bevy_ui::geometry::Val::Px(16.0), },
+}
+bevy_ecs::hierarchy::Children [
+#NameStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#NameStatLabel
+bevy_ui::widget::text::Text("Name")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#NameStatValue
+bevy_ui::widget::text::Text("Scavenger Mk.I")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
+
+#WeightStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#WeightStatLabel
+bevy_ui::widget::text::Text("Weight")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#WeightStatValue
+bevy_ui::widget::text::Text("340 kg")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
+
+#DrawStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#DrawStatLabel
+bevy_ui::widget::text::Text("Power Draw")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#DrawStatValue
+bevy_ui::widget::text::Text("12 kW")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
+
+#CargoStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#CargoStatLabel
+bevy_ui::widget::text::Text("Cargo")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#CargoStatValue
+bevy_ui::widget::text::Text("18 slots")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+]
+]
+]
+]
+]
+]

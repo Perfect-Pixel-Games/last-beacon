@@ -1,0 +1,285 @@
+#LastBeaconMissionControlPage
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Percent(100.0),
+    position_type: bevy_ui::ui_node::PositionType::Absolute,
+    left: bevy_ui::geometry::Val::Px(0.0),
+    top: bevy_ui::geometry::Val::Px(60.0),
+    right: bevy_ui::geometry::Val::Px(0.0),
+    bottom: bevy_ui::geometry::Val::Px(0.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+}
+bevy_ecs::hierarchy::Children [
+#MissionControlBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(4.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(24.0), right: bevy_ui::geometry::Val::Px(24.0), top: bevy_ui::geometry::Val::Px(24.0), bottom: bevy_ui::geometry::Val::Px(24.0), },
+}
+bevy_ecs::hierarchy::Children [
+#PageHeading
+bevy_ui::ui_node::Node {
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::FlexStart,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(4.0),
+    margin: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(24.0), },
+}
+bevy_ecs::hierarchy::Children [
+#PageTitle
+bevy_ui::widget::text::Text("Mission Control")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(24.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 })),
+
+#PageSubtitle
+bevy_ui::widget::text::Text("Select objectives for the next run.")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
+
+#MissionColumns
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_grow: 1.0,
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#MissionListPanel
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Px(320.0),
+    height: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#MissionListPanelHeader
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+}
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#MissionListPanelTitle
+bevy_ui::widget::text::Text("MISSION LIST")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
+
+#MissionListPanelBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(2.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(16.0), bottom: bevy_ui::geometry::Val::Px(16.0), },
+}
+bevy_ecs::hierarchy::Children [
+#MainMission
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#MainMissionLabel
+bevy_ui::widget::text::Text("Main")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#MainMissionValue
+bevy_ui::widget::text::Text("Reach the Rusting Factory")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
+],
+
+#SideMission
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#SideMissionLabel
+bevy_ui::widget::text::Text("Side")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#SideMissionValue
+bevy_ui::widget::text::Text("Scan Solar Farm")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
+
+#PassiveMission
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#PassiveMissionLabel
+bevy_ui::widget::text::Text("Passive")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#PassiveMissionValue
+bevy_ui::widget::text::Text("Recover lost cargo")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
+
+#RelayMission
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#RelayMissionLabel
+bevy_ui::widget::text::Text("Passive")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#RelayMissionValue
+bevy_ui::widget::text::Text("Survey power relays")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+]
+]
+],
+
+#MissionDetailColumn
+bevy_ui::ui_node::Node {
+    flex_grow: 1.0,
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+}
+bevy_ecs::hierarchy::Children [
+#MissionDetailPanel
+bevy_ui::ui_node::Node {
+    height: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
+    border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
+}
+bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#MissionDetailPanelHeader
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
+    border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
+}
+bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+bevy_ecs::hierarchy::Children [
+#MissionDetailPanelTitle
+bevy_ui::widget::text::Text("REACH THE RUSTING FACTORY")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+],
+
+#MissionDetailPanelBody
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+    align_items: bevy_ui::ui_node::AlignItems::Stretch,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+    row_gap: bevy_ui::geometry::Val::Px(2.0),
+    padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(16.0), bottom: bevy_ui::geometry::Val::Px(16.0), },
+}
+bevy_ecs::hierarchy::Children [
+#GiverStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#GiverStatLabel
+bevy_ui::widget::text::Text("Given By")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#GiverStatValue
+bevy_ui::widget::text::Text("Beacon Operations")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+],
+
+#RewardStat
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Px(32.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::SpaceBetween,
+    column_gap: bevy_ui::geometry::Val::Px(16.0),
+}
+bevy_ecs::hierarchy::Children [
+#RewardStatLabel
+bevy_ui::widget::text::Text("Reward")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+#RewardStatValue
+bevy_ui::widget::text::Text("Reactor Core + Scrap")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
+],
+
+#DescriptionLabel
+bevy_ui::widget::text::Text("DESCRIPTION")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(10.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.392, green: 0.455, blue: 0.545, alpha: 1.0 })),
+
+#DescriptionText
+bevy_ui::widget::text::Text("Push through the rusting factory ruins and mark the reactor chamber for recovery.")
+bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
+bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.796, green: 0.835, blue: 0.882, alpha: 1.0 }))
+]
+]
+]
+]
+]
+]

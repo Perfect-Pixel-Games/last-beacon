@@ -1,0 +1,17 @@
+#MainMenuFooter
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+}
+bevy_ecs::hierarchy::Children [
+    bevy_ui::widget::text::Text("prototype build 0.0.1")
+    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(10.0) }
+    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+        red: 0.278,
+        green: 0.333,
+        blue: 0.412,
+        alpha: 1.0,
+    }))
+]
