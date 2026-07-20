@@ -12,7 +12,7 @@ use bevy::{
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
     text::{EditableText, FontSource, TextCursorStyle, TextEdit, TextLayout, TextLayoutInfo},
-    ui::{widget::TextScroll, RelativeCursorPosition, ScrollPosition},
+    ui::{widget::TextScroll, RelativeCursorPosition},
 };
 
 /// Requests that a reusable Last Beacon BSN widget asset be applied to this entity.
@@ -277,6 +277,12 @@ pub struct LastBeaconUiTextBoxScrollDrag {
     active_text_box: Option<Entity>,
 }
 
+/// Stores user-requested multiline text scroll after Bevy's native cursor scroll runs.
+#[derive(Clone, Debug, Default, Resource)]
+pub struct LastBeaconUiTextBoxScrollOverrides {
+    scroll_y_by_text_entity: HashMap<Entity, f32>,
+}
+
 const TEXT_BOX_SCROLL_LINE_STEP: f32 = 16.0;
 const TEXT_BOX_SCROLL_TRACK_HEIGHT: f32 = 72.0;
 const TEXT_BOX_SCROLL_THUMB_HEIGHT: f32 = 28.0;
@@ -302,7 +308,6 @@ type LastBeaconUiTextInputScrollQuery<'world, 'state> = Query<
         Option<&'static Children>,
         Option<&'static Interaction>,
         Option<&'static RelativeCursorPosition>,
-        &'static mut ScrollPosition,
     ),
 >;
 
@@ -480,7 +485,14 @@ pub fn initialize_last_beacon_ui_text_inputs(
             text_entity
         };
 
-        let mut editable_text = EditableText::new(&text_input.value);
+        let mut editable_text = if text_input.multiline {
+            let mut editable_text = EditableText::default();
+            editable_text.editor_mut().set_text(&text_input.value);
+            editable_text.queue_edit(TextEdit::TextStart(false));
+            editable_text
+        } else {
+            EditableText::new(&text_input.value)
+        };
         editable_text.allow_newlines = text_input.multiline;
         editable_text.visible_width = Some(if text_input.multiline { 30.0 } else { 24.0 });
         editable_text.visible_lines = Some(if text_input.multiline { 4.0 } else { 1.0 });
@@ -488,7 +500,7 @@ pub fn initialize_last_beacon_ui_text_inputs(
         if text_input.multiline {
             commands
                 .entity(input_entity)
-                .insert((ScrollPosition::default(), RelativeCursorPosition::default()));
+                .insert(RelativeCursorPosition::default());
         }
 
         commands.entity(text_entity).insert((
@@ -725,6 +737,7 @@ pub fn initialize_last_beacon_ui_sliders(
 pub fn drag_last_beacon_ui_text_box_scrollbars(
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     mut scroll_drag: ResMut<LastBeaconUiTextBoxScrollDrag>,
+    mut scroll_overrides: ResMut<LastBeaconUiTextBoxScrollOverrides>,
     text_inputs: Query<(Entity, &LastBeaconUiTextInput, Option<&Children>)>,
     children_query: Query<&Children>,
     scroll_track_query: Query<
@@ -782,15 +795,20 @@ pub fn drag_last_beacon_ui_text_box_scrollbars(
         else {
             continue;
         };
-        let scroll_progress = (normalized_cursor_position.y + 0.5).clamp(0.0, 1.0);
+        let scroll_progress = (0.5 - normalized_cursor_position.y).clamp(0.0, 1.0);
         let max_scroll_y = text_box_max_scroll_y(text_layout, computed_node);
-        text_scroll.0.y = scroll_progress * max_scroll_y;
+        let next_scroll_y = scroll_progress * max_scroll_y;
+        text_scroll.0.y = next_scroll_y;
+        scroll_overrides
+            .scroll_y_by_text_entity
+            .insert(editable_text_entity, next_scroll_y);
     }
 }
 
 /// Applies mouse-wheel scrolling to hovered multiline text boxes.
 pub fn scroll_last_beacon_ui_text_inputs(
     mut mouse_wheel_messages: MessageReader<MouseWheel>,
+    mut scroll_overrides: ResMut<LastBeaconUiTextBoxScrollOverrides>,
     mut text_inputs: LastBeaconUiTextInputScrollQuery,
     children_query: Query<&Children>,
     editable_text_marker_query: Query<(), With<EditableText>>,
@@ -810,14 +828,8 @@ pub fn scroll_last_beacon_ui_text_inputs(
         return;
     }
 
-    for (
-        _input_entity,
-        text_input,
-        input_children,
-        interaction,
-        relative_cursor_position,
-        mut scroll_position,
-    ) in &mut text_inputs
+    for (_input_entity, text_input, input_children, interaction, relative_cursor_position) in
+        &mut text_inputs
     {
         let cursor_is_over = relative_cursor_position
             .map(RelativeCursorPosition::cursor_over)
@@ -827,8 +839,6 @@ pub fn scroll_last_beacon_ui_text_inputs(
         if !text_input.multiline || !cursor_is_over {
             continue;
         }
-        scroll_position.y = 0.0;
-
         let Some(editable_text_entity) = first_descendant_with_editable_text(
             input_children,
             &children_query,
@@ -842,7 +852,30 @@ pub fn scroll_last_beacon_ui_text_inputs(
             continue;
         };
         let max_scroll_y = text_box_max_scroll_y(text_layout, computed_node);
-        text_scroll.0.y = (text_scroll.0.y - scroll_delta).clamp(0.0, max_scroll_y);
+        let next_scroll_y = (text_scroll.0.y - scroll_delta).clamp(0.0, max_scroll_y);
+        text_scroll.0.y = next_scroll_y;
+        scroll_overrides
+            .scroll_y_by_text_entity
+            .insert(editable_text_entity, next_scroll_y);
+    }
+}
+
+/// Reapplies user text-box scroll after Bevy's native cursor-visibility scroll runs.
+pub fn apply_last_beacon_ui_text_box_scroll_overrides(
+    scroll_overrides: Res<LastBeaconUiTextBoxScrollOverrides>,
+    mut editable_text_query: Query<
+        (&mut TextScroll, &TextLayoutInfo, &ComputedNode),
+        With<EditableText>,
+    >,
+) {
+    for (text_entity, scroll_y) in &scroll_overrides.scroll_y_by_text_entity {
+        let Ok((mut text_scroll, text_layout, computed_node)) =
+            editable_text_query.get_mut(*text_entity)
+        else {
+            continue;
+        };
+        let max_scroll_y = text_box_max_scroll_y(text_layout, computed_node);
+        text_scroll.0.y = scroll_y.clamp(0.0, max_scroll_y);
     }
 }
 

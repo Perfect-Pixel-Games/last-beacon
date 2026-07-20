@@ -129,6 +129,7 @@ impl Plugin for LastBeaconPlugin {
         .init_resource::<ui_widgets::LastBeaconUiInputValues>()
         .init_resource::<ui_widgets::LastBeaconUiDropdownStates>()
         .init_resource::<ui_widgets::LastBeaconUiTextBoxScrollDrag>()
+        .init_resource::<ui_widgets::LastBeaconUiTextBoxScrollOverrides>()
         .register_type::<ui_widgets::LastBeaconMainMenuPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconTabButton>()
@@ -166,7 +167,6 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::initialize_last_beacon_ui_text_scroll_tracks,
                 ui_widgets::drag_last_beacon_ui_text_box_scrollbars,
                 ui_widgets::scroll_last_beacon_ui_text_inputs,
-                ui_widgets::refresh_last_beacon_ui_text_box_scrollbars,
             ),
         )
         .add_systems(
@@ -191,6 +191,15 @@ impl Plugin for LastBeaconPlugin {
         .add_systems(
             Update,
             ui_widgets::apply_pending_last_beacon_bsn_widgets.run_if(foundation_is_not_paused),
+        )
+        .add_systems(
+            PostUpdate,
+            (
+                ui_widgets::apply_last_beacon_ui_text_box_scroll_overrides,
+                ui_widgets::refresh_last_beacon_ui_text_box_scrollbars,
+            )
+                .chain()
+                .after(bevy::ui::UiSystems::PostLayout),
         )
         .add_systems(PostUpdate, ui_widgets::enforce_last_beacon_button_styles);
     }

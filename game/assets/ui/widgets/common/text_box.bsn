@@ -7,7 +7,7 @@ bevy_ui::ui_node::Node {
     align_items: bevy_ui::ui_node::AlignItems::FlexStart,
     justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
     padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(12.0), right: bevy_ui::geometry::Val::Px(12.0), top: bevy_ui::geometry::Val::Px(10.0), bottom: bevy_ui::geometry::Val::Px(10.0), },
-    overflow: bevy_ui::ui_node::Overflow { x: bevy_ui::ui_node::OverflowAxis::Clip, y: bevy_ui::ui_node::OverflowAxis::Scroll, },
+    overflow: bevy_ui::ui_node::Overflow { x: bevy_ui::ui_node::OverflowAxis::Clip, y: bevy_ui::ui_node::OverflowAxis::Clip, },
     border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
     border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
 }

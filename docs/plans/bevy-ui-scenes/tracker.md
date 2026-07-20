@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Native EditableText text box rewrite committed and pushed`
+- Overall status: `Native EditableText text box scroll checkpoint ready to commit`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Native EditableText text box rewrite implemented with gpt-5.4; awaiting user review`
+- Current handoff state: `Native EditableText text box scroll stabilization checkpoint with gpt-5.4; user confirmed improved behavior and requested checkpoint commit`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Native EditableText text box rewrite commit 5cf203d pushed to origin/feature/bevy-ui-scenes; tracker finalization commit pending.`
+- Root commit/push state: `Native EditableText text box rewrite commit 5cf203d and tracker commit 1d547b9 pushed to origin/feature/bevy-ui-scenes; text-box scroll stabilization checkpoint commit pending.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Replaced custom multiline text renderer/caret/navigation with native Bevy EditableText and synced authored scrollbar to Bevy TextScroll; validation passed; commit 5cf203d pushed.`
+- Current tweak state: `Stabilized native EditableText text-box scrolling by keeping TextScroll as the single scroll owner, removing wrapper ScrollPosition/scroll overflow, initializing multiline cursor at the top, fixing scrollbar drag direction, and persistently reapplying user scroll overrides after Bevy's native cursor-visible scroll; cargo check passed; checkpoint commit pending.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -233,6 +233,7 @@
 - `2026-07-20`: User reported the custom multiline text-box caret did not behave like the default text-field caret because it was end-only and could not move around text. Added byte-safe caret position state for multiline text boxes; typing and Enter now insert at the caret, Backspace/Delete remove around the caret, and Left/Right/Up/Down/Home/End move the caret while keeping the caret line visible. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `3436dcd Improve text box caret navigation`.
 - `2026-07-20`: User reported the multiline text-box caret still did not match the text field because the inline `|` glyph was white, shifted text, and was too thin. Replaced the inline caret glyph with a separate absolute-positioned `LastBeaconUiTextBoxCaret` UI node using a 2px width and slate cursor color matching Bevy `TextCursorStyle` defaults, so caret blinking no longer changes the rendered text layout. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `1d980ec Style text box caret separately`.
 - `2026-07-20`: User reported the separate multiline text-box caret was still offset and not drawn at the correct location. Initial attempts to align a custom caret via `TextLayoutInfo` still produced unacceptable visual offsets. User approved replacing the custom multiline editor with native Bevy `EditableText` plus authored scrollbar sync. Reworked the text box so Bevy owns caret rendering, keyboard navigation, text editing, click placement, and Unicode editing behavior; custom systems now only wheel/drag/sync scrollbar state via Bevy `TextScroll`. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `5cf203d Use native text box editing`.
+- `2026-07-20`: User reported native text-box scrolling did not work, then snapped to the end/original position, and then jittered up/down while scrolling. Stabilized scrolling by scheduling a post-layout scroll override after Bevy's native editable-text cursor scroll, initializing multiline native `EditableText` with the cursor at the start instead of the end, removing wrapper `ScrollPosition`, switching the authored text-box wrapper overflow from `Scroll` to `Clip`, fixing scrollbar drag progress direction, and making user scroll overrides persist every frame so Bevy does not immediately reset them. User confirmed the behavior is working much better and requested a checkpoint commit. Validation so far: `cargo fmt --manifest-path game/Cargo.toml` and `cargo check --manifest-path game/Cargo.toml` passed.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
