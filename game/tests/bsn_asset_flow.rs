@@ -10,7 +10,7 @@ use last_beacon::{
         LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiDropdownIcon,
         LastBeaconUiDropdownPanel, LastBeaconUiDropdownToggle, LastBeaconUiNumberInput,
         LastBeaconUiRadioIcon, LastBeaconUiSlider, LastBeaconUiSliderFill, LastBeaconUiSymbolIcon,
-        LastBeaconUiTab, LastBeaconUiTextHorizontalScrollThumb,
+        LastBeaconUiTab, LastBeaconUiTabPanel, LastBeaconUiTextHorizontalScrollThumb,
         LastBeaconUiTextHorizontalScrollTrack, LastBeaconUiTextInput, LastBeaconUiTextScrollThumb,
         LastBeaconUiTextScrollTrack, LastBeaconUiValueButton, LastBeaconUiValueText,
     },
@@ -88,15 +88,17 @@ fn converted_bsn_scene_assets_load_as_scene_patches() {
         })
         .collect::<Vec<_>>();
 
-    for _frame_number in 0..120 {
+    for _frame_number in 0..600 {
         app.update();
     }
 
     let scene_assets = app.world().resource::<Assets<ScenePatch>>();
+    let asset_server = app.world().resource::<AssetServer>();
     for (scene_asset_path, scene_handle) in scene_handles {
         assert!(
             scene_assets.get(&scene_handle).is_some(),
-            "the converted .bsn asset `{scene_asset_path}` should load as a ScenePatch"
+            "the converted .bsn asset `{scene_asset_path}` should load as a ScenePatch; load state: {:?}",
+            asset_server.get_load_state(scene_handle.id())
         );
     }
 }
@@ -126,7 +128,7 @@ fn converted_pixel_perfect_scene_spawns_authored_text_through_foundation_bridge(
         source: SceneSource::bsn_scene(scene_key),
     });
 
-    for _frame_number in 0..120 {
+    for _frame_number in 0..600 {
         app.update();
     }
 
@@ -151,6 +153,8 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<AlignItems>()
         .register_type::<JustifyContent>()
         .register_type::<PositionType>()
+        .register_type::<Display>()
+        .register_type::<GlobalZIndex>()
         .register_type::<Overflow>()
         .register_type::<OverflowAxis>()
         .register_type::<UiRect>()
@@ -182,6 +186,7 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<LastBeaconBeaconTabButton>()
         .register_type::<LastBeaconUiButton>()
         .register_type::<LastBeaconUiTab>()
+        .register_type::<LastBeaconUiTabPanel>()
         .register_type::<LastBeaconUiTextInput>()
         .register_type::<LastBeaconUiTextScrollTrack>()
         .register_type::<LastBeaconUiTextScrollThumb>()

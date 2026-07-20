@@ -89,6 +89,28 @@ impl Default for LastBeaconUiTab {
     }
 }
 
+/// Shows an authored content pane only when its matching reusable tab is selected.
+#[derive(Clone, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiTabPanel {
+    /// Selection group this panel belongs to.
+    pub group: String,
+    /// Stable tab identifier this panel represents.
+    pub tab: String,
+    /// Whether this panel should be shown before the user interacts with the group.
+    pub selected: bool,
+}
+
+impl Default for LastBeaconUiTabPanel {
+    fn default() -> Self {
+        Self {
+            group: "default".to_string(),
+            tab: "default".to_string(),
+            selected: false,
+        }
+    }
+}
+
 /// Makes an authored text value editable when clicked.
 #[derive(Clone, Debug, Default, Component, Reflect)]
 #[reflect(Component, Default)]
@@ -383,6 +405,9 @@ type LastBeaconUiTabInteractionQuery<'w, 's> = Query<
     (&'static LastBeaconUiTab, &'static Interaction),
     (Changed<Interaction>, With<Button>),
 >;
+
+type LastBeaconUiTabPanelQuery<'w, 's> =
+    Query<'w, 's, (&'static LastBeaconUiTabPanel, &'static mut Node)>;
 
 type LastBeaconUiButtonStyleQuery<'w, 's> = Query<
     'w,
@@ -1339,6 +1364,28 @@ pub fn update_last_beacon_ui_tab_selection(
                 .selected_tabs
                 .insert(tab.group.clone(), tab.tab.clone());
         }
+    }
+}
+
+/// Shows only the reusable tab panel that matches the current tab selection.
+pub fn refresh_last_beacon_ui_tab_panels(
+    tab_selections: Res<LastBeaconUiTabSelections>,
+    mut tab_panels: LastBeaconUiTabPanelQuery,
+) {
+    if !tab_selections.is_changed() {
+        return;
+    }
+
+    for (tab_panel, mut node) in &mut tab_panels {
+        let selected_tab = tab_selections.selected_tabs.get(&tab_panel.group);
+        let panel_is_selected = selected_tab
+            .map(|selected_tab| selected_tab == &tab_panel.tab)
+            .unwrap_or(tab_panel.selected);
+        node.display = if panel_is_selected {
+            Display::Flex
+        } else {
+            Display::None
+        };
     }
 }
 

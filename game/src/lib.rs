@@ -139,6 +139,7 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<ui_widgets::LastBeaconBeaconTabButton>()
         .register_type::<ui_widgets::LastBeaconUiButton>()
         .register_type::<ui_widgets::LastBeaconUiTab>()
+        .register_type::<ui_widgets::LastBeaconUiTabPanel>()
         .register_type::<ui_widgets::LastBeaconUiTextInput>()
         .register_type::<ui_widgets::LastBeaconUiTextScrollTrack>()
         .register_type::<ui_widgets::LastBeaconUiTextScrollThumb>()
@@ -193,6 +194,7 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::refresh_last_beacon_ui_slider_fills,
                 ui_widgets::refresh_last_beacon_ui_value_text,
                 ui_widgets::update_last_beacon_ui_tab_selection,
+                ui_widgets::refresh_last_beacon_ui_tab_panels,
                 exit_game_on_foundation_exit_request,
                 spin_cube.run_if(foundation_is_not_paused),
             ),
