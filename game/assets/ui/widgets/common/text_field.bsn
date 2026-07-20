@@ -1,7 +1,7 @@
 #TextField
 bevy_ui::widget::button::Button
 bevy_ui::ui_node::Node {
-    width: bevy_ui::geometry::Val::Px(260.0),
+    width: bevy_ui::geometry::Val::Percent(100.0),
     height: bevy_ui::geometry::Val::Px(42.0),
     flex_direction: bevy_ui::ui_node::FlexDirection::Row,
     align_items: bevy_ui::ui_node::AlignItems::Center,

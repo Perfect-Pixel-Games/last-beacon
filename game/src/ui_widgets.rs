@@ -535,8 +535,13 @@ pub fn initialize_last_beacon_ui_text_inputs(
             EditableText::new(&text_input.value)
         };
         editable_text.allow_newlines = text_input.multiline;
-        editable_text.visible_width = Some(if text_input.multiline { 30.0 } else { 24.0 });
-        editable_text.visible_lines = Some(if text_input.multiline { 4.0 } else { 1.0 });
+        if text_input.multiline {
+            editable_text.visible_width = None;
+            editable_text.visible_lines = None;
+        } else {
+            editable_text.visible_width = Some(24.0);
+            editable_text.visible_lines = Some(1.0);
+        }
 
         if text_input.multiline {
             commands
@@ -554,11 +559,13 @@ pub fn initialize_last_beacon_ui_text_inputs(
                 linebreak: LineBreak::NoWrap,
                 ..default()
             }
-        } else {
+        } else if number_input_query.contains(text_entity) {
             TextLayout {
                 justify: Justify::Center,
                 ..default()
             }
+        } else {
+            TextLayout::default()
         };
 
         commands.entity(text_entity).insert((
@@ -570,10 +577,20 @@ pub fn initialize_last_beacon_ui_text_inputs(
         ));
 
         if let Ok(mut node) = node_query.get_mut(text_entity) {
+            if text_input.multiline {
+                node.width = Val::Percent(100.0);
+                node.height = Val::Percent(100.0);
+            }
             if number_input_query.contains(text_entity) {
                 node.align_items = AlignItems::Center;
                 node.justify_content = JustifyContent::Center;
             }
+        } else if text_input.multiline {
+            commands.entity(text_entity).insert(Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                ..default()
+            });
         } else {
             commands.entity(text_entity).insert(Node::default());
         }
@@ -1105,7 +1122,17 @@ pub fn refresh_last_beacon_ui_text_box_scrollbars(
         else {
             continue;
         };
-        let scrollbar_layout = text_box_scrollbar_layout(text_box_node, text_layout, computed_node);
+        let has_vertical_overflow =
+            text_box_max_scroll_y(text_layout, computed_node) > f32::EPSILON;
+        let has_horizontal_overflow =
+            text_box_max_scroll_x(text_layout, computed_node) > f32::EPSILON;
+        let scrollbar_layout = text_box_scrollbar_layout(
+            text_box_node,
+            text_layout,
+            computed_node,
+            has_vertical_overflow,
+            has_horizontal_overflow,
+        );
 
         if let Some(scroll_track_entity) = first_descendant_with_scroll_track(
             input_children,
@@ -1113,6 +1140,11 @@ pub fn refresh_last_beacon_ui_text_box_scrollbars(
             &vertical_scroll_track_query,
         ) {
             if let Ok(mut scroll_track_node) = node_query.get_mut(scroll_track_entity) {
+                scroll_track_node.display = if has_vertical_overflow {
+                    Display::Flex
+                } else {
+                    Display::None
+                };
                 scroll_track_node.right = Val::Px(scrollbar_layout.inset);
                 scroll_track_node.top = Val::Px(scrollbar_layout.vertical_track_top);
                 scroll_track_node.width = Val::Px(scrollbar_layout.thickness);
@@ -1145,6 +1177,11 @@ pub fn refresh_last_beacon_ui_text_box_scrollbars(
             &horizontal_scroll_track_query,
         ) {
             if let Ok(mut scroll_track_node) = node_query.get_mut(scroll_track_entity) {
+                scroll_track_node.display = if has_horizontal_overflow {
+                    Display::Flex
+                } else {
+                    Display::None
+                };
                 scroll_track_node.left = Val::Px(scrollbar_layout.horizontal_track_left);
                 scroll_track_node.bottom = Val::Px(scrollbar_layout.inset);
                 scroll_track_node.width = Val::Px(scrollbar_layout.horizontal_track_length);
@@ -1532,6 +1569,8 @@ fn text_box_scrollbar_layout(
     text_box_node: &ComputedNode,
     text_layout: &TextLayoutInfo,
     text_node: &ComputedNode,
+    has_vertical_overflow: bool,
+    has_horizontal_overflow: bool,
 ) -> LastBeaconUiTextBoxScrollbarLayout {
     let text_box_size = text_box_node.size() * text_box_node.inverse_scale_factor;
     let shorter_text_box_axis = text_box_size.x.min(text_box_size.y).max(0.0);
@@ -1541,8 +1580,18 @@ fn text_box_scrollbar_layout(
     );
     let inset = thickness * 0.67;
     let top_inset = inset * 2.0;
-    let right_lane_width = thickness + inset * 2.0;
-    let bottom_lane_height = thickness + inset * 2.0;
+    // Only reserve the shared corner when both scrollbar axes are visible. If one
+    // axis is hidden, the visible scrollbar should use that corner space too.
+    let right_lane_width = if has_vertical_overflow && has_horizontal_overflow {
+        thickness + inset * 2.0
+    } else {
+        inset
+    };
+    let bottom_lane_height = if has_vertical_overflow && has_horizontal_overflow {
+        thickness + inset * 2.0
+    } else {
+        inset
+    };
     let horizontal_track_left = thickness * 2.0;
     let vertical_track_length = (text_box_size.y - top_inset - bottom_lane_height).max(thickness);
     let horizontal_track_length =

@@ -1,6 +1,6 @@
 #StatRowsPanel
 bevy_ui::ui_node::Node {
-    width: bevy_ui::geometry::Val::Px(320.0),
+    width: bevy_ui::geometry::Val::Percent(100.0),
     flex_direction: bevy_ui::ui_node::FlexDirection::Column,
     align_items: bevy_ui::ui_node::AlignItems::Stretch,
     justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,

@@ -18,7 +18,7 @@ bevy_ecs::hierarchy::Children [
 ] ,
 
         #TextFieldPropertyValue
-        bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(260.0), align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
+        bevy_ui::ui_node::Node { flex_grow: 1.0, align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
         bevy_ecs::hierarchy::Children [
             last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/text_field.bsn" }
         ]
@@ -36,7 +36,7 @@ bevy_ecs::hierarchy::Children [
 ] ,
 
         #TextBoxPropertyValue
-        bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(260.0), align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
+        bevy_ui::ui_node::Node { flex_grow: 1.0, align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
         bevy_ecs::hierarchy::Children [
             last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/text_box.bsn" }
         ]
@@ -54,7 +54,7 @@ bevy_ecs::hierarchy::Children [
 ] ,
 
         #RadioButtonsPropertyValue
-        bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(260.0), align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
+        bevy_ui::ui_node::Node { flex_grow: 1.0, align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
         bevy_ecs::hierarchy::Children [
             last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/radio_buttons.bsn" }
         ]
@@ -72,7 +72,7 @@ bevy_ecs::hierarchy::Children [
 ] ,
 
         #ToggleButtonsPropertyValue
-        bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(260.0), align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
+        bevy_ui::ui_node::Node { flex_grow: 1.0, align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
         bevy_ecs::hierarchy::Children [
             last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/toggle_buttons.bsn" }
         ]
@@ -90,7 +90,7 @@ bevy_ecs::hierarchy::Children [
 ] ,
 
         #ComboBoxPropertyValue
-        bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(260.0), align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
+        bevy_ui::ui_node::Node { flex_grow: 1.0, align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
         bevy_ecs::hierarchy::Children [
             last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/combo_box.bsn" }
         ]
@@ -108,7 +108,7 @@ bevy_ecs::hierarchy::Children [
 ] ,
 
         #NumberFieldPropertyValue
-        bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(260.0), align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
+        bevy_ui::ui_node::Node { flex_grow: 1.0, align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
         bevy_ecs::hierarchy::Children [
             last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/number_field.bsn" }
         ]
@@ -126,7 +126,7 @@ bevy_ecs::hierarchy::Children [
 ] ,
 
         #SliderPropertyValue
-        bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(260.0), align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
+        bevy_ui::ui_node::Node { flex_grow: 1.0, align_items: bevy_ui::ui_node::AlignItems::Center, justify_content: bevy_ui::ui_node::JustifyContent::FlexStart, }
         bevy_ecs::hierarchy::Children [
             last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/slider.bsn" }
         ]

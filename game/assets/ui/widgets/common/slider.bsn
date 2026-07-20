@@ -1,6 +1,6 @@
 #Slider
 bevy_ui::ui_node::Node {
-    width: bevy_ui::geometry::Val::Px(260.0),
+    width: bevy_ui::geometry::Val::Percent(100.0),
     height: bevy_ui::geometry::Val::Px(42.0),
     flex_direction: bevy_ui::ui_node::FlexDirection::Row,
     align_items: bevy_ui::ui_node::AlignItems::Center,
@@ -9,7 +9,7 @@ bevy_ui::ui_node::Node {
 bevy_ecs::hierarchy::Children [
     #SliderTrack
     bevy_ui::widget::button::Button
-    bevy_ui::ui_node::Node { width: bevy_ui::geometry::Val::Px(206.0), height: bevy_ui::geometry::Val::Px(12.0), flex_direction: bevy_ui::ui_node::FlexDirection::Row, align_items: bevy_ui::ui_node::AlignItems::Center, }
+    bevy_ui::ui_node::Node { height: bevy_ui::geometry::Val::Px(12.0), flex_grow: 1.0, flex_direction: bevy_ui::ui_node::FlexDirection::Row, align_items: bevy_ui::ui_node::AlignItems::Center, }
     bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }))
     last_beacon::ui_widgets::LastBeaconUiSlider { target: "slider-volume", min: 0.0, max: 100.0 }
     bevy_ecs::hierarchy::Children [
