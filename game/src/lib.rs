@@ -130,6 +130,7 @@ impl Plugin for LastBeaconPlugin {
         .init_resource::<ui_widgets::LastBeaconUiDropdownStates>()
         .init_resource::<ui_widgets::LastBeaconUiTextBoxScrollDrag>()
         .init_resource::<ui_widgets::LastBeaconUiTextBoxScrollOverrides>()
+        .init_resource::<ui_widgets::LastBeaconUiTextBoxCaretScrollRequests>()
         .register_type::<ui_widgets::LastBeaconMainMenuPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconTabButton>()
@@ -138,6 +139,8 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<ui_widgets::LastBeaconUiTextInput>()
         .register_type::<ui_widgets::LastBeaconUiTextScrollTrack>()
         .register_type::<ui_widgets::LastBeaconUiTextScrollThumb>()
+        .register_type::<ui_widgets::LastBeaconUiTextHorizontalScrollTrack>()
+        .register_type::<ui_widgets::LastBeaconUiTextHorizontalScrollThumb>()
         .register_type::<ui_widgets::LastBeaconUiSymbolIcon>()
         .register_type::<ui_widgets::LastBeaconUiRadioIcon>()
         .register_type::<ui_widgets::LastBeaconUiDropdownIcon>()
@@ -167,6 +170,7 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::initialize_last_beacon_ui_text_scroll_tracks,
                 ui_widgets::drag_last_beacon_ui_text_box_scrollbars,
                 ui_widgets::scroll_last_beacon_ui_text_inputs,
+                ui_widgets::request_last_beacon_ui_text_box_caret_scroll_for_keyboard_input,
             ),
         )
         .add_systems(

@@ -4,15 +4,22 @@
 //! lightweight widget slots. This keeps scene files focused on layout while common
 //! visual pieces live under `assets/ui/widgets/`.
 
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use bevy::{
-    input::mouse::{MouseScrollUnit, MouseWheel},
+    input::{
+        keyboard::{Key, KeyboardInput},
+        mouse::{MouseScrollUnit, MouseWheel},
+    },
     input_focus::{FocusCause, InputFocus},
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
     text::{
-        EditableText, FontSource, LineHeight, TextCursorStyle, TextEdit, TextLayout, TextLayoutInfo,
+        EditableText, FontSource, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextLayout,
+        TextLayoutInfo,
     },
     ui::{
         widget::TextScroll, ComputedUiRenderTargetInfo, RelativeCursorPosition, UiGlobalTransform,
@@ -100,6 +107,16 @@ pub struct LastBeaconUiTextScrollTrack;
 #[derive(Clone, Copy, Debug, Default, Component, Reflect)]
 #[reflect(Component, Default)]
 pub struct LastBeaconUiTextScrollThumb;
+
+/// Marks the horizontal draggable scroll track for a multiline text input.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiTextHorizontalScrollTrack;
+
+/// Marks the horizontal visual scroll thumb for a multiline text input.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiTextHorizontalScrollThumb;
 
 /// Marks text that should render with the bundled Noto Sans Symbols 2 font.
 #[derive(Clone, Copy, Debug, Default, Component, Reflect)]
@@ -280,17 +297,34 @@ pub struct LastBeaconUiDropdownStates {
 #[derive(Clone, Copy, Debug, Default, Resource)]
 pub struct LastBeaconUiTextBoxScrollDrag {
     active_text_box: Option<Entity>,
+    axis: LastBeaconUiTextBoxScrollAxis,
+}
+
+/// Identifies which authored scrollbar axis is currently being dragged.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+enum LastBeaconUiTextBoxScrollAxis {
+    #[default]
+    Vertical,
+    Horizontal,
 }
 
 /// Stores user-requested multiline text scroll after Bevy's native cursor scroll runs.
 #[derive(Clone, Debug, Default, Resource)]
 pub struct LastBeaconUiTextBoxScrollOverrides {
-    scroll_y_by_text_entity: HashMap<Entity, f32>,
+    scroll_by_text_entity: HashMap<Entity, Vec2>,
+}
+
+/// Tracks focused text boxes whose keyboard input should make the caret visible again.
+#[derive(Clone, Debug, Default, Resource)]
+pub struct LastBeaconUiTextBoxCaretScrollRequests {
+    text_entities: HashSet<Entity>,
 }
 
 const TEXT_BOX_SCROLL_LINE_STEP: f32 = 16.0;
-const TEXT_BOX_SCROLL_TRACK_HEIGHT: f32 = 72.0;
-const TEXT_BOX_SCROLL_THUMB_HEIGHT: f32 = 28.0;
+const TEXT_BOX_SCROLLBAR_THICKNESS_RATIO: f32 = 0.065;
+const TEXT_BOX_SCROLLBAR_MIN_THICKNESS: f32 = 4.0;
+const TEXT_BOX_SCROLLBAR_MAX_THICKNESS: f32 = 8.0;
+const TEXT_BOX_SCROLLBAR_MIN_THUMB_RATIO: f32 = 0.25;
 
 type LastBeaconUiTextInputFocusQuery<'world, 'state> = Query<
     'world,
@@ -513,13 +547,21 @@ pub fn initialize_last_beacon_ui_text_inputs(
         } else {
             LineHeight::default()
         };
+        let text_layout = if text_input.multiline {
+            TextLayout {
+                linebreak: LineBreak::NoWrap,
+                ..default()
+            }
+        } else {
+            TextLayout::default()
+        };
 
         commands.entity(text_entity).insert((
             Node::default(),
             editable_text,
             TextScroll::default(),
             TextCursorStyle::default(),
-            TextLayout::default(),
+            text_layout,
             line_height,
         ));
     }
@@ -739,9 +781,16 @@ pub fn refresh_last_beacon_ui_dropdown_panels(
 /// Enables cursor-position tracking for authored multiline text-box scroll tracks.
 pub fn initialize_last_beacon_ui_text_scroll_tracks(
     mut commands: Commands,
-    scroll_tracks: Query<Entity, Added<LastBeaconUiTextScrollTrack>>,
+    vertical_scroll_tracks: Query<Entity, Added<LastBeaconUiTextScrollTrack>>,
+    horizontal_scroll_tracks: Query<Entity, Added<LastBeaconUiTextHorizontalScrollTrack>>,
 ) {
-    for scroll_track_entity in &scroll_tracks {
+    for scroll_track_entity in &vertical_scroll_tracks {
+        commands
+            .entity(scroll_track_entity)
+            .insert(RelativeCursorPosition::default());
+    }
+
+    for scroll_track_entity in &horizontal_scroll_tracks {
         commands
             .entity(scroll_track_entity)
             .insert(RelativeCursorPosition::default());
@@ -768,9 +817,13 @@ pub fn drag_last_beacon_ui_text_box_scrollbars(
     mut scroll_overrides: ResMut<LastBeaconUiTextBoxScrollOverrides>,
     text_inputs: Query<(Entity, &LastBeaconUiTextInput, Option<&Children>)>,
     children_query: Query<&Children>,
-    scroll_track_query: Query<
+    vertical_scroll_track_query: Query<
         (&Interaction, &RelativeCursorPosition),
         With<LastBeaconUiTextScrollTrack>,
+    >,
+    horizontal_scroll_track_query: Query<
+        (&Interaction, &RelativeCursorPosition),
+        With<LastBeaconUiTextHorizontalScrollTrack>,
     >,
     editable_text_marker_query: Query<(), With<EditableText>>,
     mut editable_text_query: Query<
@@ -788,27 +841,47 @@ pub fn drag_last_beacon_ui_text_box_scrollbars(
             continue;
         }
 
-        let Some(scroll_track_entity) = first_descendant_with_scroll_track(
+        let vertical_scroll_track = first_descendant_with_scroll_track(
             input_children,
             &children_query,
-            &scroll_track_query,
-        ) else {
-            continue;
-        };
-        let Ok((scroll_track_interaction, relative_cursor_position)) =
-            scroll_track_query.get(scroll_track_entity)
-        else {
-            continue;
-        };
+            &vertical_scroll_track_query,
+        )
+        .and_then(|scroll_track_entity| vertical_scroll_track_query.get(scroll_track_entity).ok());
+        let horizontal_scroll_track = first_descendant_with_horizontal_scroll_track(
+            input_children,
+            &children_query,
+            &horizontal_scroll_track_query,
+        )
+        .and_then(|scroll_track_entity| {
+            horizontal_scroll_track_query.get(scroll_track_entity).ok()
+        });
 
-        if *scroll_track_interaction == Interaction::Pressed {
+        if vertical_scroll_track
+            .is_some_and(|(interaction, _)| *interaction == Interaction::Pressed)
+        {
             scroll_drag.active_text_box = Some(input_entity);
+            scroll_drag.axis = LastBeaconUiTextBoxScrollAxis::Vertical;
+        }
+        if horizontal_scroll_track
+            .is_some_and(|(interaction, _)| *interaction == Interaction::Pressed)
+        {
+            scroll_drag.active_text_box = Some(input_entity);
+            scroll_drag.axis = LastBeaconUiTextBoxScrollAxis::Horizontal;
         }
         if scroll_drag.active_text_box != Some(input_entity) {
             continue;
         }
 
-        let Some(normalized_cursor_position) = relative_cursor_position.normalized else {
+        let relative_cursor_position = match scroll_drag.axis {
+            LastBeaconUiTextBoxScrollAxis::Vertical => {
+                vertical_scroll_track.map(|(_, relative_cursor_position)| relative_cursor_position)
+            }
+            LastBeaconUiTextBoxScrollAxis::Horizontal => horizontal_scroll_track
+                .map(|(_, relative_cursor_position)| relative_cursor_position),
+        };
+        let Some(normalized_cursor_position) =
+            relative_cursor_position.and_then(|position| position.normalized)
+        else {
             continue;
         };
         let Some(editable_text_entity) = first_descendant_with_editable_text(
@@ -823,19 +896,36 @@ pub fn drag_last_beacon_ui_text_box_scrollbars(
         else {
             continue;
         };
-        let scroll_progress = (normalized_cursor_position.y + 0.5).clamp(0.0, 1.0);
-        let max_scroll_y = text_box_max_scroll_y(text_layout, computed_node);
-        let next_scroll_y = scroll_progress * max_scroll_y;
-        text_scroll.0.y = next_scroll_y;
+        let current_scroll = scroll_overrides
+            .scroll_by_text_entity
+            .get(&editable_text_entity)
+            .copied()
+            .unwrap_or(text_scroll.0);
+        let next_scroll = match scroll_drag.axis {
+            LastBeaconUiTextBoxScrollAxis::Vertical => {
+                let scroll_progress = (normalized_cursor_position.y + 0.5).clamp(0.0, 1.0);
+                let next_scroll_y =
+                    scroll_progress * text_box_max_scroll_y(text_layout, computed_node);
+                Vec2::new(current_scroll.x, next_scroll_y)
+            }
+            LastBeaconUiTextBoxScrollAxis::Horizontal => {
+                let scroll_progress = (normalized_cursor_position.x + 0.5).clamp(0.0, 1.0);
+                let next_scroll_x =
+                    scroll_progress * text_box_max_scroll_x(text_layout, computed_node);
+                Vec2::new(next_scroll_x, current_scroll.y)
+            }
+        };
+        text_scroll.0 = clamp_text_box_scroll(next_scroll, text_layout, computed_node);
         scroll_overrides
-            .scroll_y_by_text_entity
-            .insert(editable_text_entity, next_scroll_y);
+            .scroll_by_text_entity
+            .insert(editable_text_entity, text_scroll.0);
     }
 }
 
 /// Applies mouse-wheel scrolling to hovered multiline text boxes.
 pub fn scroll_last_beacon_ui_text_inputs(
     mut mouse_wheel_messages: MessageReader<MouseWheel>,
+    keyboard_input: Res<ButtonInput<KeyCode>>,
     mut scroll_overrides: ResMut<LastBeaconUiTextBoxScrollOverrides>,
     mut text_inputs: LastBeaconUiTextInputScrollQuery,
     children_query: Query<&Children>,
@@ -845,14 +935,29 @@ pub fn scroll_last_beacon_ui_text_inputs(
         With<EditableText>,
     >,
 ) {
-    let scroll_delta = mouse_wheel_messages
-        .read()
-        .map(|message| match message.unit {
-            MouseScrollUnit::Line => message.y * TEXT_BOX_SCROLL_LINE_STEP,
-            MouseScrollUnit::Pixel => message.y,
-        })
-        .sum::<f32>();
-    if scroll_delta.abs() < f32::EPSILON {
+    let shift_is_pressed =
+        keyboard_input.pressed(KeyCode::ShiftLeft) || keyboard_input.pressed(KeyCode::ShiftRight);
+    let mut vertical_scroll_delta = 0.0;
+    let mut horizontal_scroll_delta = 0.0;
+
+    for mouse_wheel_message in mouse_wheel_messages.read() {
+        let message_scroll_delta = match mouse_wheel_message.unit {
+            MouseScrollUnit::Line => Vec2::new(
+                mouse_wheel_message.x * TEXT_BOX_SCROLL_LINE_STEP,
+                mouse_wheel_message.y * TEXT_BOX_SCROLL_LINE_STEP,
+            ),
+            MouseScrollUnit::Pixel => Vec2::new(mouse_wheel_message.x, mouse_wheel_message.y),
+        };
+
+        if shift_is_pressed {
+            horizontal_scroll_delta += message_scroll_delta.x - message_scroll_delta.y;
+        } else {
+            horizontal_scroll_delta += message_scroll_delta.x;
+            vertical_scroll_delta += message_scroll_delta.y;
+        }
+    }
+
+    if vertical_scroll_delta.abs() < f32::EPSILON && horizontal_scroll_delta.abs() < f32::EPSILON {
         return;
     }
 
@@ -879,44 +984,93 @@ pub fn scroll_last_beacon_ui_text_inputs(
         else {
             continue;
         };
-        let max_scroll_y = text_box_max_scroll_y(text_layout, computed_node);
-        let next_scroll_y = (text_scroll.0.y - scroll_delta).clamp(0.0, max_scroll_y);
-        text_scroll.0.y = next_scroll_y;
+        let requested_scroll = Vec2::new(
+            text_scroll.0.x + horizontal_scroll_delta,
+            text_scroll.0.y - vertical_scroll_delta,
+        );
+        text_scroll.0 = clamp_text_box_scroll(requested_scroll, text_layout, computed_node);
         scroll_overrides
-            .scroll_y_by_text_entity
-            .insert(editable_text_entity, next_scroll_y);
+            .scroll_by_text_entity
+            .insert(editable_text_entity, text_scroll.0);
+    }
+}
+
+/// Records keyboard edits/navigation that should make the native caret visible again.
+pub fn request_last_beacon_ui_text_box_caret_scroll_for_keyboard_input(
+    mut keyboard_input_messages: MessageReader<KeyboardInput>,
+    input_focus: Res<InputFocus>,
+    editable_text_query: Query<(), With<EditableText>>,
+    mut caret_scroll_requests: ResMut<LastBeaconUiTextBoxCaretScrollRequests>,
+) {
+    let Some(focused_text_entity) = input_focus.get() else {
+        keyboard_input_messages.read().for_each(drop);
+        return;
+    };
+    if !editable_text_query.contains(focused_text_entity) {
+        keyboard_input_messages.read().for_each(drop);
+        return;
+    }
+
+    for keyboard_input_message in keyboard_input_messages.read() {
+        if !keyboard_input_message.state.is_pressed() {
+            continue;
+        }
+        if keyboard_input_should_reveal_text_caret(&keyboard_input_message.logical_key) {
+            caret_scroll_requests
+                .text_entities
+                .insert(focused_text_entity);
+        }
     }
 }
 
 /// Reapplies user text-box scroll after Bevy's native cursor-visibility scroll runs.
 pub fn apply_last_beacon_ui_text_box_scroll_overrides(
-    scroll_overrides: Res<LastBeaconUiTextBoxScrollOverrides>,
+    mut scroll_overrides: ResMut<LastBeaconUiTextBoxScrollOverrides>,
+    mut caret_scroll_requests: ResMut<LastBeaconUiTextBoxCaretScrollRequests>,
     mut editable_text_query: Query<
         (&mut TextScroll, &TextLayoutInfo, &ComputedNode),
         With<EditableText>,
     >,
 ) {
-    for (text_entity, scroll_y) in &scroll_overrides.scroll_y_by_text_entity {
+    for (text_entity, stored_scroll) in &mut scroll_overrides.scroll_by_text_entity {
         let Ok((mut text_scroll, text_layout, computed_node)) =
             editable_text_query.get_mut(*text_entity)
         else {
             continue;
         };
-        let max_scroll_y = text_box_max_scroll_y(text_layout, computed_node);
-        text_scroll.0.y = scroll_y.clamp(0.0, max_scroll_y);
+
+        // Mouse wheel and scrollbar dragging are allowed to move the caret offscreen.
+        // Keyboard typing/navigation intentionally returns control to Bevy's native
+        // caret-visible scroll, then stores that position as the new user override.
+        if caret_scroll_requests.text_entities.remove(text_entity) {
+            text_scroll.0 = clamp_text_box_scroll(text_scroll.0, text_layout, computed_node);
+            *stored_scroll = text_scroll.0;
+            continue;
+        }
+
+        text_scroll.0 = clamp_text_box_scroll(*stored_scroll, text_layout, computed_node);
     }
 }
 
 /// Mirrors Bevy's native text scroll state into the authored scrollbar thumb.
 pub fn refresh_last_beacon_ui_text_box_scrollbars(
-    text_inputs: Query<(&LastBeaconUiTextInput, Option<&Children>)>,
+    text_inputs: Query<(&LastBeaconUiTextInput, &ComputedNode, Option<&Children>)>,
     children_query: Query<&Children>,
     editable_text_marker_query: Query<(), With<EditableText>>,
     editable_text_query: Query<(&TextScroll, &TextLayoutInfo, &ComputedNode), With<EditableText>>,
-    scroll_thumb_query: Query<(), With<LastBeaconUiTextScrollThumb>>,
+    vertical_scroll_track_query: Query<
+        (&Interaction, &RelativeCursorPosition),
+        With<LastBeaconUiTextScrollTrack>,
+    >,
+    vertical_scroll_thumb_query: Query<(), With<LastBeaconUiTextScrollThumb>>,
+    horizontal_scroll_track_query: Query<
+        (&Interaction, &RelativeCursorPosition),
+        With<LastBeaconUiTextHorizontalScrollTrack>,
+    >,
+    horizontal_scroll_thumb_query: Query<(), With<LastBeaconUiTextHorizontalScrollThumb>>,
     mut node_query: Query<&mut Node>,
 ) {
-    for (text_input, input_children) in &text_inputs {
+    for (text_input, text_box_node, input_children) in &text_inputs {
         if !text_input.multiline {
             continue;
         }
@@ -932,21 +1086,70 @@ pub fn refresh_last_beacon_ui_text_box_scrollbars(
         else {
             continue;
         };
-        let Some(scroll_thumb_entity) = first_descendant_with_scroll_thumb(
+        let scrollbar_layout = text_box_scrollbar_layout(text_box_node, text_layout, computed_node);
+
+        if let Some(scroll_track_entity) = first_descendant_with_scroll_track(
             input_children,
             &children_query,
-            &scroll_thumb_query,
-        ) else {
-            continue;
-        };
-        let max_scroll_y = text_box_max_scroll_y(text_layout, computed_node);
-        let scroll_progress = if max_scroll_y <= f32::EPSILON {
-            0.0
-        } else {
-            (text_scroll.0.y / max_scroll_y).clamp(0.0, 1.0)
-        };
-        if let Ok(mut scroll_thumb_node) = node_query.get_mut(scroll_thumb_entity) {
-            scroll_thumb_node.top = Val::Px(scroll_progress * text_box_scroll_thumb_travel());
+            &vertical_scroll_track_query,
+        ) {
+            if let Ok(mut scroll_track_node) = node_query.get_mut(scroll_track_entity) {
+                scroll_track_node.right = Val::Px(scrollbar_layout.inset);
+                scroll_track_node.top = Val::Px(scrollbar_layout.vertical_track_top);
+                scroll_track_node.width = Val::Px(scrollbar_layout.thickness);
+                scroll_track_node.height = Val::Px(scrollbar_layout.vertical_track_length);
+            }
+        }
+
+        if let Some(scroll_thumb_entity) = first_descendant_with_scroll_thumb(
+            input_children,
+            &children_query,
+            &vertical_scroll_thumb_query,
+        ) {
+            let max_scroll_y = text_box_max_scroll_y(text_layout, computed_node);
+            let scroll_progress = if max_scroll_y <= f32::EPSILON {
+                0.0
+            } else {
+                (text_scroll.0.y / max_scroll_y).clamp(0.0, 1.0)
+            };
+            if let Ok(mut scroll_thumb_node) = node_query.get_mut(scroll_thumb_entity) {
+                scroll_thumb_node.width = Val::Px(scrollbar_layout.thickness);
+                scroll_thumb_node.height = Val::Px(scrollbar_layout.vertical_thumb_length);
+                scroll_thumb_node.top =
+                    Val::Px(scroll_progress * scrollbar_layout.vertical_thumb_travel());
+            }
+        }
+
+        if let Some(scroll_track_entity) = first_descendant_with_horizontal_scroll_track(
+            input_children,
+            &children_query,
+            &horizontal_scroll_track_query,
+        ) {
+            if let Ok(mut scroll_track_node) = node_query.get_mut(scroll_track_entity) {
+                scroll_track_node.left = Val::Px(scrollbar_layout.horizontal_track_left);
+                scroll_track_node.bottom = Val::Px(scrollbar_layout.inset);
+                scroll_track_node.width = Val::Px(scrollbar_layout.horizontal_track_length);
+                scroll_track_node.height = Val::Px(scrollbar_layout.thickness);
+            }
+        }
+
+        if let Some(scroll_thumb_entity) = first_descendant_with_horizontal_scroll_thumb(
+            input_children,
+            &children_query,
+            &horizontal_scroll_thumb_query,
+        ) {
+            let max_scroll_x = text_box_max_scroll_x(text_layout, computed_node);
+            let scroll_progress = if max_scroll_x <= f32::EPSILON {
+                0.0
+            } else {
+                (text_scroll.0.x / max_scroll_x).clamp(0.0, 1.0)
+            };
+            if let Ok(mut scroll_thumb_node) = node_query.get_mut(scroll_thumb_entity) {
+                scroll_thumb_node.width = Val::Px(scrollbar_layout.horizontal_thumb_length);
+                scroll_thumb_node.height = Val::Px(scrollbar_layout.thickness);
+                scroll_thumb_node.left =
+                    Val::Px(scroll_progress * scrollbar_layout.horizontal_thumb_travel());
+            }
         }
     }
 }
@@ -1218,12 +1421,125 @@ fn queue_text_input_click_placement(
     editable_text.queue_edit(TextEdit::MoveToPoint(local_position));
 }
 
+fn keyboard_input_should_reveal_text_caret(key: &Key) -> bool {
+    match key {
+        Key::Character(text) => !text.is_empty(),
+        Key::Enter
+        | Key::Space
+        | Key::Backspace
+        | Key::Delete
+        | Key::ArrowLeft
+        | Key::ArrowRight
+        | Key::ArrowUp
+        | Key::ArrowDown
+        | Key::Home
+        | Key::End
+        | Key::PageUp
+        | Key::PageDown => true,
+        _ => false,
+    }
+}
+
+fn clamp_text_box_scroll(
+    scroll: Vec2,
+    text_layout: &TextLayoutInfo,
+    computed_node: &ComputedNode,
+) -> Vec2 {
+    Vec2::new(
+        scroll
+            .x
+            .clamp(0.0, text_box_max_scroll_x(text_layout, computed_node)),
+        scroll
+            .y
+            .clamp(0.0, text_box_max_scroll_y(text_layout, computed_node)),
+    )
+}
+
+fn text_box_max_scroll_x(text_layout: &TextLayoutInfo, computed_node: &ComputedNode) -> f32 {
+    (text_layout.size.x - computed_node.content_box().width()).max(0.0)
+}
+
 fn text_box_max_scroll_y(text_layout: &TextLayoutInfo, computed_node: &ComputedNode) -> f32 {
     (text_layout.size.y - computed_node.content_box().height()).max(0.0)
 }
 
-fn text_box_scroll_thumb_travel() -> f32 {
-    TEXT_BOX_SCROLL_TRACK_HEIGHT - TEXT_BOX_SCROLL_THUMB_HEIGHT
+#[derive(Clone, Copy, Debug)]
+struct LastBeaconUiTextBoxScrollbarLayout {
+    thickness: f32,
+    inset: f32,
+    vertical_track_top: f32,
+    vertical_track_length: f32,
+    vertical_thumb_length: f32,
+    horizontal_track_left: f32,
+    horizontal_track_length: f32,
+    horizontal_thumb_length: f32,
+}
+
+impl LastBeaconUiTextBoxScrollbarLayout {
+    fn vertical_thumb_travel(self) -> f32 {
+        (self.vertical_track_length - self.vertical_thumb_length).max(0.0)
+    }
+
+    fn horizontal_thumb_travel(self) -> f32 {
+        (self.horizontal_track_length - self.horizontal_thumb_length).max(0.0)
+    }
+}
+
+fn text_box_scrollbar_layout(
+    text_box_node: &ComputedNode,
+    text_layout: &TextLayoutInfo,
+    text_node: &ComputedNode,
+) -> LastBeaconUiTextBoxScrollbarLayout {
+    let text_box_size = text_box_node.size() * text_box_node.inverse_scale_factor;
+    let shorter_text_box_axis = text_box_size.x.min(text_box_size.y).max(0.0);
+    let thickness = (shorter_text_box_axis * TEXT_BOX_SCROLLBAR_THICKNESS_RATIO).clamp(
+        TEXT_BOX_SCROLLBAR_MIN_THICKNESS,
+        TEXT_BOX_SCROLLBAR_MAX_THICKNESS,
+    );
+    let inset = thickness * 0.67;
+    let top_inset = inset * 2.0;
+    let right_lane_width = thickness + inset * 2.0;
+    let bottom_lane_height = thickness + inset * 2.0;
+    let horizontal_track_left = thickness * 2.0;
+    let vertical_track_length = (text_box_size.y - top_inset - bottom_lane_height).max(thickness);
+    let horizontal_track_length =
+        (text_box_size.x - horizontal_track_left - right_lane_width).max(thickness);
+    let viewport_size = text_node.content_box().size();
+    let vertical_thumb_length = proportional_scroll_thumb_length(
+        vertical_track_length,
+        viewport_size.y,
+        text_layout.size.y,
+    );
+    let horizontal_thumb_length = proportional_scroll_thumb_length(
+        horizontal_track_length,
+        viewport_size.x,
+        text_layout.size.x,
+    );
+
+    LastBeaconUiTextBoxScrollbarLayout {
+        thickness,
+        inset,
+        vertical_track_top: top_inset,
+        vertical_track_length,
+        vertical_thumb_length,
+        horizontal_track_left,
+        horizontal_track_length,
+        horizontal_thumb_length,
+    }
+}
+
+fn proportional_scroll_thumb_length(
+    track_length: f32,
+    viewport_length: f32,
+    content_length: f32,
+) -> f32 {
+    if content_length <= f32::EPSILON || content_length <= viewport_length {
+        return track_length;
+    }
+
+    let visible_content_ratio =
+        (viewport_length / content_length).clamp(TEXT_BOX_SCROLLBAR_MIN_THUMB_RATIO, 1.0);
+    track_length * visible_content_ratio
 }
 
 fn first_descendant_with_text(
@@ -1256,12 +1572,35 @@ fn first_descendant_with_scroll_thumb(
     })
 }
 
+fn first_descendant_with_horizontal_scroll_thumb(
+    children: Option<&Children>,
+    children_query: &Query<&Children>,
+    scroll_thumb_query: &Query<(), With<LastBeaconUiTextHorizontalScrollThumb>>,
+) -> Option<Entity> {
+    first_matching_descendant(children, children_query, |entity| {
+        scroll_thumb_query.contains(entity)
+    })
+}
+
 fn first_descendant_with_scroll_track(
     children: Option<&Children>,
     children_query: &Query<&Children>,
     scroll_track_query: &Query<
         (&Interaction, &RelativeCursorPosition),
         With<LastBeaconUiTextScrollTrack>,
+    >,
+) -> Option<Entity> {
+    first_matching_descendant(children, children_query, |entity| {
+        scroll_track_query.contains(entity)
+    })
+}
+
+fn first_descendant_with_horizontal_scroll_track(
+    children: Option<&Children>,
+    children_query: &Query<&Children>,
+    scroll_track_query: &Query<
+        (&Interaction, &RelativeCursorPosition),
+        With<LastBeaconUiTextHorizontalScrollTrack>,
     >,
 ) -> Option<Entity> {
     first_matching_descendant(children, children_query, |entity| {

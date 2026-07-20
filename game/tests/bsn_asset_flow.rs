@@ -9,7 +9,8 @@ use last_beacon::{
         LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiDropdownIcon,
         LastBeaconUiDropdownPanel, LastBeaconUiDropdownToggle, LastBeaconUiNumberInput,
         LastBeaconUiRadioIcon, LastBeaconUiSlider, LastBeaconUiSliderFill, LastBeaconUiSymbolIcon,
-        LastBeaconUiTab, LastBeaconUiTextInput, LastBeaconUiTextScrollThumb,
+        LastBeaconUiTab, LastBeaconUiTextHorizontalScrollThumb,
+        LastBeaconUiTextHorizontalScrollTrack, LastBeaconUiTextInput, LastBeaconUiTextScrollThumb,
         LastBeaconUiTextScrollTrack, LastBeaconUiValueButton, LastBeaconUiValueText,
     },
 };
@@ -176,6 +177,8 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<LastBeaconUiTextInput>()
         .register_type::<LastBeaconUiTextScrollTrack>()
         .register_type::<LastBeaconUiTextScrollThumb>()
+        .register_type::<LastBeaconUiTextHorizontalScrollTrack>()
+        .register_type::<LastBeaconUiTextHorizontalScrollThumb>()
         .register_type::<LastBeaconUiSymbolIcon>()
         .register_type::<LastBeaconUiRadioIcon>()
         .register_type::<LastBeaconUiDropdownIcon>()
