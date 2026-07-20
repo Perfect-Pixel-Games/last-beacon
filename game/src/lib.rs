@@ -419,7 +419,11 @@ fn spin_cube(time: Res<Time>, mut spinning_entities: Query<&mut Transform, With<
 
 fn hide_last_beacon_menu_ui_behind_settings(
     scene_stack: Option<Res<SceneStack>>,
-    mut menu_roots: Query<(&SceneOwner, &mut Visibility), With<LastBeaconHideWhenSettingsOpen>>,
+    mut menu_roots: Query<
+        (Option<&SceneOwner>, Option<&ChildOf>, &mut Visibility),
+        With<LastBeaconHideWhenSettingsOpen>,
+    >,
+    scene_owners: Query<&SceneOwner>,
 ) {
     let Some(scene_stack) = scene_stack else {
         return;
@@ -432,8 +436,11 @@ fn hide_last_beacon_menu_ui_behind_settings(
         )
     });
 
-    for (scene_owner, mut menu_visibility) in &mut menu_roots {
-        let owning_scene_is_visible = scene_stack.is_visible(scene_owner.scene_id);
+    for (scene_owner, parent_link, mut menu_visibility) in &mut menu_roots {
+        let effective_scene_owner =
+            effective_placeholder_scene_owner(scene_owner.copied(), parent_link, &scene_owners);
+        let owning_scene_is_visible = effective_scene_owner
+            .is_some_and(|scene_owner| scene_stack.is_visible(scene_owner.scene_id));
         let desired_visibility = if settings_scene_is_open && owning_scene_is_visible {
             // Hide only marked menu UI roots; generated cube/gameplay entities stay visible.
             Visibility::Hidden
@@ -469,16 +476,17 @@ mod tests {
             .write_message(SceneCommand::open(SceneSource::runtime("main-menu")));
         app.update();
 
+        let scene_root = app
+            .world_mut()
+            .spawn(SceneOwner {
+                scene_id: SceneId(1),
+            })
+            .id();
         let menu_root = app
             .world_mut()
-            .spawn((
-                SceneOwner {
-                    scene_id: SceneId(1),
-                },
-                Visibility::Inherited,
-                LastBeaconHideWhenSettingsOpen,
-            ))
+            .spawn((Visibility::Inherited, LastBeaconHideWhenSettingsOpen))
             .id();
+        app.world_mut().entity_mut(scene_root).add_child(menu_root);
 
         let settings_options = OpenSceneOptions::default()
             .with_key("options-menu")
