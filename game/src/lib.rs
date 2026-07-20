@@ -158,6 +158,7 @@ impl Plugin for LastBeaconPlugin {
         .add_systems(
             Startup,
             (
+                ui_widgets::preload_last_beacon_ui_fonts,
                 scenes::register_last_beacon_bsn_scenes,
                 scenes::open_initial_scene,
             )
@@ -168,7 +169,12 @@ impl Plugin for LastBeaconPlugin {
             (
                 scenes::spawn_requested_last_beacon_scene_drivers,
                 scenes::navigate_last_beacon_beacon_pages,
-                ui_widgets::queue_last_beacon_bsn_widgets,
+                // Must run after Foundation propagates SceneOwner onto newly
+                // applied scene content, so newly-discovered widget slots are
+                // already attributable to their owning scene before the scene
+                // stack's visibility sync runs this frame. See
+                // `queue_last_beacon_bsn_widgets`'s doc comment.
+                ui_widgets::queue_last_beacon_bsn_widgets.after(propagate_loaded_bsn_scene_owners),
                 ui_widgets::apply_last_beacon_ui_font,
                 ui_widgets::initialize_last_beacon_ui_text_inputs,
                 ui_widgets::focus_last_beacon_ui_text_inputs,

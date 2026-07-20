@@ -27,6 +27,7 @@ use bevy::{
     },
     window::PrimaryWindow,
 };
+use foundation_runtime_library::scene_stack::SceneContentLoading;
 
 /// Requests that a reusable Last Beacon BSN widget asset be applied to this entity.
 #[derive(Clone, Debug, Default, Component, Reflect)]
@@ -487,6 +488,12 @@ struct LastBeaconBsnWidgetFailed {
 }
 
 /// Starts loading newly-authored widget slots.
+///
+/// This must run after Foundation's `propagate_loaded_bsn_scene_owners` so a
+/// widget slot already carries [`foundation_runtime_library::prelude::SceneOwner`]
+/// before it gains [`SceneContentLoading`] here — otherwise the marker could
+/// briefly apply to no scene, letting the parent scene reveal for one frame
+/// before hiding again once ownership catches up.
 pub fn queue_last_beacon_bsn_widgets(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -500,13 +507,30 @@ pub fn queue_last_beacon_bsn_widgets(
 
         // Store the handle on the slot so the exclusive apply system can patch this entity later.
         let scene_handle = asset_server.load(widget_slot.asset_path.clone());
-        commands
-            .entity(widget_slot_entity)
-            .insert(LastBeaconBsnWidgetPending {
+        commands.entity(widget_slot_entity).insert((
+            LastBeaconBsnWidgetPending {
                 asset_path: widget_slot.asset_path.clone(),
                 scene_handle,
-            });
+            },
+            // Keep the owning scene hidden until this nested widget also
+            // finishes applying, so it can't pop in after the rest of the
+            // scene is already visible.
+            SceneContentLoading,
+        ));
     }
+}
+
+/// Starts loading Last Beacon's shared UI fonts before any scene opens.
+///
+/// `apply_last_beacon_ui_font` reassigns every newly-spawned `TextFont` to
+/// these same font handles regardless of scene content, so those handles
+/// are almost always already loading (or loaded) by the time any authored
+/// text applies. Without this, the very first text of a session would
+/// request the fonts cold, on top of whatever `.bsn` load/apply latency
+/// already delayed that text's appearance.
+pub fn preload_last_beacon_ui_fonts(asset_server: Res<AssetServer>) {
+    let _ui_font: Handle<Font> = asset_server.load("fonts/NotoSans-Regular.ttf");
+    let _symbol_font: Handle<Font> = asset_server.load("fonts/NotoSansSymbols2-Regular.ttf");
 }
 
 /// Applies loaded widget scene patches onto their slot entities.
@@ -1902,6 +1926,7 @@ pub fn apply_pending_last_beacon_bsn_widgets(world: &mut World) {
             Ok(()) => {
                 if let Ok(mut widget_slot_entity_mut) = world.get_entity_mut(widget_slot_entity) {
                     widget_slot_entity_mut.remove::<LastBeaconBsnWidgetPending>();
+                    widget_slot_entity_mut.remove::<SceneContentLoading>();
                 }
             }
             Err(apply_error) => {
@@ -1918,6 +1943,9 @@ fn mark_widget_failed(world: &mut World, widget_slot_entity: Entity, failure_rea
     error!("{failure_reason}");
     if let Ok(mut widget_slot_entity_mut) = world.get_entity_mut(widget_slot_entity) {
         widget_slot_entity_mut.remove::<LastBeaconBsnWidgetPending>();
+        // A failed widget load is still a settled outcome: reveal the parent
+        // scene instead of hiding it forever because one widget broke.
+        widget_slot_entity_mut.remove::<SceneContentLoading>();
         widget_slot_entity_mut.insert(LastBeaconBsnWidgetFailed {
             reason: failure_reason,
         });
@@ -1927,6 +1955,7 @@ fn mark_widget_failed(world: &mut World, widget_slot_entity: Entity, failure_rea
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bevy::asset::LoadState;
 
     #[test]
     fn widget_asset_path_is_authored_explicitly() {
@@ -1935,5 +1964,141 @@ mod tests {
         };
 
         assert_eq!(widget.asset_path, "ui/widgets/main_menu/title.bsn");
+    }
+
+    fn test_app_with_assets() -> App {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(bevy::asset::AssetPlugin {
+            file_path: ".".to_string(),
+            ..default()
+        });
+        app.init_asset::<ScenePatch>();
+        app.init_asset::<Font>();
+        app
+    }
+
+    #[test]
+    fn queueing_a_widget_slot_marks_the_scene_as_still_loading() {
+        let mut app = test_app_with_assets();
+        app.add_systems(Update, queue_last_beacon_bsn_widgets);
+
+        let widget_slot_entity = app
+            .world_mut()
+            .spawn(LastBeaconBsnWidget {
+                asset_path: "ui/widgets/common/divider.bsn".to_string(),
+            })
+            .id();
+
+        app.update();
+
+        assert!(
+            app.world()
+                .get::<LastBeaconBsnWidgetPending>(widget_slot_entity)
+                .is_some(),
+            "widget slot should start loading its asset"
+        );
+        assert!(
+            app.world()
+                .get::<SceneContentLoading>(widget_slot_entity)
+                .is_some(),
+            "widget slot should mark its owning scene as still loading"
+        );
+    }
+
+    #[test]
+    fn applying_a_widget_clears_the_scene_loading_marker() {
+        let mut app = test_app_with_assets();
+        app.add_systems(Update, apply_pending_last_beacon_bsn_widgets);
+
+        let scene_patch = {
+            let asset_server = app.world().resource::<AssetServer>();
+            ScenePatch::load(
+                asset_server,
+                bevy::scene::bsn! { Name(String::from("Divider")) },
+            )
+        };
+        let scene_handle = app
+            .world_mut()
+            .resource_mut::<Assets<ScenePatch>>()
+            .add(scene_patch);
+        let widget_slot_entity = app
+            .world_mut()
+            .spawn((
+                LastBeaconBsnWidgetPending {
+                    asset_path: "ui/widgets/common/divider.bsn".to_string(),
+                    scene_handle,
+                },
+                SceneContentLoading,
+            ))
+            .id();
+
+        app.update();
+        app.update();
+
+        assert!(
+            app.world()
+                .get::<LastBeaconBsnWidgetPending>(widget_slot_entity)
+                .is_none(),
+            "widget slot should no longer be pending once applied"
+        );
+        assert!(
+            app.world()
+                .get::<SceneContentLoading>(widget_slot_entity)
+                .is_none(),
+            "applying the widget should clear the owning scene's loading marker"
+        );
+    }
+
+    #[test]
+    fn a_failed_widget_load_still_clears_the_scene_loading_marker() {
+        let mut app = test_app_with_assets();
+
+        let widget_slot_entity = app.world_mut().spawn(SceneContentLoading).id();
+        mark_widget_failed(
+            app.world_mut(),
+            widget_slot_entity,
+            "test failure".to_string(),
+        );
+
+        assert!(
+            app.world()
+                .get::<LastBeaconBsnWidgetFailed>(widget_slot_entity)
+                .is_some(),
+            "widget slot should be marked failed"
+        );
+        assert!(
+            app.world()
+                .get::<SceneContentLoading>(widget_slot_entity)
+                .is_none(),
+            "a failed widget load must not permanently hide its owning scene"
+        );
+    }
+
+    #[test]
+    fn preloading_fonts_starts_loading_both_last_beacon_fonts() {
+        let mut app = test_app_with_assets();
+        app.add_systems(Update, preload_last_beacon_ui_fonts);
+        app.update();
+
+        let asset_server = app.world().resource::<AssetServer>();
+        let ui_font_handle: Handle<Font> = asset_server.load("fonts/NotoSans-Regular.ttf");
+        let symbol_font_handle: Handle<Font> =
+            asset_server.load("fonts/NotoSansSymbols2-Regular.ttf");
+
+        assert!(
+            !matches!(
+                asset_server.load_state(ui_font_handle.id()),
+                LoadState::NotLoaded
+            ),
+            "preload should have already requested the UI font"
+        );
+        assert!(
+            !matches!(
+                asset_server.load_state(symbol_font_handle.id()),
+                LoadState::NotLoaded
+            ),
+            "preload should have already requested the symbol font"
+        );
     }
 }

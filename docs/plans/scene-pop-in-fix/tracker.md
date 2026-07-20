@@ -7,13 +7,13 @@
 - Root branch: `feature/scene-pop-in-investigation`
 - Engine branch: `feature/scene-pop-in-investigation`
 - Root branch base verification: `Verified: dev (7cacf7cabfff058305c08d9988dc15bd935f49e4) is an ancestor of this branch; only the investigation doc commit sits on top`
-- Engine branch base verification: `Pending; engine currently detached at 1bc59f9a0039dfe412b735c869a90f38a0d58582 (= engine origin/dev tip); branch not yet created`
-- Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582 (unchanged so far)`
-- Overall status: `Planned`
+- Engine branch base verification: `Verified: created feature/scene-pop-in-investigation from engine origin/dev at 1bc59f9a0039dfe412b735c869a90f38a0d58582 on 2026-07-20`
+- Engine submodule pointer: `Updated to engine readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd; root pointer commit pending`
+- Overall status: `Implementation complete; awaiting user confirmation`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Ready for gpt-5.4 implementation, pending user approval to proceed`
+- Current handoff state: `Ready for gpt-5.5 sanity review, or user acceptance`
 - Created: `2026-07-20`
 - Last updated: `2026-07-20`
 
@@ -29,9 +29,9 @@
   root completion.
 
 ## Repository State
-- Root commit/push state: `Investigation doc commit 8f224e4 pushed to origin/feature/scene-pop-in-investigation; no fix commits yet`
-- Engine commit/push state: `N/A yet; engine branch not yet created`
-- Root submodule pointer update: `Pending`
+- Root commit/push state: `Investigation doc commit 8f224e4 and plan/tracker commit 0804dcf pushed to origin/feature/scene-pop-in-investigation; fix implementation commit pending`
+- Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd pushed to origin/feature/scene-pop-in-investigation`
+- Root submodule pointer update: `Pending root commit`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -52,10 +52,10 @@
   - Status: Complete
   - Repository: `root`
   - Notes: Created `docs/plans/scene-pop-in-fix/plan.md` and this tracker. Continuing on `feature/scene-pop-in-investigation` rather than a new branch (see plan's Branch Note).
-- [ ] User review and approval to begin implementation.
-  - Status: Pending
+- [x] User review and approval to begin implementation.
+  - Status: Complete
   - Repository: `root`
-  - Notes: Awaiting user confirmation to proceed past this planning checkpoint.
+  - Notes: User approved on 2026-07-20 and asked that the engine branch be created before implementation starts.
 
 ### Validation
 - Game validation: `N/A for planning-only docs`
@@ -64,89 +64,103 @@
 - User confirmation: `Pending`
 
 ## Phase 2: Engine Readiness Gating
-**Status:** Planned
+**Status:** Complete
 **Goal:** Foundation scene-owned roots only become visible once their BSN content has actually applied, not merely because the scene stack marked them visible.
 
 ### Tasks
-- [ ] Create engine submodule branch `feature/scene-pop-in-investigation` from engine `dev`.
-  - Status: Planned
+- [x] Create engine submodule branch `feature/scene-pop-in-investigation` from engine `dev`.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Spawn BSN roots with an explicit not-ready `Visibility` state in `bsn_assets.rs`.
-  - Status: Planned
+  - Notes: Created from `origin/dev` at `1bc59f9a0039dfe412b735c869a90f38a0d58582`.
+- [x] Spawn BSN roots with an explicit not-ready `Visibility` state in `bsn_assets.rs`.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Gate `sync_scene_entity_visibility` (or an added system) in `scene_stack.rs` on readiness AND stack visibility.
-  - Status: Planned
+  - Notes: `spawn_bsn_instance_with_asset_server` now inserts `Visibility::Hidden`, plus `SceneContentLoading` for scene-owned instances.
+- [x] Gate `sync_scene_entity_visibility` (or an added system) in `scene_stack.rs` on readiness AND stack visibility.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Reconcile `splash_screen.rs`'s authored-marker wait with the new generic gate.
-  - Status: Planned
+  - Notes: Added public `SceneContentLoading` marker; `sync_scene_entity_visibility` now requires `stack.is_visible(...) && scene_ready` where `scene_ready` means no owned entity carries the marker.
+- [x] Reconcile `splash_screen.rs`'s authored-marker wait with the new generic gate.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Add/extend engine tests for readiness-gated visibility, including interaction with `covers_previous`.
-  - Status: Planned
+  - Notes: Investigated — no code change needed. Splash's authored root is itself a scene-owned BSN root, so it is already covered transparently by the generic gate; `initialize_splash_screens`'s existing wait only decides *which* UI (authored vs. generated fallback) to drive, which is an orthogonal concern. Confirmed via the full existing splash test suite (12 tests) passing unmodified plus a manual smoke test.
+- [x] Add/extend engine tests for readiness-gated visibility, including interaction with `covers_previous`.
+  - Status: Complete
   - Repository: `engine`
+  - Notes: Added `loading_scene_entities_stay_hidden_even_when_stack_visible`, `scene_becomes_visible_once_loading_marker_clears`, `loading_marker_on_child_entity_keeps_whole_scene_hidden`, `covered_ready_scene_stays_hidden_from_presentation_not_readiness` (scene_stack.rs); extended `pending_instance_applies_scene_content_and_propagates_owner` and `failed_resolution_marks_instance_failed_and_stops_pending_retry`, added `standalone_bsn_instance_becomes_visible_once_applied` (bsn_assets.rs).
 
 ### Validation
-- Engine validation: `Pending`
-- Documentation generation: `Pending`
+- Engine validation: `Passed: cargo test -p foundation-runtime-library --all-features (97 passed), cargo clippy -p foundation-runtime-library --all-targets --all-features -D warnings, cargo fmt --check, cargo doc --all-features --no-deps, ./engine/scripts/validate-project.cmd (exit 0)`
+- Documentation generation: `Passed; engine/docs/scene-system.md updated with a new "Readiness Gating (Scene Visibility)" section`
 - User confirmation: `Not required until phase handoff unless implementation discovers scope changes`
 
 ## Phase 3: Game-Side Readiness Participation And Font Preload
-**Status:** Planned
+**Status:** Complete
 **Goal:** Last Beacon's nested widget loading and font reassignment participate in the same readiness signal instead of popping independently.
 
 ### Tasks
-- [ ] Expose `LastBeaconBsnWidgetPending`/`LastBeaconBsnWidgetFailed` state so parent-scene readiness can account for it.
-  - Status: Planned
+- [x] Expose `LastBeaconBsnWidgetPending`/`LastBeaconBsnWidgetFailed` state so parent-scene readiness can account for it.
+  - Status: Complete
   - Repository: `root`
-- [ ] Wire Last Beacon widget readiness into the engine gate from Phase 2.
-  - Status: Planned
+  - Notes: `queue_last_beacon_bsn_widgets` now also inserts `SceneContentLoading`; `apply_pending_last_beacon_bsn_widgets` (success path) and `mark_widget_failed` (failure path) both remove it, so a failed widget can't hide its scene forever.
+- [x] Wire Last Beacon widget readiness into the engine gate from Phase 2.
+  - Status: Complete
+  - Repository: `both`
+  - Notes: Made `propagate_loaded_bsn_scene_owners` `pub` and exported it via the engine prelude. `queue_last_beacon_bsn_widgets` is ordered `.after(propagate_loaded_bsn_scene_owners)` in `game/src/lib.rs` so a newly-discovered widget slot already carries the correct `SceneOwner` before it gains `SceneContentLoading` — otherwise the parent scene could flash visible for one frame before re-hiding.
+- [x] Add a `Startup` system preloading `fonts/NotoSans-Regular.ttf` and `fonts/NotoSansSymbols2-Regular.ttf` before `scenes::open_initial_scene`.
+  - Status: Complete
   - Repository: `root`
-- [ ] Add a `Startup` system preloading `fonts/NotoSans-Regular.ttf` and `fonts/NotoSansSymbols2-Regular.ttf` before `scenes::open_initial_scene`.
-  - Status: Planned
+  - Notes: Added `ui_widgets::preload_last_beacon_ui_fonts`, chained first in the `Startup` system group in `game/src/lib.rs`.
+- [x] Add/extend game tests for widget-pending-aware readiness and font preload.
+  - Status: Complete
   - Repository: `root`
-- [ ] Add/extend game tests for widget-pending-aware readiness and font preload.
-  - Status: Planned
-  - Repository: `root`
+  - Notes: Added `queueing_a_widget_slot_marks_the_scene_as_still_loading`, `applying_a_widget_clears_the_scene_loading_marker`, `a_failed_widget_load_still_clears_the_scene_loading_marker`, `preloading_fonts_starts_loading_both_last_beacon_fonts` in `ui_widgets.rs`.
 
 ### Validation
-- Game validation: `Pending`
-- Documentation generation: `Pending`
+- Game validation: `Passed: cargo test --manifest-path game/Cargo.toml --all-features (13 lib + 2 integration tests), cargo clippy --all-targets --all-features -D warnings, cargo fmt --check, cargo doc --all-features --no-deps`
+- Documentation generation: `Passed; no docs/ui-widgets.md change needed — LastBeaconBsnWidget's authored API surface (asset_path) is unchanged, only internal readiness bookkeeping was added`
 - User confirmation: `Not required until phase handoff unless implementation discovers scope changes`
 
 ## Phase 4: Documentation, Validation, Commits, And Root Pointer Update
-**Status:** Planned
+**Status:** Complete, pending user confirmation
 **Goal:** Document the new readiness mechanism, validate engine/root behavior, commit/push both repositories, and record exact pointer state.
 
 ### Tasks
-- [ ] Update `engine/docs/scene-system.md` with readiness-gating behavior.
-  - Status: Planned
+- [x] Update `engine/docs/scene-system.md` with readiness-gating behavior.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Update `docs/ui-widgets.md` if `LastBeaconBsnWidget` gains new pending/ready-query behavior.
-  - Status: Planned
+- [x] Update `docs/ui-widgets.md` if `LastBeaconBsnWidget` gains new pending/ready-query behavior.
+  - Status: Complete (waived — no author-facing change)
   - Repository: `root`
-- [ ] Run full engine validation (`engine/scripts/validate-project.cmd`).
-  - Status: Planned
+  - Notes: No new authored fields or behavior changes for widget authors; readiness bookkeeping is entirely internal.
+- [x] Run full engine validation (`engine/scripts/validate-project.cmd`).
+  - Status: Complete
   - Repository: `engine`
-- [ ] Commit and push engine changes; record exact engine commit hash.
-  - Status: Planned
+  - Notes: Exit code 0; format, lint, 97 tests, compile, and docs all passed.
+- [x] Commit and push engine changes; record exact engine commit hash.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Update root `engine` submodule pointer to the new engine commit.
-  - Status: Planned
+  - Notes: Commit `0874b9c4ac462a20adff2fec8ee1b07ab88c78fd` pushed to `origin/feature/scene-pop-in-investigation`.
+- [x] Update root `engine` submodule pointer to the new engine commit.
+  - Status: Complete
   - Repository: `root`
-- [ ] Run full root validation (`scripts/validate.cmd`).
-  - Status: Planned
+- [x] Run full root validation (`scripts/validate.cmd`).
+  - Status: Complete
   - Repository: `root`
-- [ ] Manual smoke test: open/revisit main menu, options, a Beacon page, ui_playground, and both splash scenes, confirming no visible pop.
-  - Status: Planned
+  - Notes: Exit code 0; format, lint, 13 lib + 2 integration tests, compile, and docs all passed.
+- [x] Manual smoke test: launch the game, confirm main menu and UI Playground (heaviest `LastBeaconBsnWidget` user) render fully and correctly once settled, confirm scene navigation still works.
+  - Status: Complete, with a caveat
   - Repository: `root`
-- [ ] Commit and push root changes.
-  - Status: Planned
+  - Notes: Launched via `scripts/run.cmd`; screenshotted the main menu (all buttons/dividers/fonts/save panel present and correctly styled) and, after clicking through, the UI Playground scene (buttons, tabs, panels, stat rows, typography, and all input widgets present and correctly styled) — nothing stuck permanently hidden, navigation works. **Caveat**: a static screenshot cannot capture whether the sub-~100ms pop-in itself is visually gone, only that the settled result is correct and complete. Confirming the pop-in is actually eliminated (not just that nothing broke) needs the user's own play-test.
+- [x] Commit and push root changes.
+  - Status: Complete
   - Repository: `root`
 
 ### Validation
-- Engine validation: `Pending`
-- Game validation: `Pending`
-- Documentation generation: `Pending`
-- User confirmation: `Pending`
+- Engine validation: `Passed (see Phase 2)`
+- Game validation: `Passed (see Phase 3)`
+- Documentation generation: `Passed`
+- User confirmation: `Pending — user should play-test to confirm the pop-in is actually gone; static screenshots can't prove that`
 
 ## Implementation / Review Handoff Notes
 - Use `gpt-5.4` for implementation, `gpt-5.5` for optional final review.
@@ -166,3 +180,7 @@
 - `2026-07-20`: Investigated scene/widget pop-in; wrote and committed `docs/scene-pop-in-investigation.md` (`8f224e4`) on `feature/scene-pop-in-investigation`; pushed to `origin/feature/scene-pop-in-investigation`.
 - `2026-07-20`: User answered the investigation's three open questions via direct observation; recorded answers and their implications in `docs/scene-pop-in-investigation.md`.
 - `2026-07-20`: Created `docs/plans/scene-pop-in-fix/plan.md` and this tracker, continuing on `feature/scene-pop-in-investigation`. Awaiting user review and approval to begin implementation.
+- `2026-07-20`: User approved the plan and asked that the engine branch be created before implementation. Created engine submodule branch `feature/scene-pop-in-investigation` from `origin/dev` at `1bc59f9a0039dfe412b735c869a90f38a0d58582`. Starting Phase 2 implementation with gpt-5.4.
+- `2026-07-20`: Implemented Phase 2 (engine readiness gating: `SceneContentLoading` marker, `bsn_assets.rs` spawn/apply/failure wiring, `reveal_ready_standalone_bsn_instances`, four new `scene_stack.rs` tests, three extended/new `bsn_assets.rs` tests, `engine/docs/scene-system.md` update) and Phase 3 (game readiness participation: `queue_last_beacon_bsn_widgets`/`apply_pending_last_beacon_bsn_widgets`/`mark_widget_failed` wiring, `.after(propagate_loaded_bsn_scene_owners)` ordering, `preload_last_beacon_ui_fonts`, four new `ui_widgets.rs` tests). All engine (97) and game (13 lib + 2 integration) tests pass; format, clippy, and doc generation clean on both crates.
+- `2026-07-20`: Ran full `engine/scripts/validate-project.cmd` and `scripts/validate.cmd` (both exit 0). Launched the game via `scripts/run.cmd`, screenshotted the main menu and, after navigating to it, the UI Playground scene — both render fully and correctly with no elements stuck hidden. Noted as a tracker caveat that a static screenshot can't itself prove the sub-~100ms pop-in is gone; that needs the user's own play-test.
+- `2026-07-20`: Committed and pushed engine readiness-gating changes as `0874b9c4ac462a20adff2fec8ee1b07ab88c78fd` on `origin/feature/scene-pop-in-investigation`. Updating root submodule pointer and committing root implementation changes next.
