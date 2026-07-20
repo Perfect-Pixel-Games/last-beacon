@@ -10,6 +10,7 @@ use std::{
 };
 
 use bevy::{
+    ecs::system::SystemParam,
     input::{
         keyboard::{Key, KeyboardInput},
         mouse::{MouseScrollUnit, MouseWheel},
@@ -326,9 +327,9 @@ const TEXT_BOX_SCROLLBAR_MIN_THICKNESS: f32 = 4.0;
 const TEXT_BOX_SCROLLBAR_MAX_THICKNESS: f32 = 8.0;
 const TEXT_BOX_SCROLLBAR_MIN_THUMB_RATIO: f32 = 0.25;
 
-type LastBeaconUiTextInputFocusQuery<'world, 'state> = Query<
-    'world,
-    'state,
+type LastBeaconUiTextInputFocusQuery<'w, 's> = Query<
+    'w,
+    's,
     (
         Entity,
         &'static LastBeaconUiTextInput,
@@ -338,9 +339,9 @@ type LastBeaconUiTextInputFocusQuery<'world, 'state> = Query<
     (Changed<Interaction>, With<LastBeaconUiTextInput>),
 >;
 
-type LastBeaconUiTextInputScrollQuery<'world, 'state> = Query<
-    'world,
-    'state,
+type LastBeaconUiTextInputScrollQuery<'w, 's> = Query<
+    'w,
+    's,
     (
         Entity,
         &'static LastBeaconUiTextInput,
@@ -350,23 +351,23 @@ type LastBeaconUiTextInputScrollQuery<'world, 'state> = Query<
     ),
 >;
 
-type LastBeaconUiValueButtonInteractionQuery<'world, 'state> = Query<
-    'world,
-    'state,
+type LastBeaconUiValueButtonInteractionQuery<'w, 's> = Query<
+    'w,
+    's,
     (&'static LastBeaconUiValueButton, &'static Interaction),
     (Changed<Interaction>, With<Button>),
 >;
 
-type LastBeaconUiDropdownToggleQuery<'world, 'state> = Query<
-    'world,
-    'state,
+type LastBeaconUiDropdownToggleQuery<'w, 's> = Query<
+    'w,
+    's,
     (&'static LastBeaconUiDropdownToggle, &'static Interaction),
     (Changed<Interaction>, With<Button>),
 >;
 
-type LastBeaconUiSliderInteractionQuery<'world, 'state> = Query<
-    'world,
-    'state,
+type LastBeaconUiSliderInteractionQuery<'w, 's> = Query<
+    'w,
+    's,
     (
         Entity,
         &'static LastBeaconUiSlider,
@@ -376,16 +377,16 @@ type LastBeaconUiSliderInteractionQuery<'world, 'state> = Query<
     With<Button>,
 >;
 
-type LastBeaconUiTabInteractionQuery<'world, 'state> = Query<
-    'world,
-    'state,
+type LastBeaconUiTabInteractionQuery<'w, 's> = Query<
+    'w,
+    's,
     (&'static LastBeaconUiTab, &'static Interaction),
     (Changed<Interaction>, With<Button>),
 >;
 
-type LastBeaconUiButtonStyleQuery<'world, 'state> = Query<
-    'world,
-    'state,
+type LastBeaconUiButtonStyleQuery<'w, 's> = Query<
+    'w,
+    's,
     (
         &'static LastBeaconUiButton,
         &'static Interaction,
@@ -396,9 +397,9 @@ type LastBeaconUiButtonStyleQuery<'world, 'state> = Query<
     (With<Button>, Without<LastBeaconUiTab>),
 >;
 
-type LastBeaconUiTabStyleQuery<'world, 'state> = Query<
-    'world,
-    'state,
+type LastBeaconUiTabStyleQuery<'w, 's> = Query<
+    'w,
+    's,
     (
         &'static LastBeaconUiTab,
         &'static Interaction,
@@ -409,9 +410,9 @@ type LastBeaconUiTabStyleQuery<'world, 'state> = Query<
     (With<Button>, Without<LastBeaconUiButton>),
 >;
 
-type MainMenuPrimaryButtonStyleQuery<'world, 'state> = Query<
-    'world,
-    'state,
+type MainMenuPrimaryButtonStyleQuery<'w, 's> = Query<
+    'w,
+    's,
     &'static mut BackgroundColor,
     (
         With<LastBeaconMainMenuPrimaryButton>,
@@ -422,9 +423,9 @@ type MainMenuPrimaryButtonStyleQuery<'world, 'state> = Query<
     ),
 >;
 
-type BeaconPrimaryButtonStyleQuery<'world, 'state> = Query<
-    'world,
-    'state,
+type BeaconPrimaryButtonStyleQuery<'w, 's> = Query<
+    'w,
+    's,
     &'static mut BackgroundColor,
     (
         With<LastBeaconBeaconPrimaryButton>,
@@ -435,9 +436,9 @@ type BeaconPrimaryButtonStyleQuery<'world, 'state> = Query<
     ),
 >;
 
-type BeaconTabButtonStyleQuery<'world, 'state> = Query<
-    'world,
-    'state,
+type BeaconTabButtonStyleQuery<'w, 's> = Query<
+    'w,
+    's,
     &'static mut BackgroundColor,
     (
         With<LastBeaconBeaconTabButton>,
@@ -1088,37 +1089,65 @@ pub fn apply_last_beacon_ui_text_box_scroll_overrides(
     }
 }
 
-/// Mirrors Bevy's native text scroll state into the authored scrollbar thumb.
-pub fn refresh_last_beacon_ui_text_box_scrollbars(
-    text_inputs: Query<(&LastBeaconUiTextInput, &ComputedNode, Option<&Children>)>,
-    children_query: Query<&Children>,
-    editable_text_marker_query: Query<(), With<EditableText>>,
-    editable_text_query: Query<(&TextScroll, &TextLayoutInfo, &ComputedNode), With<EditableText>>,
+/// Query bundle used to refresh authored multiline text-box scrollbars.
+#[derive(SystemParam)]
+pub struct LastBeaconTextBoxScrollbarQueries<'w, 's> {
+    text_inputs: Query<
+        'w,
+        's,
+        (
+            &'static LastBeaconUiTextInput,
+            &'static ComputedNode,
+            Option<&'static Children>,
+        ),
+    >,
+    children_query: Query<'w, 's, &'static Children>,
+    editable_text_marker_query: Query<'w, 's, (), With<EditableText>>,
+    editable_text_query: Query<
+        'w,
+        's,
+        (
+            &'static TextScroll,
+            &'static TextLayoutInfo,
+            &'static ComputedNode,
+        ),
+        With<EditableText>,
+    >,
     vertical_scroll_track_query: Query<
-        (&Interaction, &RelativeCursorPosition),
+        'w,
+        's,
+        (&'static Interaction, &'static RelativeCursorPosition),
         With<LastBeaconUiTextScrollTrack>,
     >,
-    vertical_scroll_thumb_query: Query<(), With<LastBeaconUiTextScrollThumb>>,
+    vertical_scroll_thumb_query: Query<'w, 's, (), With<LastBeaconUiTextScrollThumb>>,
     horizontal_scroll_track_query: Query<
-        (&Interaction, &RelativeCursorPosition),
+        'w,
+        's,
+        (&'static Interaction, &'static RelativeCursorPosition),
         With<LastBeaconUiTextHorizontalScrollTrack>,
     >,
-    horizontal_scroll_thumb_query: Query<(), With<LastBeaconUiTextHorizontalScrollThumb>>,
-    mut node_query: Query<&mut Node>,
+    horizontal_scroll_thumb_query: Query<'w, 's, (), With<LastBeaconUiTextHorizontalScrollThumb>>,
+    node_query: Query<'w, 's, &'static mut Node>,
+}
+
+/// Mirrors Bevy's native text scroll state into the authored scrollbar thumb.
+pub fn refresh_last_beacon_ui_text_box_scrollbars(
+    mut scrollbar_queries: LastBeaconTextBoxScrollbarQueries,
 ) {
-    for (text_input, text_box_node, input_children) in &text_inputs {
+    for (text_input, text_box_node, input_children) in &scrollbar_queries.text_inputs {
         if !text_input.multiline {
             continue;
         }
         let Some(editable_text_entity) = first_descendant_with_editable_text(
             input_children,
-            &children_query,
-            &editable_text_marker_query,
+            &scrollbar_queries.children_query,
+            &scrollbar_queries.editable_text_marker_query,
         ) else {
             continue;
         };
-        let Ok((text_scroll, text_layout, computed_node)) =
-            editable_text_query.get(editable_text_entity)
+        let Ok((text_scroll, text_layout, computed_node)) = scrollbar_queries
+            .editable_text_query
+            .get(editable_text_entity)
         else {
             continue;
         };
@@ -1136,10 +1165,12 @@ pub fn refresh_last_beacon_ui_text_box_scrollbars(
 
         if let Some(scroll_track_entity) = first_descendant_with_scroll_track(
             input_children,
-            &children_query,
-            &vertical_scroll_track_query,
+            &scrollbar_queries.children_query,
+            &scrollbar_queries.vertical_scroll_track_query,
         ) {
-            if let Ok(mut scroll_track_node) = node_query.get_mut(scroll_track_entity) {
+            if let Ok(mut scroll_track_node) =
+                scrollbar_queries.node_query.get_mut(scroll_track_entity)
+            {
                 scroll_track_node.display = if has_vertical_overflow {
                     Display::Flex
                 } else {
@@ -1154,8 +1185,8 @@ pub fn refresh_last_beacon_ui_text_box_scrollbars(
 
         if let Some(scroll_thumb_entity) = first_descendant_with_scroll_thumb(
             input_children,
-            &children_query,
-            &vertical_scroll_thumb_query,
+            &scrollbar_queries.children_query,
+            &scrollbar_queries.vertical_scroll_thumb_query,
         ) {
             let max_scroll_y = text_box_max_scroll_y(text_layout, computed_node);
             let scroll_progress = if max_scroll_y <= f32::EPSILON {
@@ -1163,7 +1194,9 @@ pub fn refresh_last_beacon_ui_text_box_scrollbars(
             } else {
                 (text_scroll.0.y / max_scroll_y).clamp(0.0, 1.0)
             };
-            if let Ok(mut scroll_thumb_node) = node_query.get_mut(scroll_thumb_entity) {
+            if let Ok(mut scroll_thumb_node) =
+                scrollbar_queries.node_query.get_mut(scroll_thumb_entity)
+            {
                 scroll_thumb_node.width = Val::Px(scrollbar_layout.thickness);
                 scroll_thumb_node.height = Val::Px(scrollbar_layout.vertical_thumb_length);
                 scroll_thumb_node.top =
@@ -1173,10 +1206,12 @@ pub fn refresh_last_beacon_ui_text_box_scrollbars(
 
         if let Some(scroll_track_entity) = first_descendant_with_horizontal_scroll_track(
             input_children,
-            &children_query,
-            &horizontal_scroll_track_query,
+            &scrollbar_queries.children_query,
+            &scrollbar_queries.horizontal_scroll_track_query,
         ) {
-            if let Ok(mut scroll_track_node) = node_query.get_mut(scroll_track_entity) {
+            if let Ok(mut scroll_track_node) =
+                scrollbar_queries.node_query.get_mut(scroll_track_entity)
+            {
                 scroll_track_node.display = if has_horizontal_overflow {
                     Display::Flex
                 } else {
@@ -1191,8 +1226,8 @@ pub fn refresh_last_beacon_ui_text_box_scrollbars(
 
         if let Some(scroll_thumb_entity) = first_descendant_with_horizontal_scroll_thumb(
             input_children,
-            &children_query,
-            &horizontal_scroll_thumb_query,
+            &scrollbar_queries.children_query,
+            &scrollbar_queries.horizontal_scroll_thumb_query,
         ) {
             let max_scroll_x = text_box_max_scroll_x(text_layout, computed_node);
             let scroll_progress = if max_scroll_x <= f32::EPSILON {
@@ -1200,7 +1235,9 @@ pub fn refresh_last_beacon_ui_text_box_scrollbars(
             } else {
                 (text_scroll.0.x / max_scroll_x).clamp(0.0, 1.0)
             };
-            if let Ok(mut scroll_thumb_node) = node_query.get_mut(scroll_thumb_entity) {
+            if let Ok(mut scroll_thumb_node) =
+                scrollbar_queries.node_query.get_mut(scroll_thumb_entity)
+            {
                 scroll_thumb_node.width = Val::Px(scrollbar_layout.horizontal_thumb_length);
                 scroll_thumb_node.height = Val::Px(scrollbar_layout.thickness);
                 scroll_thumb_node.left =
