@@ -100,6 +100,41 @@ pub struct LastBeaconUiTextScrollTrack;
 #[reflect(Component, Default)]
 pub struct LastBeaconUiTextScrollThumb;
 
+/// Marks text that should render with the bundled Noto Sans Symbols 2 font.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiSymbolIcon;
+
+/// Updates a radio icon from reusable tab selection state.
+#[derive(Clone, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiRadioIcon {
+    /// Selection group this icon follows.
+    pub group: String,
+    /// Tab identifier represented by this icon.
+    pub tab: String,
+    /// Whether this option is initially selected.
+    pub selected: bool,
+}
+
+impl Default for LastBeaconUiRadioIcon {
+    fn default() -> Self {
+        Self {
+            group: "default".to_string(),
+            tab: "default".to_string(),
+            selected: false,
+        }
+    }
+}
+
+/// Updates a combo-box arrow icon from dropdown open state.
+#[derive(Clone, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiDropdownIcon {
+    /// Dropdown key this icon follows.
+    pub target: String,
+}
+
 /// Makes an editable text input feed a numeric value.
 #[derive(Clone, Debug, Component, Reflect)]
 #[reflect(Component, Default)]
@@ -428,11 +463,17 @@ pub fn queue_last_beacon_bsn_widgets(
 /// Applies Last Beacon's current UI font to newly spawned text.
 pub fn apply_last_beacon_ui_font(
     asset_server: Res<AssetServer>,
-    mut text_fonts: Query<&mut TextFont, Added<TextFont>>,
+    mut text_fonts: Query<(&mut TextFont, Option<&LastBeaconUiSymbolIcon>), Added<TextFont>>,
 ) {
     let ui_font = asset_server.load("fonts/NotoSans-Regular.ttf");
-    for mut text_font in &mut text_fonts {
-        text_font.font = FontSource::Handle(ui_font.clone());
+    let symbol_font = asset_server.load("fonts/NotoSansSymbols2-Regular.ttf");
+    for (mut text_font, symbol_icon) in &mut text_fonts {
+        let font_handle = if symbol_icon.is_some() {
+            symbol_font.clone()
+        } else {
+            ui_font.clone()
+        };
+        text_font.font = FontSource::Handle(font_handle);
     }
 }
 
@@ -620,6 +661,51 @@ pub fn toggle_last_beacon_ui_dropdowns(
         dropdown_states
             .open_dropdowns
             .insert(toggle.target.clone(), next_open_state);
+    }
+}
+
+/// Mirrors reusable radio selection into symbol icon text.
+pub fn refresh_last_beacon_ui_radio_icons(
+    tab_selections: Res<LastBeaconUiTabSelections>,
+    mut radio_icons: Query<(&LastBeaconUiRadioIcon, &mut Text)>,
+) {
+    if !tab_selections.is_changed() {
+        return;
+    }
+
+    for (radio_icon, mut text) in &mut radio_icons {
+        let selected_tab = tab_selections.selected_tabs.get(&radio_icon.group);
+        let option_is_selected = selected_tab
+            .map(|selected_tab| selected_tab == &radio_icon.tab)
+            .unwrap_or(radio_icon.selected);
+        text.0 = if option_is_selected {
+            "●".to_string()
+        } else {
+            "○".to_string()
+        };
+    }
+}
+
+/// Mirrors reusable dropdown open state into symbol arrow text.
+pub fn refresh_last_beacon_ui_dropdown_icons(
+    dropdown_states: Res<LastBeaconUiDropdownStates>,
+    mut dropdown_icons: Query<(&LastBeaconUiDropdownIcon, &mut Text)>,
+) {
+    if !dropdown_states.is_changed() {
+        return;
+    }
+
+    for (dropdown_icon, mut text) in &mut dropdown_icons {
+        let dropdown_is_open = dropdown_states
+            .open_dropdowns
+            .get(&dropdown_icon.target)
+            .copied()
+            .unwrap_or(false);
+        text.0 = if dropdown_is_open {
+            "▴".to_string()
+        } else {
+            "▾".to_string()
+        };
     }
 }
 

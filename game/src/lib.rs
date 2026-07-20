@@ -139,6 +139,9 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<ui_widgets::LastBeaconUiTextInput>()
         .register_type::<ui_widgets::LastBeaconUiTextScrollTrack>()
         .register_type::<ui_widgets::LastBeaconUiTextScrollThumb>()
+        .register_type::<ui_widgets::LastBeaconUiSymbolIcon>()
+        .register_type::<ui_widgets::LastBeaconUiRadioIcon>()
+        .register_type::<ui_widgets::LastBeaconUiDropdownIcon>()
         .register_type::<ui_widgets::LastBeaconUiNumberInput>()
         .register_type::<ui_widgets::LastBeaconUiValueButton>()
         .register_type::<ui_widgets::LastBeaconUiValueText>()
@@ -176,7 +179,9 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::update_last_beacon_ui_number_inputs,
                 ui_widgets::update_last_beacon_ui_value_buttons,
                 ui_widgets::toggle_last_beacon_ui_dropdowns,
+                ui_widgets::refresh_last_beacon_ui_dropdown_icons,
                 ui_widgets::refresh_last_beacon_ui_dropdown_panels,
+                ui_widgets::refresh_last_beacon_ui_radio_icons,
                 ui_widgets::initialize_last_beacon_ui_sliders,
                 ui_widgets::update_last_beacon_ui_sliders,
                 ui_widgets::refresh_last_beacon_ui_slider_fills,

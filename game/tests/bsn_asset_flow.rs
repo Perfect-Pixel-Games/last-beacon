@@ -6,11 +6,11 @@ use last_beacon::{
     asset_root,
     ui_widgets::{
         LastBeaconBeaconPrimaryButton, LastBeaconBeaconTabButton, LastBeaconBsnWidget,
-        LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiDropdownPanel,
-        LastBeaconUiDropdownToggle, LastBeaconUiNumberInput, LastBeaconUiSlider,
-        LastBeaconUiSliderFill, LastBeaconUiTab, LastBeaconUiTextInput,
-        LastBeaconUiTextScrollThumb, LastBeaconUiTextScrollTrack, LastBeaconUiValueButton,
-        LastBeaconUiValueText,
+        LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiDropdownIcon,
+        LastBeaconUiDropdownPanel, LastBeaconUiDropdownToggle, LastBeaconUiNumberInput,
+        LastBeaconUiRadioIcon, LastBeaconUiSlider, LastBeaconUiSliderFill, LastBeaconUiSymbolIcon,
+        LastBeaconUiTab, LastBeaconUiTextInput, LastBeaconUiTextScrollThumb,
+        LastBeaconUiTextScrollTrack, LastBeaconUiValueButton, LastBeaconUiValueText,
     },
 };
 
@@ -176,6 +176,9 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<LastBeaconUiTextInput>()
         .register_type::<LastBeaconUiTextScrollTrack>()
         .register_type::<LastBeaconUiTextScrollThumb>()
+        .register_type::<LastBeaconUiSymbolIcon>()
+        .register_type::<LastBeaconUiRadioIcon>()
+        .register_type::<LastBeaconUiDropdownIcon>()
         .register_type::<LastBeaconUiNumberInput>()
         .register_type::<LastBeaconUiValueButton>()
         .register_type::<LastBeaconUiValueText>()

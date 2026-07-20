@@ -14,7 +14,13 @@ bevy_ecs::hierarchy::Children [
     last_beacon::ui_widgets::LastBeaconUiTab { group: "radio-power", tab: "online", selected: true }
     last_beacon::ui_widgets::LastBeaconUiValueButton { target: "radio-power", set_value: "online", delta: 0.0, min: 0.0, max: 1.0 }
     bevy_ecs::hierarchy::Children [
-        bevy_ui::widget::text::Text("(*) ONLINE")
+        bevy_ui::widget::text::Text("●")
+        last_beacon::ui_widgets::LastBeaconUiSymbolIcon
+        last_beacon::ui_widgets::LastBeaconUiRadioIcon { group: "radio-power", tab: "online", selected: true }
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 })),
+
+        bevy_ui::widget::text::Text("ONLINE")
         bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
         bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
     ],
@@ -27,7 +33,13 @@ bevy_ecs::hierarchy::Children [
     last_beacon::ui_widgets::LastBeaconUiTab { group: "radio-power", tab: "standby", selected: false }
     last_beacon::ui_widgets::LastBeaconUiValueButton { target: "radio-power", set_value: "standby", delta: 0.0, min: 0.0, max: 1.0 }
     bevy_ecs::hierarchy::Children [
-        bevy_ui::widget::text::Text("( ) STANDBY")
+        bevy_ui::widget::text::Text("○")
+        last_beacon::ui_widgets::LastBeaconUiSymbolIcon
+        last_beacon::ui_widgets::LastBeaconUiRadioIcon { group: "radio-power", tab: "standby", selected: false }
+        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+
+        bevy_ui::widget::text::Text("STANDBY")
         bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
         bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
     ]
