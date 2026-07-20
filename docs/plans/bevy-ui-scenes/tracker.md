@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Noto Sans Symbols 2 icon font integration committed and pushed`
+- Overall status: `Text box caret navigation validated`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Noto Sans Symbols 2 icon font integration implemented with gpt-5.4; awaiting user review`
+- Current handoff state: `Text box caret navigation implemented with gpt-5.4; awaiting commit and user review`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Noto Sans Symbols 2 icon font integration commit 3a01e76 pushed to origin/feature/bevy-ui-scenes; tracker finalization commit pending.`
+- Root commit/push state: `Noto Sans Symbols 2 icon font integration commit 3a01e76 and tracker commit f56fcab pushed to origin/feature/bevy-ui-scenes; text box caret navigation commit pending.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Bundled Noto Sans Symbols 2, restored radio/combo symbol glyphs with symbol-specific font markers, and added state-driven radio/arrow icon refresh; validation passed; commit 3a01e76 pushed.`
+- Current tweak state: `Custom multiline text box now tracks byte-safe caret position, renders the caret at that position, supports insertion/deletion at caret, and supports Left/Right/Up/Down/Home/End keyboard movement; validation passed; commit pending.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -230,6 +230,7 @@
 - `2026-07-19`: User confirmed the text box works and requested scrollbar indicator dragging. Added `LastBeaconUiTextScrollTrack` and drag state so the authored scrollbar track can be pressed/dragged to set the same visible-line window used by wheel scrolling, with the thumb refreshed from the shared state. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `e4f4309 Add text box scrollbar dragging`.
 - `2026-07-19`: User reported the custom multiline text box lacked a blinking cursor and noted square missing-glyph boxes on radio buttons and combo box. Added a focused multiline text-box caret rendered as a blinking ASCII `|` in the custom visible-line window, and replaced unsupported icon-like glyphs (`●`, `○`, `▾`) with ASCII-safe labels. Confirmed the game currently uses `game/assets/fonts/NotoSans-Regular.ttf`; it is broad enough for normal UI text but should not be treated as an icon font without fallback. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `ac9ed5c Add text box caret and safe glyphs`.
 - `2026-07-20`: User asked to use Noto Sans Symbols 2 for known symbol icons and make icons state-driven. Bundled `game/assets/fonts/NotoSansSymbols2-Regular.ttf`, added symbol font marker/runtime support, restored radio icons to `●`/`○`, restored combo arrow to `▾`, and added runtime refresh so radio icons follow selected option while combo arrow switches between `▾` and `▴` based on dropdown open state. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `3a01e76 Use symbol font for input icons`.
+- `2026-07-20`: User reported the custom multiline text-box caret did not behave like the default text-field caret because it was end-only and could not move around text. Added byte-safe caret position state for multiline text boxes; typing and Enter now insert at the caret, Backspace/Delete remove around the caret, and Left/Right/Up/Down/Home/End move the caret while keeping the caret line visible. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.

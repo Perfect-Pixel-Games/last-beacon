@@ -297,6 +297,7 @@ pub struct LastBeaconUiTextBoxCaretBlink {
 struct LastBeaconUiTextBoxState {
     value: String,
     first_visible_line: usize,
+    caret_byte_index: usize,
 }
 
 const TEXT_BOX_VISIBLE_LINES: usize = 4;
@@ -508,10 +509,11 @@ pub fn initialize_last_beacon_ui_text_inputs(
                 LastBeaconUiTextBoxState {
                     value: text_input.value.clone(),
                     first_visible_line: 0,
+                    caret_byte_index: text_input.value.len(),
                 },
             );
             if let Ok(mut text) = text_values.get_mut(text_entity) {
-                text.0 = visible_text_box_lines(&text_input.value, 0, false);
+                text.0 = visible_text_box_lines(&text_input.value, 0, None);
             }
             commands
                 .entity(input_entity)
@@ -790,7 +792,7 @@ pub fn refresh_last_beacon_ui_text_box_cursors(
             text.0 = visible_text_box_lines(
                 &text_box_state.value,
                 text_box_state.first_visible_line,
-                should_show_caret,
+                should_show_caret.then_some(text_box_state.caret_byte_index),
             );
         }
     }
@@ -821,6 +823,7 @@ pub fn type_into_last_beacon_ui_text_boxes(
     }
 
     let mut text_changed = false;
+    let mut caret_changed = false;
     let Some(text_box_state) = text_box_states.boxes.get_mut(&focused_entity) else {
         keyboard_inputs.clear();
         return;
@@ -833,26 +836,46 @@ pub fn type_into_last_beacon_ui_text_boxes(
 
         match &keyboard_input.logical_key {
             Key::Enter => {
-                text_box_state.value.push('\n');
+                insert_text_at_text_box_caret(text_box_state, "\n");
                 text_changed = true;
             }
             Key::Backspace => {
-                text_box_state.value.pop();
-                text_changed = true;
+                text_changed |= delete_before_text_box_caret(text_box_state);
+            }
+            Key::Delete => {
+                text_changed |= delete_after_text_box_caret(text_box_state);
+            }
+            Key::ArrowLeft => {
+                caret_changed |= move_text_box_caret_left(text_box_state);
+            }
+            Key::ArrowRight => {
+                caret_changed |= move_text_box_caret_right(text_box_state);
+            }
+            Key::ArrowUp => {
+                caret_changed |= move_text_box_caret_vertically(text_box_state, -1);
+            }
+            Key::ArrowDown => {
+                caret_changed |= move_text_box_caret_vertically(text_box_state, 1);
+            }
+            Key::Home => {
+                caret_changed |= move_text_box_caret_to_line_start(text_box_state);
+            }
+            Key::End => {
+                caret_changed |= move_text_box_caret_to_line_end(text_box_state);
             }
             Key::Character(character) => {
-                text_box_state.value.push_str(character.as_str());
+                insert_text_at_text_box_caret(text_box_state, character.as_str());
                 text_changed = true;
             }
             _ => {}
         }
     }
 
-    if !text_changed {
+    if !text_changed && !caret_changed {
         return;
     }
 
-    text_box_state.first_visible_line = max_first_visible_text_box_line(&text_box_state.value);
+    keep_text_box_caret_visible(text_box_state);
     refresh_text_box_view(
         focused_entity,
         input_children,
@@ -1231,31 +1254,208 @@ fn format_value(value: f32) -> String {
 fn visible_text_box_lines(
     value: &str,
     first_visible_line: usize,
-    should_show_caret: bool,
+    visible_caret_byte_index: Option<usize>,
 ) -> String {
-    let total_line_count = value.lines().count().max(1);
-    let mut visible_lines = value
-        .lines()
-        .skip(first_visible_line)
-        .take(TEXT_BOX_VISIBLE_LINES)
-        .map(str::to_string)
-        .collect::<Vec<_>>();
+    let line_ranges = text_box_line_ranges(value);
+    let caret_line_and_column = visible_caret_byte_index
+        .map(|caret_byte_index| text_box_line_and_column(value, caret_byte_index));
+    let visible_line_range =
+        first_visible_line..(first_visible_line + TEXT_BOX_VISIBLE_LINES).min(line_ranges.len());
+    let mut visible_lines = Vec::new();
+
+    for line_index in visible_line_range {
+        let (line_start_byte_index, line_end_byte_index) = line_ranges[line_index];
+        let mut line = value[line_start_byte_index..line_end_byte_index].to_string();
+        if let Some((caret_line_index, caret_column)) = caret_line_and_column {
+            if caret_line_index == line_index {
+                let caret_local_byte_index = byte_index_for_text_column(&line, caret_column);
+                line.insert(caret_local_byte_index, '|');
+            }
+        }
+        visible_lines.push(line);
+    }
+
     if visible_lines.is_empty() {
         visible_lines.push(String::new());
     }
-
-    let last_visible_line = first_visible_line + visible_lines.len();
-    if should_show_caret && last_visible_line >= total_line_count {
-        if let Some(last_line) = visible_lines.last_mut() {
-            last_line.push('|');
-        }
-    }
-
     visible_lines.join("\n")
 }
 
 fn max_first_visible_text_box_line(value: &str) -> usize {
-    value.lines().count().saturating_sub(TEXT_BOX_VISIBLE_LINES)
+    text_box_line_ranges(value)
+        .len()
+        .saturating_sub(TEXT_BOX_VISIBLE_LINES)
+}
+
+fn insert_text_at_text_box_caret(text_box_state: &mut LastBeaconUiTextBoxState, text: &str) {
+    text_box_state
+        .value
+        .insert_str(text_box_state.caret_byte_index, text);
+    text_box_state.caret_byte_index += text.len();
+}
+
+fn delete_before_text_box_caret(text_box_state: &mut LastBeaconUiTextBoxState) -> bool {
+    let Some(previous_byte_index) =
+        previous_text_box_char_boundary(&text_box_state.value, text_box_state.caret_byte_index)
+    else {
+        return false;
+    };
+    text_box_state
+        .value
+        .replace_range(previous_byte_index..text_box_state.caret_byte_index, "");
+    text_box_state.caret_byte_index = previous_byte_index;
+    true
+}
+
+fn delete_after_text_box_caret(text_box_state: &mut LastBeaconUiTextBoxState) -> bool {
+    let Some(next_byte_index) =
+        next_text_box_char_boundary(&text_box_state.value, text_box_state.caret_byte_index)
+    else {
+        return false;
+    };
+    text_box_state
+        .value
+        .replace_range(text_box_state.caret_byte_index..next_byte_index, "");
+    true
+}
+
+fn move_text_box_caret_left(text_box_state: &mut LastBeaconUiTextBoxState) -> bool {
+    let Some(previous_byte_index) =
+        previous_text_box_char_boundary(&text_box_state.value, text_box_state.caret_byte_index)
+    else {
+        return false;
+    };
+    text_box_state.caret_byte_index = previous_byte_index;
+    true
+}
+
+fn move_text_box_caret_right(text_box_state: &mut LastBeaconUiTextBoxState) -> bool {
+    let Some(next_byte_index) =
+        next_text_box_char_boundary(&text_box_state.value, text_box_state.caret_byte_index)
+    else {
+        return false;
+    };
+    text_box_state.caret_byte_index = next_byte_index;
+    true
+}
+
+fn move_text_box_caret_vertically(
+    text_box_state: &mut LastBeaconUiTextBoxState,
+    line_delta: isize,
+) -> bool {
+    let (current_line_index, current_column) =
+        text_box_line_and_column(&text_box_state.value, text_box_state.caret_byte_index);
+    let line_ranges = text_box_line_ranges(&text_box_state.value);
+    let target_line_index = current_line_index
+        .saturating_add_signed(line_delta)
+        .min(line_ranges.len().saturating_sub(1));
+    if target_line_index == current_line_index {
+        return false;
+    }
+    text_box_state.caret_byte_index = text_box_byte_index_for_line_and_column(
+        &text_box_state.value,
+        target_line_index,
+        current_column,
+    );
+    true
+}
+
+fn move_text_box_caret_to_line_start(text_box_state: &mut LastBeaconUiTextBoxState) -> bool {
+    let (current_line_index, _) =
+        text_box_line_and_column(&text_box_state.value, text_box_state.caret_byte_index);
+    let line_ranges = text_box_line_ranges(&text_box_state.value);
+    let (line_start_byte_index, _) = line_ranges[current_line_index];
+    if text_box_state.caret_byte_index == line_start_byte_index {
+        return false;
+    }
+    text_box_state.caret_byte_index = line_start_byte_index;
+    true
+}
+
+fn move_text_box_caret_to_line_end(text_box_state: &mut LastBeaconUiTextBoxState) -> bool {
+    let (current_line_index, _) =
+        text_box_line_and_column(&text_box_state.value, text_box_state.caret_byte_index);
+    let line_ranges = text_box_line_ranges(&text_box_state.value);
+    let (_, line_end_byte_index) = line_ranges[current_line_index];
+    if text_box_state.caret_byte_index == line_end_byte_index {
+        return false;
+    }
+    text_box_state.caret_byte_index = line_end_byte_index;
+    true
+}
+
+fn keep_text_box_caret_visible(text_box_state: &mut LastBeaconUiTextBoxState) {
+    let (caret_line_index, _) =
+        text_box_line_and_column(&text_box_state.value, text_box_state.caret_byte_index);
+    if caret_line_index < text_box_state.first_visible_line {
+        text_box_state.first_visible_line = caret_line_index;
+        return;
+    }
+
+    let first_hidden_line = text_box_state.first_visible_line + TEXT_BOX_VISIBLE_LINES;
+    if caret_line_index >= first_hidden_line {
+        text_box_state.first_visible_line = caret_line_index + 1 - TEXT_BOX_VISIBLE_LINES;
+    }
+}
+
+fn text_box_line_and_column(value: &str, caret_byte_index: usize) -> (usize, usize) {
+    let bounded_caret_byte_index = caret_byte_index.min(value.len());
+    for (line_index, (line_start_byte_index, line_end_byte_index)) in
+        text_box_line_ranges(value).into_iter().enumerate()
+    {
+        if bounded_caret_byte_index >= line_start_byte_index
+            && bounded_caret_byte_index <= line_end_byte_index
+        {
+            let column = value[line_start_byte_index..bounded_caret_byte_index]
+                .chars()
+                .count();
+            return (line_index, column);
+        }
+    }
+    (0, 0)
+}
+
+fn text_box_byte_index_for_line_and_column(value: &str, line_index: usize, column: usize) -> usize {
+    let line_ranges = text_box_line_ranges(value);
+    let bounded_line_index = line_index.min(line_ranges.len().saturating_sub(1));
+    let (line_start_byte_index, line_end_byte_index) = line_ranges[bounded_line_index];
+    let line = &value[line_start_byte_index..line_end_byte_index];
+    line_start_byte_index + byte_index_for_text_column(line, column)
+}
+
+fn byte_index_for_text_column(text: &str, column: usize) -> usize {
+    text.char_indices()
+        .nth(column)
+        .map(|(byte_index, _)| byte_index)
+        .unwrap_or(text.len())
+}
+
+fn previous_text_box_char_boundary(value: &str, byte_index: usize) -> Option<usize> {
+    value[..byte_index]
+        .char_indices()
+        .last()
+        .map(|(index, _)| index)
+}
+
+fn next_text_box_char_boundary(value: &str, byte_index: usize) -> Option<usize> {
+    value[byte_index..]
+        .char_indices()
+        .nth(1)
+        .map(|(offset, _)| byte_index + offset)
+        .or_else(|| (byte_index < value.len()).then_some(value.len()))
+}
+
+fn text_box_line_ranges(value: &str) -> Vec<(usize, usize)> {
+    let mut line_ranges = Vec::new();
+    let mut line_start_byte_index = 0;
+    for (byte_index, character) in value.char_indices() {
+        if character == '\n' {
+            line_ranges.push((line_start_byte_index, byte_index));
+            line_start_byte_index = byte_index + character.len_utf8();
+        }
+    }
+    line_ranges.push((line_start_byte_index, value.len()));
+    line_ranges
 }
 
 fn refresh_text_box_view(
@@ -1277,7 +1477,7 @@ fn refresh_text_box_view(
         text.0 = visible_text_box_lines(
             &text_box_state.value,
             text_box_state.first_visible_line,
-            false,
+            None,
         );
     }
 
