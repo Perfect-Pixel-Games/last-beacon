@@ -1402,16 +1402,25 @@ bevy_ecs::hierarchy::Children [
                     ]
                 ]
             ]
-        ],
+        ]
+    ],
 
-    #BackButton
+    #BackButtonDock
+    bevy_ui::ui_node::Node {
+        width: bevy_ui::geometry::Val::Percent(100.0),
+        height: bevy_ui::geometry::Val::Percent(100.0),
+        position_type: bevy_ui::ui_node::PositionType::Absolute,
+        flex_direction: bevy_ui::ui_node::FlexDirection::Row,
+        align_items: bevy_ui::ui_node::AlignItems::FlexEnd,
+        justify_content: bevy_ui::ui_node::JustifyContent::FlexEnd,
+        padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(40.0), right: bevy_ui::geometry::Val::Px(40.0), top: bevy_ui::geometry::Val::Px(40.0), bottom: bevy_ui::geometry::Val::Px(40.0), },
+    }
+    bevy_ecs::hierarchy::Children [
+        #BackButton
         bevy_ui::widget::button::Button
         bevy_ui::ui_node::Node {
             width: bevy_ui::geometry::Val::Px(220.0),
             height: bevy_ui::geometry::Val::Px(38.0),
-            position_type: bevy_ui::ui_node::PositionType::Absolute,
-            right: bevy_ui::geometry::Val::Px(40.0),
-            bottom: bevy_ui::geometry::Val::Px(40.0),
             flex_direction: bevy_ui::ui_node::FlexDirection::Row,
             align_items: bevy_ui::ui_node::AlignItems::Center,
             justify_content: bevy_ui::ui_node::JustifyContent::Center,
