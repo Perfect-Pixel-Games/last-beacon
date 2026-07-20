@@ -19,6 +19,11 @@ bevy_ecs::hierarchy::Children [
     bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(13.0) }
     bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 })),
 
+    #TextBoxCaret
+    bevy_ui::ui_node::Node { display: bevy_ui::ui_node::Display::None, position_type: bevy_ui::ui_node::PositionType::Absolute, left: bevy_ui::geometry::Val::Px(12.0), top: bevy_ui::geometry::Val::Px(10.0), width: bevy_ui::geometry::Val::Px(2.0), height: bevy_ui::geometry::Val::Px(15.0), }
+    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }))
+    last_beacon::ui_widgets::LastBeaconUiTextBoxCaret,
+
     #TextBoxScrollBar
     bevy_ui::widget::button::Button
     bevy_ui::ui_node::Node { position_type: bevy_ui::ui_node::PositionType::Absolute, right: bevy_ui::geometry::Val::Px(4.0), top: bevy_ui::geometry::Val::Px(8.0), width: bevy_ui::geometry::Val::Px(6.0), height: bevy_ui::geometry::Val::Px(72.0), }

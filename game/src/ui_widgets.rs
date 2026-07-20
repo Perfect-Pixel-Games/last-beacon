@@ -293,6 +293,11 @@ pub struct LastBeaconUiTextBoxCaretBlink {
     caret_is_visible: bool,
 }
 
+/// Marks the visual caret node for a custom multiline text box.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiTextBoxCaret;
+
 #[derive(Clone, Debug, Default)]
 struct LastBeaconUiTextBoxState {
     value: String,
@@ -301,6 +306,10 @@ struct LastBeaconUiTextBoxState {
 }
 
 const TEXT_BOX_VISIBLE_LINES: usize = 4;
+const TEXT_BOX_CONTENT_LEFT: f32 = 12.0;
+const TEXT_BOX_CONTENT_TOP: f32 = 10.0;
+const TEXT_BOX_LINE_HEIGHT: f32 = 16.0;
+const TEXT_BOX_CARET_COLUMN_WIDTH: f32 = 7.0;
 
 type LastBeaconUiTextInputFocusQuery<'world, 'state> = Query<
     'world,
@@ -513,7 +522,7 @@ pub fn initialize_last_beacon_ui_text_inputs(
                 },
             );
             if let Ok(mut text) = text_values.get_mut(text_entity) {
-                text.0 = visible_text_box_lines(&text_input.value, 0, None);
+                text.0 = visible_text_box_lines(&text_input.value, 0);
             }
             commands
                 .entity(input_entity)
@@ -759,6 +768,7 @@ pub fn initialize_last_beacon_ui_sliders(
 }
 
 /// Refreshes the custom multiline caret blink state for focused text boxes.
+#[allow(clippy::too_many_arguments)]
 pub fn refresh_last_beacon_ui_text_box_cursors(
     time: Res<Time>,
     input_focus: Res<InputFocus>,
@@ -766,10 +776,14 @@ pub fn refresh_last_beacon_ui_text_box_cursors(
     text_box_states: Res<LastBeaconUiTextBoxStates>,
     text_inputs: Query<(&LastBeaconUiTextInput, Option<&Children>)>,
     children_query: Query<&Children>,
-    mut text_query: Query<&mut Text>,
+    caret_query: Query<(), With<LastBeaconUiTextBoxCaret>>,
+    mut node_query: Query<&mut Node>,
 ) {
     let next_caret_is_visible = (time.elapsed_secs() * 2.0).floor() as i32 % 2 == 0;
-    if caret_blink.caret_is_visible == next_caret_is_visible && !input_focus.is_changed() {
+    if caret_blink.caret_is_visible == next_caret_is_visible
+        && !input_focus.is_changed()
+        && !text_box_states.is_changed()
+    {
         return;
     }
     caret_blink.caret_is_visible = next_caret_is_visible;
@@ -781,19 +795,28 @@ pub fn refresh_last_beacon_ui_text_box_cursors(
         if !text_input.multiline {
             continue;
         }
-        let Some(text_entity) =
-            first_descendant_with_rendered_text(input_children, &children_query, &text_query)
+        let Some(caret_entity) =
+            first_descendant_with_text_box_caret(input_children, &children_query, &caret_query)
         else {
             continue;
         };
-        if let Ok(mut text) = text_query.get_mut(text_entity) {
+        if let Ok(mut caret_node) = node_query.get_mut(caret_entity) {
             let text_box_has_focus = input_focus.get() == Some(*input_entity);
             let should_show_caret = text_box_has_focus && caret_blink.caret_is_visible;
-            text.0 = visible_text_box_lines(
-                &text_box_state.value,
-                text_box_state.first_visible_line,
-                should_show_caret.then_some(text_box_state.caret_byte_index),
-            );
+            caret_node.display = if should_show_caret {
+                Display::Flex
+            } else {
+                Display::None
+            };
+
+            let (caret_line_index, caret_column) =
+                text_box_line_and_column(&text_box_state.value, text_box_state.caret_byte_index);
+            let visible_line_index =
+                caret_line_index.saturating_sub(text_box_state.first_visible_line);
+            caret_node.left =
+                Val::Px(TEXT_BOX_CONTENT_LEFT + caret_column as f32 * TEXT_BOX_CARET_COLUMN_WIDTH);
+            caret_node.top =
+                Val::Px(TEXT_BOX_CONTENT_TOP + visible_line_index as f32 * TEXT_BOX_LINE_HEIGHT);
         }
     }
 }
@@ -1251,28 +1274,15 @@ fn format_value(value: f32) -> String {
     }
 }
 
-fn visible_text_box_lines(
-    value: &str,
-    first_visible_line: usize,
-    visible_caret_byte_index: Option<usize>,
-) -> String {
+fn visible_text_box_lines(value: &str, first_visible_line: usize) -> String {
     let line_ranges = text_box_line_ranges(value);
-    let caret_line_and_column = visible_caret_byte_index
-        .map(|caret_byte_index| text_box_line_and_column(value, caret_byte_index));
     let visible_line_range =
         first_visible_line..(first_visible_line + TEXT_BOX_VISIBLE_LINES).min(line_ranges.len());
     let mut visible_lines = Vec::new();
 
     for line_index in visible_line_range {
         let (line_start_byte_index, line_end_byte_index) = line_ranges[line_index];
-        let mut line = value[line_start_byte_index..line_end_byte_index].to_string();
-        if let Some((caret_line_index, caret_column)) = caret_line_and_column {
-            if caret_line_index == line_index {
-                let caret_local_byte_index = byte_index_for_text_column(&line, caret_column);
-                line.insert(caret_local_byte_index, '|');
-            }
-        }
-        visible_lines.push(line);
+        visible_lines.push(value[line_start_byte_index..line_end_byte_index].to_string());
     }
 
     if visible_lines.is_empty() {
@@ -1474,11 +1484,7 @@ fn refresh_text_box_view(
         return;
     };
     if let Ok(mut text) = text_query.get_mut(text_entity) {
-        text.0 = visible_text_box_lines(
-            &text_box_state.value,
-            text_box_state.first_visible_line,
-            None,
-        );
+        text.0 = visible_text_box_lines(&text_box_state.value, text_box_state.first_visible_line);
     }
 
     let max_first_visible_line = max_first_visible_text_box_line(&text_box_state.value);
@@ -1537,6 +1543,16 @@ fn first_descendant_with_scroll_thumb(
 ) -> Option<Entity> {
     first_matching_descendant(children, children_query, |entity| {
         scroll_thumb_query.contains(entity)
+    })
+}
+
+fn first_descendant_with_text_box_caret(
+    children: Option<&Children>,
+    children_query: &Query<&Children>,
+    caret_query: &Query<(), With<LastBeaconUiTextBoxCaret>>,
+) -> Option<Entity> {
+    first_matching_descendant(children, children_query, |entity| {
+        caret_query.contains(entity)
     })
 }
 

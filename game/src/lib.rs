@@ -139,6 +139,7 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<ui_widgets::LastBeaconUiTextInput>()
         .register_type::<ui_widgets::LastBeaconUiTextScrollTrack>()
         .register_type::<ui_widgets::LastBeaconUiTextScrollThumb>()
+        .register_type::<ui_widgets::LastBeaconUiTextBoxCaret>()
         .register_type::<ui_widgets::LastBeaconUiSymbolIcon>()
         .register_type::<ui_widgets::LastBeaconUiRadioIcon>()
         .register_type::<ui_widgets::LastBeaconUiDropdownIcon>()
