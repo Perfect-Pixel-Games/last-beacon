@@ -128,9 +128,7 @@ impl Plugin for LastBeaconPlugin {
         .init_resource::<ui_widgets::LastBeaconUiTabSelections>()
         .init_resource::<ui_widgets::LastBeaconUiInputValues>()
         .init_resource::<ui_widgets::LastBeaconUiDropdownStates>()
-        .init_resource::<ui_widgets::LastBeaconUiTextBoxStates>()
         .init_resource::<ui_widgets::LastBeaconUiTextBoxScrollDrag>()
-        .init_resource::<ui_widgets::LastBeaconUiTextBoxCaretBlink>()
         .register_type::<ui_widgets::LastBeaconMainMenuPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconPrimaryButton>()
         .register_type::<ui_widgets::LastBeaconBeaconTabButton>()
@@ -139,7 +137,6 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<ui_widgets::LastBeaconUiTextInput>()
         .register_type::<ui_widgets::LastBeaconUiTextScrollTrack>()
         .register_type::<ui_widgets::LastBeaconUiTextScrollThumb>()
-        .register_type::<ui_widgets::LastBeaconUiTextBoxCaret>()
         .register_type::<ui_widgets::LastBeaconUiSymbolIcon>()
         .register_type::<ui_widgets::LastBeaconUiRadioIcon>()
         .register_type::<ui_widgets::LastBeaconUiDropdownIcon>()
@@ -166,11 +163,10 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::apply_last_beacon_ui_font,
                 ui_widgets::initialize_last_beacon_ui_text_inputs,
                 ui_widgets::focus_last_beacon_ui_text_inputs,
-                ui_widgets::refresh_last_beacon_ui_text_box_cursors,
-                ui_widgets::type_into_last_beacon_ui_text_boxes,
                 ui_widgets::initialize_last_beacon_ui_text_scroll_tracks,
                 ui_widgets::drag_last_beacon_ui_text_box_scrollbars,
                 ui_widgets::scroll_last_beacon_ui_text_inputs,
+                ui_widgets::refresh_last_beacon_ui_text_box_scrollbars,
             ),
         )
         .add_systems(

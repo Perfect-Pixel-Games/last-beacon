@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Text box caret style refinement committed and pushed`
+- Overall status: `Native EditableText text box rewrite validated`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Text box caret style refinement implemented with gpt-5.4; awaiting user review`
+- Current handoff state: `Native EditableText text box rewrite implemented with gpt-5.4; awaiting commit and user review`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Text box caret style refinement commit 1d980ec pushed to origin/feature/bevy-ui-scenes; tracker finalization commit pending.`
+- Root commit/push state: `Text box caret style refinement commit 1d980ec and tracker commit af52774 pushed to origin/feature/bevy-ui-scenes; native EditableText text box rewrite commit pending.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Replaced inline text-box caret glyph with a separate styled 2px UI node so blinking does not change text layout and caret color/thickness better match Bevy TextCursorStyle defaults; validation passed; commit 1d980ec pushed.`
+- Current tweak state: `Replaced custom multiline text renderer/caret/navigation with native Bevy EditableText and synced authored scrollbar to Bevy TextScroll; validation passed; commit pending.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -232,6 +232,7 @@
 - `2026-07-20`: User asked to use Noto Sans Symbols 2 for known symbol icons and make icons state-driven. Bundled `game/assets/fonts/NotoSansSymbols2-Regular.ttf`, added symbol font marker/runtime support, restored radio icons to `●`/`○`, restored combo arrow to `▾`, and added runtime refresh so radio icons follow selected option while combo arrow switches between `▾` and `▴` based on dropdown open state. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `3a01e76 Use symbol font for input icons`.
 - `2026-07-20`: User reported the custom multiline text-box caret did not behave like the default text-field caret because it was end-only and could not move around text. Added byte-safe caret position state for multiline text boxes; typing and Enter now insert at the caret, Backspace/Delete remove around the caret, and Left/Right/Up/Down/Home/End move the caret while keeping the caret line visible. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `3436dcd Improve text box caret navigation`.
 - `2026-07-20`: User reported the multiline text-box caret still did not match the text field because the inline `|` glyph was white, shifted text, and was too thin. Replaced the inline caret glyph with a separate absolute-positioned `LastBeaconUiTextBoxCaret` UI node using a 2px width and slate cursor color matching Bevy `TextCursorStyle` defaults, so caret blinking no longer changes the rendered text layout. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors. Committed and pushed as `1d980ec Style text box caret separately`.
+- `2026-07-20`: User reported the separate multiline text-box caret was still offset and not drawn at the correct location. Initial attempts to align a custom caret via `TextLayoutInfo` still produced unacceptable visual offsets. User approved replacing the custom multiline editor with native Bevy `EditableText` plus authored scrollbar sync. Reworked the text box so Bevy owns caret rendering, keyboard navigation, text editing, click placement, and Unicode editing behavior; custom systems now only wheel/drag/sync scrollbar state via Bevy `TextScroll`. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`, `cargo test --manifest-path game/Cargo.toml --all-features`, `cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`, `scripts/validate.cmd`, and a timeout-terminated smoke launch of `last-beacon/ui_playground` with no BSN load errors.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
