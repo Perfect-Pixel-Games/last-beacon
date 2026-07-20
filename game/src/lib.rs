@@ -419,11 +419,7 @@ fn spin_cube(time: Res<Time>, mut spinning_entities: Query<&mut Transform, With<
 
 fn hide_last_beacon_menu_ui_behind_settings(
     scene_stack: Option<Res<SceneStack>>,
-    mut menu_roots: Query<
-        (Option<&SceneOwner>, Option<&ChildOf>, &mut Visibility),
-        With<LastBeaconHideWhenSettingsOpen>,
-    >,
-    scene_owners: Query<&SceneOwner>,
+    mut menu_roots: Query<&mut Node, With<LastBeaconHideWhenSettingsOpen>>,
 ) {
     let Some(scene_stack) = scene_stack else {
         return;
@@ -436,22 +432,16 @@ fn hide_last_beacon_menu_ui_behind_settings(
         )
     });
 
-    for (scene_owner, parent_link, mut menu_visibility) in &mut menu_roots {
-        let effective_scene_owner =
-            effective_placeholder_scene_owner(scene_owner.copied(), parent_link, &scene_owners);
-        let owning_scene_is_visible = effective_scene_owner
-            .is_some_and(|scene_owner| scene_stack.is_visible(scene_owner.scene_id));
-        let desired_visibility = if settings_scene_is_open && owning_scene_is_visible {
-            // Hide only marked menu UI roots; generated cube/gameplay entities stay visible.
-            Visibility::Hidden
-        } else if owning_scene_is_visible {
-            Visibility::Inherited
+    for mut menu_node in &mut menu_roots {
+        let desired_display = if settings_scene_is_open {
+            // Hide only marked UI roots; generated cube/gameplay entities stay visible.
+            Display::None
         } else {
-            Visibility::Hidden
+            Display::Flex
         };
 
-        if *menu_visibility != desired_visibility {
-            *menu_visibility = desired_visibility;
+        if menu_node.display != desired_display {
+            menu_node.display = desired_display;
         }
     }
 }
@@ -484,7 +474,7 @@ mod tests {
             .id();
         let menu_root = app
             .world_mut()
-            .spawn((Visibility::Inherited, LastBeaconHideWhenSettingsOpen))
+            .spawn((Node::default(), LastBeaconHideWhenSettingsOpen))
             .id();
         app.world_mut().entity_mut(scene_root).add_child(menu_root);
 
@@ -499,8 +489,8 @@ mod tests {
         app.update();
 
         assert_eq!(
-            app.world().get::<Visibility>(menu_root),
-            Some(&Visibility::Hidden),
+            app.world().get::<Node>(menu_root).map(|node| node.display),
+            Some(Display::None),
             "settings should hide marked menu UI roots while leaving the lower scene stacked",
         );
         assert_eq!(
@@ -513,9 +503,9 @@ mod tests {
         app.update();
 
         assert_eq!(
-            app.world().get::<Visibility>(menu_root),
-            Some(&Visibility::Inherited),
-            "closing settings should restore marked menu UI visibility",
+            app.world().get::<Node>(menu_root).map(|node| node.display),
+            Some(Display::Flex),
+            "closing settings should restore marked menu UI display",
         );
     }
 
