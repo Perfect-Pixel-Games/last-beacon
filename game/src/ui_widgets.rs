@@ -90,6 +90,11 @@ pub struct LastBeaconUiTextInput {
     pub multiline: bool,
 }
 
+/// Marks the draggable scroll track for a multiline text input.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiTextScrollTrack;
+
 /// Marks the visual scroll thumb for a multiline text input.
 #[derive(Clone, Copy, Debug, Default, Component, Reflect)]
 #[reflect(Component, Default)]
@@ -239,6 +244,12 @@ pub struct LastBeaconUiDropdownStates {
 #[derive(Clone, Debug, Default, Resource)]
 pub struct LastBeaconUiTextBoxStates {
     boxes: HashMap<Entity, LastBeaconUiTextBoxState>,
+}
+
+/// Stores the currently dragged multiline text box scrollbar.
+#[derive(Clone, Copy, Debug, Default, Resource)]
+pub struct LastBeaconUiTextBoxScrollDrag {
+    active_text_box: Option<Entity>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -629,6 +640,18 @@ pub fn refresh_last_beacon_ui_dropdown_panels(
     }
 }
 
+/// Enables cursor-position tracking for authored multiline text-box scroll tracks.
+pub fn initialize_last_beacon_ui_text_scroll_tracks(
+    mut commands: Commands,
+    scroll_tracks: Query<Entity, Added<LastBeaconUiTextScrollTrack>>,
+) {
+    for scroll_track_entity in &scroll_tracks {
+        commands
+            .entity(scroll_track_entity)
+            .insert(RelativeCursorPosition::default());
+    }
+}
+
 /// Enables cursor-position tracking for authored reusable sliders.
 pub fn initialize_last_beacon_ui_sliders(
     mut commands: Commands,
@@ -707,6 +730,75 @@ pub fn type_into_last_beacon_ui_text_boxes(
         &mut text_query,
         &mut node_query,
     );
+}
+
+/// Applies scrollbar track dragging to multiline text boxes.
+#[allow(clippy::too_many_arguments)]
+pub fn drag_last_beacon_ui_text_box_scrollbars(
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    mut scroll_drag: ResMut<LastBeaconUiTextBoxScrollDrag>,
+    mut text_box_states: ResMut<LastBeaconUiTextBoxStates>,
+    text_inputs: Query<(Entity, &LastBeaconUiTextInput, Option<&Children>)>,
+    children_query: Query<&Children>,
+    scroll_track_query: Query<
+        (&Interaction, &RelativeCursorPosition),
+        With<LastBeaconUiTextScrollTrack>,
+    >,
+    scroll_thumb_query: Query<(), With<LastBeaconUiTextScrollThumb>>,
+    mut text_query: Query<&mut Text>,
+    mut node_query: Query<&mut Node>,
+) {
+    if !mouse_buttons.pressed(MouseButton::Left) {
+        scroll_drag.active_text_box = None;
+        return;
+    }
+
+    for (input_entity, text_input, input_children) in &text_inputs {
+        if !text_input.multiline {
+            continue;
+        }
+
+        let Some(scroll_track_entity) = first_descendant_with_scroll_track(
+            input_children,
+            &children_query,
+            &scroll_track_query,
+        ) else {
+            continue;
+        };
+        let Ok((scroll_track_interaction, relative_cursor_position)) =
+            scroll_track_query.get(scroll_track_entity)
+        else {
+            continue;
+        };
+
+        if *scroll_track_interaction == Interaction::Pressed {
+            scroll_drag.active_text_box = Some(input_entity);
+        }
+        if scroll_drag.active_text_box != Some(input_entity) {
+            continue;
+        }
+
+        let Some(normalized_cursor_position) = relative_cursor_position.normalized else {
+            continue;
+        };
+        let Some(text_box_state) = text_box_states.boxes.get_mut(&input_entity) else {
+            continue;
+        };
+        let max_first_visible_line = max_first_visible_text_box_line(&text_box_state.value);
+        let scroll_progress = (normalized_cursor_position.y + 0.5).clamp(0.0, 1.0);
+        text_box_state.first_visible_line =
+            (scroll_progress * max_first_visible_line as f32).round() as usize;
+
+        refresh_text_box_view(
+            input_entity,
+            input_children,
+            text_box_state,
+            &children_query,
+            &scroll_thumb_query,
+            &mut text_query,
+            &mut node_query,
+        );
+    }
 }
 
 /// Applies mouse-wheel scrolling to hovered multiline text boxes.
@@ -1092,6 +1184,19 @@ fn first_descendant_with_scroll_thumb(
 ) -> Option<Entity> {
     first_matching_descendant(children, children_query, |entity| {
         scroll_thumb_query.contains(entity)
+    })
+}
+
+fn first_descendant_with_scroll_track(
+    children: Option<&Children>,
+    children_query: &Query<&Children>,
+    scroll_track_query: &Query<
+        (&Interaction, &RelativeCursorPosition),
+        With<LastBeaconUiTextScrollTrack>,
+    >,
+) -> Option<Entity> {
+    first_matching_descendant(children, children_query, |entity| {
+        scroll_track_query.contains(entity)
     })
 }
 
