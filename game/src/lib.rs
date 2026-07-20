@@ -124,6 +124,7 @@ impl Plugin for LastBeaconPlugin {
             roots: vec![asset_root()],
         })
         .register_type::<SpinningCube>()
+        .register_type::<LastBeaconPlaceholderCubeScene>()
         .register_type::<scenes::LastBeaconBeaconPageButton>()
         .register_type::<ui_widgets::LastBeaconBsnWidget>()
         .init_resource::<ui_widgets::LastBeaconUiTabSelections>()
@@ -173,6 +174,7 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::drag_last_beacon_ui_text_box_scrollbars,
                 ui_widgets::scroll_last_beacon_ui_text_inputs,
                 ui_widgets::request_last_beacon_ui_text_box_caret_scroll_for_keyboard_input,
+                initialize_last_beacon_placeholder_cube_scenes,
             ),
         )
         .add_systems(
@@ -273,10 +275,132 @@ pub fn say_hello_world() {
     info!("Hello World!");
 }
 
+/// Placeholder rotating cube scene used until final menu, Beacon, and gameplay art exists.
+#[derive(Clone, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconPlaceholderCubeScene {
+    /// Cube color name: `green`, `red`, or `blue`.
+    pub cube_color: String,
+    /// Edge length of the generated cube in world units.
+    pub cube_size: f32,
+}
+
+impl Default for LastBeaconPlaceholderCubeScene {
+    fn default() -> Self {
+        Self {
+            cube_color: "blue".to_string(),
+            cube_size: 2.0,
+        }
+    }
+}
+
 /// Example gameplay component used by LastBeacon-specific systems.
 #[derive(Clone, Copy, Debug, Default, Component, Reflect)]
 #[reflect(Component)]
 pub struct SpinningCube;
+
+type PlaceholderCubeSceneInitQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (
+        Entity,
+        &'static LastBeaconPlaceholderCubeScene,
+        Option<&'static SceneOwner>,
+        Option<&'static ChildOf>,
+    ),
+    Added<LastBeaconPlaceholderCubeScene>,
+>;
+
+fn initialize_last_beacon_placeholder_cube_scenes(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    placeholder_scenes: PlaceholderCubeSceneInitQuery,
+    scene_owners: Query<&SceneOwner>,
+) {
+    for (placeholder_scene_entity, placeholder_scene, scene_owner, parent_link) in
+        &placeholder_scenes
+    {
+        let effective_scene_owner =
+            effective_placeholder_scene_owner(scene_owner.copied(), parent_link, &scene_owners);
+        debug!(
+            "Initializing LastBeaconPlaceholderCubeScene on {placeholder_scene_entity:?} with scene_owner={effective_scene_owner:?}"
+        );
+
+        let cube_size = placeholder_scene.cube_size;
+        let cube_mesh = meshes.add(Cuboid::from_size(Vec3::splat(cube_size)));
+        let cube_material = materials.add(StandardMaterial {
+            base_color: placeholder_cube_color(&placeholder_scene.cube_color),
+            ..default()
+        });
+        let cube_position = Vec3::new(0.0, cube_size * 0.5, 0.0);
+
+        let cube_entity = commands
+            .spawn((
+                Mesh3d(cube_mesh),
+                MeshMaterial3d(cube_material),
+                Transform::from_translation(cube_position),
+                SpinningCube,
+                Name::new("Last Beacon Placeholder Cube"),
+            ))
+            .id();
+
+        let light_illuminance = 12_000.0;
+        let light_position = Vec3::new(3.0, 5.0, 3.0);
+        let light_target = Vec3::ZERO;
+
+        let light_entity = commands
+            .spawn((
+                DirectionalLight {
+                    illuminance: light_illuminance,
+                    shadow_maps_enabled: true,
+                    ..default()
+                },
+                Transform::from_translation(light_position).looking_at(light_target, Vec3::Y),
+                Name::new("Last Beacon Placeholder Light"),
+            ))
+            .id();
+
+        let camera_position = Vec3::new(4.0, 3.0, 6.0);
+        let camera_target = Vec3::new(0.0, 0.75, 0.0);
+
+        let camera_entity = commands
+            .spawn((
+                Camera3d::default(),
+                Transform::from_translation(camera_position).looking_at(camera_target, Vec3::Y),
+                Name::new("Last Beacon Placeholder Camera"),
+            ))
+            .id();
+
+        if let Some(scene_owner) = effective_scene_owner {
+            for generated_entity in [cube_entity, light_entity, camera_entity] {
+                commands.entity(generated_entity).insert(scene_owner);
+            }
+        }
+    }
+}
+
+fn effective_placeholder_scene_owner(
+    scene_owner: Option<SceneOwner>,
+    parent_link: Option<&ChildOf>,
+    scene_owners: &Query<&SceneOwner>,
+) -> Option<SceneOwner> {
+    scene_owner.or_else(|| {
+        parent_link.and_then(|parent_link| scene_owners.get(parent_link.parent()).ok().copied())
+    })
+}
+
+fn placeholder_cube_color(cube_color: &str) -> Color {
+    match cube_color.trim().to_ascii_lowercase().as_str() {
+        "green" => Color::srgb(0.18, 0.78, 0.34),
+        "red" => Color::srgb(0.86, 0.18, 0.16),
+        "blue" => Color::srgb(0.22, 0.42, 0.95),
+        unknown_color => {
+            warn!("Unknown LastBeaconPlaceholderCubeScene color `{unknown_color}`; using blue");
+            Color::srgb(0.22, 0.42, 0.95)
+        }
+    }
+}
 
 fn spin_cube(time: Res<Time>, mut spinning_entities: Query<&mut Transform, With<SpinningCube>>) {
     for mut transform in &mut spinning_entities {

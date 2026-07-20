@@ -6,8 +6,7 @@ bevy_ui::ui_node::Node {
     align_items: bevy_ui::ui_node::AlignItems::Stretch,
     justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
 }
-bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.008, green: 0.024, blue: 0.09, alpha: 1.0 }))
-foundation_runtime_library::menu::FoundationSimpleGameplayLevel { cube_size: 2.0 }
+last_beacon::LastBeaconPlaceholderCubeScene { cube_color: "red", cube_size: 2.0 }
 bevy_ecs::hierarchy::Children [
 #BeaconSceneCaption
 bevy_ui::ui_node::Node {

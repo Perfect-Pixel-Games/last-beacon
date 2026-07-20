@@ -1,5 +1,5 @@
 #GameplayLevel
-foundation_runtime_library::menu::FoundationSimpleGameplayLevel { cube_size: 2.0 }
+last_beacon::LastBeaconPlaceholderCubeScene { cube_color: "blue", cube_size: 2.0 }
 foundation_runtime_library::menu::FoundationPauseOpener {
     pause_scene_key: "last-beacon/pause_menu",
     pause_stack_key: "pause-menu",

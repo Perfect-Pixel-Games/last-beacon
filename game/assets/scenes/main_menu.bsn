@@ -6,7 +6,7 @@ bevy_ui::ui_node::Node {
     align_items: bevy_ui::ui_node::AlignItems::Stretch,
     justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
 }
-foundation_runtime_library::menu::FoundationSimpleGameplayLevel { cube_size: 2.0 }
+last_beacon::LastBeaconPlaceholderCubeScene { cube_color: "green", cube_size: 2.0 }
 bevy_ecs::hierarchy::Children [
     #MainMenuBackgroundLabel
     bevy_ui::ui_node::Node {
@@ -17,7 +17,7 @@ bevy_ecs::hierarchy::Children [
         align_items: bevy_ui::ui_node::AlignItems::Center,
         justify_content: bevy_ui::ui_node::JustifyContent::Center,
     }
-    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 0.4 }))
+    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
     bevy_ecs::hierarchy::Children [
         bevy_ui::widget::text::Text("Save Scene - Equipped Robot in Silo / Last Location if Mid-Run")
         bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
