@@ -310,6 +310,19 @@ bevy_ecs::hierarchy::Children [
             last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/stat_rows_panel.bsn" }
         ],
 
+        #TypographyWidgetGallery
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Px(420.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+            align_items: bevy_ui::ui_node::AlignItems::Stretch,
+            justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+            row_gap: bevy_ui::geometry::Val::Px(14.0),
+        }
+        bevy_ecs::hierarchy::Children [
+            #TypographyPanelSample
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/typography_panel.bsn" }
+        ],
+
         #InputWidgetGallery
         bevy_ui::ui_node::Node {
             width: bevy_ui::geometry::Val::Px(560.0),

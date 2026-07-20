@@ -91,6 +91,35 @@ Author-updated properties:
 - Root `Node { width }`: defaults to `Percent(100)`; parent slots decide the panel width by default.
 - Row count: duplicate or remove stat row blocks as needed.
 
+## Typography Panel
+
+Asset: `game/assets/ui/widgets/common/typography_panel.bsn`
+
+Use to preview and copy the standard text hierarchy for reusable UI surfaces.
+
+Author-updated properties:
+
+- `#TextH1 Text`: page or major panel heading sample.
+- `#TextH2 Text`: section heading sample.
+- `#TextH3 Text`: subsection/accent heading sample.
+- `#TextH4 Text`: small label heading sample.
+- `#ParagraphText Text`: body/paragraph copy sample.
+- `TextFont { font_size }`: typography scale for each text style.
+- `TextColor`: color role for each text style.
+- Root `Node { width }`: defaults to `Percent(100)`; parent slots decide the panel width by default.
+
+## Divider
+
+Asset: `game/assets/ui/widgets/common/divider.bsn`
+
+Use as a horizontal division line between related widget groups.
+
+Author-updated properties:
+
+- Root `Node { width }`: defaults to `Percent(100)`; parent slots decide line width by default.
+- Root `Node { height }`: divider thickness.
+- `BackgroundColor`: divider color and opacity.
+
 ## Text Field
 
 Asset: `game/assets/ui/widgets/common/text_field.bsn`

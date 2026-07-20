@@ -54,6 +54,8 @@ fn converted_bsn_scene_assets_load_as_scene_patches() {
         "ui/widgets/common/tertiary_button.bsn",
         "ui/widgets/common/tabs.bsn",
         "ui/widgets/common/stat_rows_panel.bsn",
+        "ui/widgets/common/typography_panel.bsn",
+        "ui/widgets/common/divider.bsn",
         "ui/widgets/common/text_field.bsn",
         "ui/widgets/common/text_box.bsn",
         "ui/widgets/common/radio_buttons.bsn",
