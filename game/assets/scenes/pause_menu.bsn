@@ -6,6 +6,7 @@ bevy_ui::ui_node::Node {
     align_items: bevy_ui::ui_node::AlignItems::Stretch,
     justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
 }
+last_beacon::LastBeaconHideWhenSettingsOpen
 bevy_ecs::hierarchy::Children [
     #PauseMenuRail
     bevy_ui::ui_node::Node {

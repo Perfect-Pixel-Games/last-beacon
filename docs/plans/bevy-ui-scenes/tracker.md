@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Placeholder cube background color pass in progress`
+- Overall status: `Settings overlay menu-hide pass in progress`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Placeholder cube background color pass in progress with gpt-5.4`
+- Current handoff state: `Settings overlay menu-hide pass in progress with gpt-5.4`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Colored placeholder cube scene commit 7c7fca6 pushed to origin/feature/bevy-ui-scenes; final tracker state commit pending.`
+- Root commit/push state: `Tracker commit 22295fb pushed to origin/feature/bevy-ui-scenes; settings overlay menu-hide checkpoint pending.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Colored placeholder cube backgrounds added and validated: green Main Menu, red Beacon, blue gameplay; checkpoint pushed as 7c7fca6.`
+- Current tweak state: `Settings now hides marked Main Menu/Pause Menu UI roots while preserving the lower cube/gameplay scene; validation passed; checkpoint commit pending.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -247,6 +247,7 @@
 - `2026-07-20`: Resumed the current UI scene feature on `feature/bevy-ui-scenes`; root branch base remains verified with `dev` as an ancestor and engine pointer remains unchanged at `1bc59f9a0039dfe412b735c869a90f38a0d58582`. Re-ran `cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`; validation passed with 2 tests passing. Committed and pushed reusable scene reconstruction as `cb44874 Reconstruct scenes with reusable widgets`.
 - `2026-07-20`: User reported that each Beacon tab page currently recreates the same top navigation and top-right information chrome. Added `last-beacon/beacon` as a persistent shell scene with the shared top navigation/status chrome, converted Dashboard, Hangar, Garage, Mission Control, Fabrication, and Silo Upgrades into content-only page scenes, and added game-owned `LastBeaconBeaconPageButton` navigation that replaces only the stable `beacon-page` stack entry with a non-blocking overlay page. Main Menu Continue/New Game and Pause Abandon Run now open the Beacon shell instead of a duplicated Dashboard scene. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo check --manifest-path game/Cargo.toml`, `CARGO_TARGET_DIR=game/target/pi-validation cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`, `CARGO_TARGET_DIR=game/target/pi-validation cargo test --manifest-path game/Cargo.toml --lib --all-features`, and a timeout-terminated smoke launch of `last-beacon/beacon` with no BSN load errors before termination. The alternate target dir was used because a hot-reload `last-beacon.exe` process was running and locking `game/target/debug/last-beacon.exe`. Committed and pushed as `3e774ae Split Beacon shell from pages`.
 - `2026-07-20`: User requested removing opaque Beacon UI backgrounds and using placeholder rotating cubes as base scenes until real art exists: green for Main Menu, red for Beacon, and blue for gameplay. Added game-owned `LastBeaconPlaceholderCubeScene`, replaced the Foundation starter cube usage in `main_menu.bsn`, `beacon.bsn`, and `gameplay_level.bsn`, made the Beacon shell background transparent, and made the Main Menu full-screen backdrop transparent so the cube remains visible behind the UI. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `CARGO_TARGET_DIR=game/target/pi-validation cargo check --manifest-path game/Cargo.toml`, `CARGO_TARGET_DIR=game/target/pi-validation cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`, `CARGO_TARGET_DIR=game/target/pi-validation cargo test --manifest-path game/Cargo.toml --lib --all-features`, and timeout-terminated smoke launches of `last-beacon/main_menu`, `last-beacon/beacon`, and `last-beacon/gameplay_level` with no BSN load errors before termination. Committed and pushed as `7c7fca6 Add colored placeholder cube scenes`.
+- `2026-07-20`: User requested that Settings hide the menu UI while keeping the gameplay level visible. Added game-owned `LastBeaconHideWhenSettingsOpen` markers to Main Menu and Pause Menu roots plus a `Last` schedule visibility system that hides only marked UI roots while `last-beacon/options_menu` is stacked. Generated cube/gameplay entities remain visible because they are not marked. Added a regression test proving Settings hides the marked menu UI without closing the lower scene, and fixed the system ordering so it runs after Foundation scene-stack visibility sync. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `CARGO_TARGET_DIR=game/target/pi-validation cargo check --manifest-path game/Cargo.toml`, `CARGO_TARGET_DIR=game/target/pi-validation cargo test --manifest-path game/Cargo.toml --lib --all-features`, `CARGO_TARGET_DIR=game/target/pi-validation cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`, and a timeout-terminated smoke launch of `[last-beacon/gameplay_level,last-beacon/pause_menu,last-beacon/options_menu]` with no BSN load errors before termination.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.

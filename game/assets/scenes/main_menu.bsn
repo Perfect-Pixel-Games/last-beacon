@@ -7,6 +7,7 @@ bevy_ui::ui_node::Node {
     justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
 }
 last_beacon::LastBeaconPlaceholderCubeScene { cube_color: "green", cube_size: 2.0 }
+last_beacon::LastBeaconHideWhenSettingsOpen
 bevy_ecs::hierarchy::Children [
     #MainMenuBackgroundLabel
     bevy_ui::ui_node::Node {

@@ -125,6 +125,7 @@ impl Plugin for LastBeaconPlugin {
         })
         .register_type::<SpinningCube>()
         .register_type::<LastBeaconPlaceholderCubeScene>()
+        .register_type::<LastBeaconHideWhenSettingsOpen>()
         .register_type::<scenes::LastBeaconBeaconPageButton>()
         .register_type::<ui_widgets::LastBeaconBsnWidget>()
         .init_resource::<ui_widgets::LastBeaconUiTabSelections>()
@@ -209,7 +210,8 @@ impl Plugin for LastBeaconPlugin {
                 .chain()
                 .after(bevy::ui::UiSystems::PostLayout),
         )
-        .add_systems(PostUpdate, ui_widgets::enforce_last_beacon_button_styles);
+        .add_systems(PostUpdate, ui_widgets::enforce_last_beacon_button_styles)
+        .add_systems(Last, hide_last_beacon_menu_ui_behind_settings);
     }
 }
 
@@ -274,6 +276,11 @@ pub fn say_hello(inputs: ConsoleInputs<LastBeaconSayHelloInputs>) {
 pub fn say_hello_world() {
     info!("Hello World!");
 }
+
+/// Hides menu UI while the Settings scene is open above it.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconHideWhenSettingsOpen;
 
 /// Placeholder rotating cube scene used until final menu, Beacon, and gameplay art exists.
 #[derive(Clone, Debug, Component, Reflect)]
@@ -410,6 +417,38 @@ fn spin_cube(time: Res<Time>, mut spinning_entities: Query<&mut Transform, With<
     }
 }
 
+fn hide_last_beacon_menu_ui_behind_settings(
+    scene_stack: Option<Res<SceneStack>>,
+    mut menu_roots: Query<(&SceneOwner, &mut Visibility), With<LastBeaconHideWhenSettingsOpen>>,
+) {
+    let Some(scene_stack) = scene_stack else {
+        return;
+    };
+
+    let settings_scene_is_open = scene_stack.entries().iter().any(|scene_stack_entry| {
+        matches!(
+            &scene_stack_entry.source,
+            SceneSource::BsnScene { key } if key == scenes::OPTIONS_MENU_SCENE
+        )
+    });
+
+    for (scene_owner, mut menu_visibility) in &mut menu_roots {
+        let owning_scene_is_visible = scene_stack.is_visible(scene_owner.scene_id);
+        let desired_visibility = if settings_scene_is_open && owning_scene_is_visible {
+            // Hide only marked menu UI roots; generated cube/gameplay entities stay visible.
+            Visibility::Hidden
+        } else if owning_scene_is_visible {
+            Visibility::Inherited
+        } else {
+            Visibility::Hidden
+        };
+
+        if *menu_visibility != desired_visibility {
+            *menu_visibility = desired_visibility;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -417,6 +456,59 @@ mod tests {
     #[test]
     fn game_name_matches_foundation_launch_argument() {
         assert_eq!(GAME_NAME, "last-beacon");
+    }
+
+    #[test]
+    fn settings_overlay_hides_marked_menu_ui_without_closing_lower_scene() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(FoundationSceneStackPlugin);
+        app.add_systems(Last, hide_last_beacon_menu_ui_behind_settings);
+
+        app.world_mut()
+            .write_message(SceneCommand::open(SceneSource::runtime("main-menu")));
+        app.update();
+
+        let menu_root = app
+            .world_mut()
+            .spawn((
+                SceneOwner {
+                    scene_id: SceneId(1),
+                },
+                Visibility::Inherited,
+                LastBeaconHideWhenSettingsOpen,
+            ))
+            .id();
+
+        let settings_options = OpenSceneOptions::default()
+            .with_key("options-menu")
+            .with_presentation(ScenePresentation::INPUT_BLOCKING_OVERLAY);
+        app.world_mut()
+            .write_message(SceneCommand::open_with_options(
+                SceneSource::bsn_scene(scenes::OPTIONS_MENU_SCENE),
+                settings_options,
+            ));
+        app.update();
+
+        assert_eq!(
+            app.world().get::<Visibility>(menu_root),
+            Some(&Visibility::Hidden),
+            "settings should hide marked menu UI roots while leaving the lower scene stacked",
+        );
+        assert_eq!(
+            app.world().resource::<SceneStack>().len(),
+            2,
+            "settings should not close the lower scene it is hiding UI from",
+        );
+
+        app.world_mut().write_message(SceneCommand::CloseCurrent);
+        app.update();
+
+        assert_eq!(
+            app.world().get::<Visibility>(menu_root),
+            Some(&Visibility::Inherited),
+            "closing settings should restore marked menu UI visibility",
+        );
     }
 
     #[test]

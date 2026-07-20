@@ -14,7 +14,7 @@ use last_beacon::{
         LastBeaconUiTextHorizontalScrollTrack, LastBeaconUiTextInput, LastBeaconUiTextScrollThumb,
         LastBeaconUiTextScrollTrack, LastBeaconUiValueButton, LastBeaconUiValueText,
     },
-    LastBeaconPlaceholderCubeScene,
+    LastBeaconHideWhenSettingsOpen, LastBeaconPlaceholderCubeScene,
 };
 
 static BSN_ASSET_TEST_LOCK: Mutex<()> = Mutex::new(());
@@ -176,6 +176,7 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<LastBeaconBsnWidget>()
         .register_type::<LastBeaconBeaconPageButton>()
         .register_type::<LastBeaconPlaceholderCubeScene>()
+        .register_type::<LastBeaconHideWhenSettingsOpen>()
         .register_type::<LastBeaconMainMenuPrimaryButton>()
         .register_type::<LastBeaconBeaconPrimaryButton>()
         .register_type::<LastBeaconBeaconTabButton>()
