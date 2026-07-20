@@ -18,8 +18,8 @@ use bevy::{
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
     text::{
-        EditableText, FontSource, LineBreak, LineHeight, TextCursorStyle, TextEdit, TextLayout,
-        TextLayoutInfo,
+        EditableText, EditableTextFilter, FontSource, LineBreak, LineHeight, TextCursorStyle,
+        TextEdit, TextLayout, TextLayoutInfo,
     },
     ui::{
         widget::TextScroll, ComputedUiRenderTargetInfo, RelativeCursorPosition, UiGlobalTransform,
@@ -510,6 +510,8 @@ pub fn initialize_last_beacon_ui_text_inputs(
     >,
     children_query: Query<&Children>,
     text_query: Query<(), With<Text>>,
+    mut node_query: Query<&mut Node>,
+    number_input_query: Query<(), With<LastBeaconUiNumberInput>>,
 ) {
     for (input_entity, text_input, input_children) in &text_inputs {
         let text_entity = if text_query.contains(input_entity) {
@@ -553,17 +555,34 @@ pub fn initialize_last_beacon_ui_text_inputs(
                 ..default()
             }
         } else {
-            TextLayout::default()
+            TextLayout {
+                justify: Justify::Center,
+                ..default()
+            }
         };
 
         commands.entity(text_entity).insert((
-            Node::default(),
             editable_text,
             TextScroll::default(),
             TextCursorStyle::default(),
             text_layout,
             line_height,
         ));
+
+        if let Ok(mut node) = node_query.get_mut(text_entity) {
+            if number_input_query.contains(text_entity) {
+                node.align_items = AlignItems::Center;
+                node.justify_content = JustifyContent::Center;
+            }
+        } else {
+            commands.entity(text_entity).insert(Node::default());
+        }
+
+        if number_input_query.contains(text_entity) {
+            commands
+                .entity(text_entity)
+                .insert(EditableTextFilter::new(number_input_allows_character));
+        }
     }
 }
 
@@ -650,9 +669,11 @@ pub fn update_last_beacon_ui_number_inputs(
             continue;
         };
         let clamped_value = value.clamp(number_input.min, number_input.max);
-        input_values
-            .values
-            .insert(number_input.target.clone(), format_value(clamped_value));
+        insert_input_value_if_changed(
+            &mut input_values,
+            &number_input.target,
+            format_value(clamped_value),
+        );
     }
 }
 
@@ -683,9 +704,7 @@ pub fn update_last_beacon_ui_value_buttons(
             .and_then(|value| value.parse::<f32>().ok())
             .unwrap_or(0.0);
         let next_value = (current_value + button.delta).clamp(button.min, button.max);
-        input_values
-            .values
-            .insert(button.target.clone(), format_value(next_value));
+        insert_input_value_if_changed(&mut input_values, &button.target, format_value(next_value));
     }
 }
 
@@ -1223,10 +1242,14 @@ pub fn refresh_last_beacon_ui_value_text(
             continue;
         };
         let rendered_value = format!("{}{}{}", value_text.prefix, value, value_text.suffix);
-        text.0 = rendered_value.clone();
+        if text.0 != rendered_value {
+            text.0 = rendered_value.clone();
+        }
         if let Some(mut editable_text) = editable_text {
-            editable_text.editor_mut().set_text(&rendered_value);
-            editable_text.queue_edit(TextEdit::TextEnd(false));
+            if editable_text.value().to_string() != rendered_value {
+                editable_text.editor_mut().set_text(&rendered_value);
+                editable_text.queue_edit(TextEdit::TextEnd(false));
+            }
         }
     }
 }
@@ -1419,6 +1442,26 @@ fn queue_text_input_click_placement(
     };
 
     editable_text.queue_edit(TextEdit::MoveToPoint(local_position));
+}
+
+fn insert_input_value_if_changed(
+    input_values: &mut LastBeaconUiInputValues,
+    target: &str,
+    value: String,
+) {
+    if input_values
+        .values
+        .get(target)
+        .is_some_and(|current_value| current_value == &value)
+    {
+        return;
+    }
+
+    input_values.values.insert(target.to_string(), value);
+}
+
+fn number_input_allows_character(character: char) -> bool {
+    character.is_ascii_digit() || character == '.' || character == '-'
 }
 
 fn keyboard_input_should_reveal_text_caret(key: &Key) -> bool {
