@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Reusable text-box completion commit 6ad3f5e pushed to origin/feature/bevy-ui-scenes; number/slider widget polish checkpoint commit pending.`
+- Root commit/push state: `Reusable scene widget reconstruction commit cb44874 pushed to origin/feature/bevy-ui-scenes; final tracker state commit pending.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Reusable-widget scene reconstruction for Main Menu, silo scenes, Settings Menu, and Pause Menu validated; checkpoint commit pending.`
+- Current tweak state: `Reusable-widget scene reconstruction for Main Menu, silo scenes, Settings Menu, and Pause Menu validated, committed, and pushed as cb44874.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -242,7 +242,7 @@
 - `2026-07-20`: User requested a reusable panel showing text types H1, H2, H3, H4, paragraph text, and a division widget. Added `typography_panel.bsn` and `divider.bsn` under common widgets, displayed the typography panel in `last-beacon/ui_playground`, added both assets to BSN asset-flow coverage, and updated `docs/ui-widgets.md` with exposed author-updated properties. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo check --manifest-path game/Cargo.toml`, and `cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`.
 - `2026-07-20`: User requested reconstructing the Main Menu on the current branch using the new reusable widget library and reminded that Bevy hot reload is available. Rebuilt `main_menu.bsn` around reusable `LastBeaconUiButton` variants for all navigation/actions, replaced Main Menu-specific divider composition with common divider widgets, retained current menu routing, current-save mock content, and 3D/simple gameplay background. Validation passed: `cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`; timeout smoke launch of `last-beacon/main_menu` showed no BSN load errors before termination.
 - `2026-07-20`: User approved the Main Menu reconstruction and requested the same reusable-widget pass for the other silo scenes, Settings Menu, and Pause Menu. Updated Dashboard, Hangar, Garage, Mission Control, Fabrication, and Silo Upgrades top navigation to use `LastBeaconUiTab`; updated the Hangar launch action, Settings Back button and tab row, and Pause Menu actions to use reusable `LastBeaconUiButton` variants. Preserved existing scene routing and mock content. Validation passed: `cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`; timeout smoke launches of `last-beacon/dashboard`, `last-beacon/hangar`, `last-beacon/garage`, `last-beacon/mission_control`, `last-beacon/fabrication`, `last-beacon/silo_upgrades`, `last-beacon/options_menu`, and `last-beacon/pause_menu` showed no BSN load errors before termination.
-- `2026-07-20`: Resumed the current UI scene feature on `feature/bevy-ui-scenes`; root branch base remains verified with `dev` as an ancestor and engine pointer remains unchanged at `1bc59f9a0039dfe412b735c869a90f38a0d58582`. Re-ran `cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`; validation passed with 2 tests passing.
+- `2026-07-20`: Resumed the current UI scene feature on `feature/bevy-ui-scenes`; root branch base remains verified with `dev` as an ancestor and engine pointer remains unchanged at `1bc59f9a0039dfe412b735c869a90f38a0d58582`. Re-ran `cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`; validation passed with 2 tests passing. Committed and pushed reusable scene reconstruction as `cb44874 Reconstruct scenes with reusable widgets`.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
