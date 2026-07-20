@@ -9,13 +9,13 @@
 - Root branch base verification: `Verified: dev (7cacf7cabfff058305c08d9988dc15bd935f49e4) is an ancestor of this branch; only the investigation doc commit sits on top`
 - Engine branch base verification: `Verified: created feature/scene-pop-in-investigation from engine origin/dev at 1bc59f9a0039dfe412b735c869a90f38a0d58582 on 2026-07-20`
 - Engine submodule pointer: `Updated to engine readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd; root pointer commit pending`
-- Overall status: `Implementation complete; awaiting user confirmation`
+- Overall status: `Regression found post-completion (large frame-time stutter on scene reveal); investigated, root cause understood, awaiting user decision on remediation direction`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Ready for gpt-5.5 sanity review, or user acceptance`
+- Current handoff state: `Blocked on user decision between remediation options; see Notes/Issues`
 - Created: `2026-07-20`
-- Last updated: `2026-07-20`
+- Last updated: `2026-07-21`
 
 ## Validation Rules
 - Task complete only after required validation passes and documentation
@@ -174,7 +174,14 @@
 - None yet.
 
 ## Notes / Issues / Oversights
-- None yet.
+- `2026-07-21`: **Regression reported by user**: "large lag spike whenever opening a scene," after the readiness-gating fix landed. Investigated with `superpowers:systematic-debugging`.
+  - Added temporary `FrameTimeDiagnosticsPlugin` + `EntityCountDiagnosticsPlugin` + a frame-time-threshold logger to `game/src/lib.rs` (never committed; reverted via `git checkout` after investigation).
+  - Reproduced via `--scene last-beacon/<key>` startup override (GUI mouse-click automation proved unreliable in this environment — several techniques tried and abandoned: `mouse_event` + `SetForegroundWindow`, `AttachThreadInput` + Alt-key-unlock trick, `PostMessage` WM_LBUTTONDOWN/UP direct injection — none reliably registered clicks against the winit window; `--scene` override sidestepped the need for clicking entirely).
+  - Confirmed two distinct spikes per fresh launch: (1) a ~290ms one-time spike on the very first frame (window/GPU/adapter creation — present at every launch regardless of which scene opens first; not related to this fix). (2) A ~130-185ms second spike occurring exactly on the frame `loading_markers` (entities with `SceneContentLoading`) drops to 0 — i.e., the readiness-reveal frame.
+  - **Isolated Stage 2's contribution via a differential test**: temporarily disabled the `SceneContentLoading` insertion in `queue_last_beacon_bsn_widgets` (game-only change, no engine rebuild needed) and re-measured both `main_menu` (2 small nested widgets) and `ui_playground` (10+ nested widgets, the heaviest user). Result: the reveal-frame spike and entity count at that frame were **essentially unchanged** with Stage 2 disabled (main_menu: 174ms→164ms; ui_playground: 130ms→185ms, entity count identical in both cases). This rules out Stage 2 (nested-widget gating) as the dominant cause — nested `.bsn` widget files are small and load/apply at nearly the same speed regardless of whether anything waits for them, so they were already clustering together in time before gating was even a factor.
+  - **Root cause conclusion**: this is very likely a **pre-existing** Bevy/wgpu cost (first-time UI render-pipeline specialization/compilation and/or text glyph-atlas building for a scene's specific set of materials/text, the first time that scene's content is ever rendered) that was **already being paid on the same frame as `.apply()`** in the original, pre-fix code too — confirmed by frame-timing analysis: Stage 1's `Visibility::Hidden → Inherited` flip happens in the exact same frame as `.apply()` completing, identically before and after this fix, since `SceneContentLoading` is removed within the same system call that runs `.apply()`. The fix did not add new computation; it changed *when the cost becomes visible*: previously this same stutter coincided with (and was masked by) the visible incremental pop-in, reading as "ugly popping." Now, with nothing visibly changing beforehand, the identical stutter reads as an isolated, unexplained freeze — "a large lag spike."
+  - Not yet empirically confirmed (would require a full pre-fix baseline rebuild, judged not worth the ~15-20 min cost given the frame-timing reasoning above is already strong): whether this stutter recurs on every re-visit of an already-opened scene in the same session, or only on each scene's first-ever open (Bevy typically caches compiled pipelines and glyph atlases for the process lifetime, so a second open of the same scene should be far cheaper computationally — the pop-in itself recurs every time per earlier findings, but pop-in is an ECS-respawn cost, not a pipeline-compile cost, and the two are separable).
+  - Decision needed from user: see options presented after this update.
 
 ## Progress Log
 - `2026-07-20`: Investigated scene/widget pop-in; wrote and committed `docs/scene-pop-in-investigation.md` (`8f224e4`) on `feature/scene-pop-in-investigation`; pushed to `origin/feature/scene-pop-in-investigation`.
@@ -184,3 +191,4 @@
 - `2026-07-20`: Implemented Phase 2 (engine readiness gating: `SceneContentLoading` marker, `bsn_assets.rs` spawn/apply/failure wiring, `reveal_ready_standalone_bsn_instances`, four new `scene_stack.rs` tests, three extended/new `bsn_assets.rs` tests, `engine/docs/scene-system.md` update) and Phase 3 (game readiness participation: `queue_last_beacon_bsn_widgets`/`apply_pending_last_beacon_bsn_widgets`/`mark_widget_failed` wiring, `.after(propagate_loaded_bsn_scene_owners)` ordering, `preload_last_beacon_ui_fonts`, four new `ui_widgets.rs` tests). All engine (97) and game (13 lib + 2 integration) tests pass; format, clippy, and doc generation clean on both crates.
 - `2026-07-20`: Ran full `engine/scripts/validate-project.cmd` and `scripts/validate.cmd` (both exit 0). Launched the game via `scripts/run.cmd`, screenshotted the main menu and, after navigating to it, the UI Playground scene — both render fully and correctly with no elements stuck hidden. Noted as a tracker caveat that a static screenshot can't itself prove the sub-~100ms pop-in is gone; that needs the user's own play-test.
 - `2026-07-20`: Committed and pushed engine readiness-gating changes as `0874b9c4ac462a20adff2fec8ee1b07ab88c78fd` on `origin/feature/scene-pop-in-investigation`. Updating root submodule pointer and committing root implementation changes next.
+- `2026-07-21`: User reported a large lag spike when opening scenes, post-fix. Investigated with `superpowers:systematic-debugging`; see Notes/Issues for the full evidence trail and root-cause conclusion. All temporary diagnostic code reverted (never committed). Awaiting user decision on remediation direction.
