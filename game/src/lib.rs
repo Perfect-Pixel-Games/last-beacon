@@ -124,6 +124,7 @@ impl Plugin for LastBeaconPlugin {
             roots: vec![asset_root()],
         })
         .register_type::<SpinningCube>()
+        .register_type::<scenes::LastBeaconBeaconPageButton>()
         .register_type::<ui_widgets::LastBeaconBsnWidget>()
         .init_resource::<ui_widgets::LastBeaconUiTabSelections>()
         .init_resource::<ui_widgets::LastBeaconUiInputValues>()
@@ -163,6 +164,7 @@ impl Plugin for LastBeaconPlugin {
             Update,
             (
                 scenes::spawn_requested_last_beacon_scene_drivers,
+                scenes::navigate_last_beacon_beacon_pages,
                 ui_widgets::queue_last_beacon_bsn_widgets,
                 ui_widgets::apply_last_beacon_ui_font,
                 ui_widgets::initialize_last_beacon_ui_text_inputs,

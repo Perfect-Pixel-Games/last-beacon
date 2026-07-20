@@ -83,8 +83,8 @@ bevy_ecs::hierarchy::Children [
         last_beacon::ui_widgets::LastBeaconUiButton { variant: "secondary" }
         foundation_runtime_library::menu::FoundationMenuButton {
             action: "clear_and_open_scene",
-            scene_key: "last-beacon/dashboard",
-            stack_key: "dashboard",
+            scene_key: "last-beacon/beacon",
+            stack_key: "beacon-shell",
         }
         bevy_ecs::hierarchy::Children [
             bevy_ui::widget::text::Text("Abandon Run")

@@ -4,6 +4,7 @@ use bevy::{prelude::*, scene::ScenePatch};
 use foundation_runtime_library::prelude::*;
 use last_beacon::{
     asset_root,
+    scenes::LastBeaconBeaconPageButton,
     ui_widgets::{
         LastBeaconBeaconPrimaryButton, LastBeaconBeaconTabButton, LastBeaconBsnWidget,
         LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiDropdownIcon,
@@ -39,6 +40,7 @@ fn converted_bsn_scene_assets_load_as_scene_patches() {
         "scenes/bevy_splash.bsn",
         "scenes/main_menu.bsn",
         "scenes/options_menu.bsn",
+        "scenes/beacon.bsn",
         "scenes/dashboard.bsn",
         "scenes/hangar.bsn",
         "scenes/garage.bsn",
@@ -171,6 +173,7 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<FoundationSplashUiRoot>()
         .register_type::<FoundationSplashText>()
         .register_type::<LastBeaconBsnWidget>()
+        .register_type::<LastBeaconBeaconPageButton>()
         .register_type::<LastBeaconMainMenuPrimaryButton>()
         .register_type::<LastBeaconBeaconPrimaryButton>()
         .register_type::<LastBeaconBeaconTabButton>()

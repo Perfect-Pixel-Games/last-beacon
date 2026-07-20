@@ -9,11 +9,11 @@
 - Root branch base verification: `Rebased onto origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80 on 2026-07-19`
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Overall status: `Main Menu reusable widget reconstruction in progress`
+- Overall status: `Beacon shell/page stack refactor in progress`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Implementation in progress with gpt-5.4`
+- Current handoff state: `Beacon shell/page stack refactor in progress with gpt-5.4`
 - Created: `2026-07-19`
 - Last updated: `2026-07-19`
 
@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Reusable scene widget reconstruction commit cb44874 pushed to origin/feature/bevy-ui-scenes; final tracker state commit pending.`
+- Root commit/push state: `Tracker commit 253a7ad pushed to origin/feature/bevy-ui-scenes; Beacon shell/page stack refactor checkpoint pending.`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 - Prototype reference state: `Prototype is now included through origin/dev at df9d52a7e2c94203904b8a7b72f96af57d1f6a80, which merged f4d2abb Add UI prototype.`
 - Working tree note: `Untracked prototype build artifacts may remain locally under prototypes/ from the prior prototype branch; do not include them in this feature unless explicitly requested.`
-- Current tweak state: `Reusable-widget scene reconstruction for Main Menu, silo scenes, Settings Menu, and Pause Menu validated, committed, and pushed as cb44874.`
+- Current tweak state: `Beacon flow refactored into persistent shell scene plus content-only stacked page scenes; validation passed; checkpoint commit pending.`
 
 ## Phase 1: Planning
 **Status:** In progress  
@@ -178,6 +178,7 @@
 - Preserve `game/assets/scenes/credits.bsn`, `pixel_perfect_splash.bsn`, `bevy_splash.bsn`, and current gameplay behavior.
 - Keep all UI data static/mock for this feature.
 - User confirmed on 2026-07-20 that Bevy hot reload is available and this follow-up should stay on the current `feature/bevy-ui-scenes` branch without creating a new feature.
+- User requested on 2026-07-20 that Beacon pages stop recreating the shared top navigation and top-right status chrome; implement a persistent Beacon shell scene plus stacked per-page scenes for selected tabs.
 
 ## Postponed Work
 - Hooking UI to real save, settings, colony, mission, robot, fabrication, or upgrade data is postponed because the user requested mock data only.
@@ -243,6 +244,7 @@
 - `2026-07-20`: User requested reconstructing the Main Menu on the current branch using the new reusable widget library and reminded that Bevy hot reload is available. Rebuilt `main_menu.bsn` around reusable `LastBeaconUiButton` variants for all navigation/actions, replaced Main Menu-specific divider composition with common divider widgets, retained current menu routing, current-save mock content, and 3D/simple gameplay background. Validation passed: `cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`; timeout smoke launch of `last-beacon/main_menu` showed no BSN load errors before termination.
 - `2026-07-20`: User approved the Main Menu reconstruction and requested the same reusable-widget pass for the other silo scenes, Settings Menu, and Pause Menu. Updated Dashboard, Hangar, Garage, Mission Control, Fabrication, and Silo Upgrades top navigation to use `LastBeaconUiTab`; updated the Hangar launch action, Settings Back button and tab row, and Pause Menu actions to use reusable `LastBeaconUiButton` variants. Preserved existing scene routing and mock content. Validation passed: `cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`; timeout smoke launches of `last-beacon/dashboard`, `last-beacon/hangar`, `last-beacon/garage`, `last-beacon/mission_control`, `last-beacon/fabrication`, `last-beacon/silo_upgrades`, `last-beacon/options_menu`, and `last-beacon/pause_menu` showed no BSN load errors before termination.
 - `2026-07-20`: Resumed the current UI scene feature on `feature/bevy-ui-scenes`; root branch base remains verified with `dev` as an ancestor and engine pointer remains unchanged at `1bc59f9a0039dfe412b735c869a90f38a0d58582`. Re-ran `cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`; validation passed with 2 tests passing. Committed and pushed reusable scene reconstruction as `cb44874 Reconstruct scenes with reusable widgets`.
+- `2026-07-20`: User reported that each Beacon tab page currently recreates the same top navigation and top-right information chrome. Added `last-beacon/beacon` as a persistent shell scene with the shared top navigation/status chrome, converted Dashboard, Hangar, Garage, Mission Control, Fabrication, and Silo Upgrades into content-only page scenes, and added game-owned `LastBeaconBeaconPageButton` navigation that replaces only the stable `beacon-page` stack entry with a non-blocking overlay page. Main Menu Continue/New Game and Pause Abandon Run now open the Beacon shell instead of a duplicated Dashboard scene. Validation passed: `cargo fmt --manifest-path game/Cargo.toml -- --check`, `cargo check --manifest-path game/Cargo.toml`, `CARGO_TARGET_DIR=game/target/pi-validation cargo test --manifest-path game/Cargo.toml --test bsn_asset_flow --all-features`, `CARGO_TARGET_DIR=game/target/pi-validation cargo test --manifest-path game/Cargo.toml --lib --all-features`, and a timeout-terminated smoke launch of `last-beacon/beacon` with no BSN load errors before termination. The alternate target dir was used because a hot-reload `last-beacon.exe` process was running and locking `game/target/debug/last-beacon.exe`.
 - `2026-07-19`: Created `feature/bevy-ui-scenes` from `dev`.
 - `2026-07-19`: Confirmed user scope, including preserving current gameplay level and replacing only the pause menu used by gameplay.
 - `2026-07-19`: Created plan and tracker for user review.
