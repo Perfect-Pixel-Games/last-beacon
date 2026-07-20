@@ -252,6 +252,12 @@ pub struct LastBeaconUiTextBoxScrollDrag {
     active_text_box: Option<Entity>,
 }
 
+/// Tracks the blink phase for custom multiline text-box carets.
+#[derive(Clone, Copy, Debug, Default, Resource)]
+pub struct LastBeaconUiTextBoxCaretBlink {
+    caret_is_visible: bool,
+}
+
 #[derive(Clone, Debug, Default)]
 struct LastBeaconUiTextBoxState {
     value: String,
@@ -464,7 +470,7 @@ pub fn initialize_last_beacon_ui_text_inputs(
                 },
             );
             if let Ok(mut text) = text_values.get_mut(text_entity) {
-                text.0 = visible_text_box_lines(&text_input.value, 0);
+                text.0 = visible_text_box_lines(&text_input.value, 0, false);
             }
             commands
                 .entity(input_entity)
@@ -661,6 +667,46 @@ pub fn initialize_last_beacon_ui_sliders(
         commands
             .entity(slider_entity)
             .insert(RelativeCursorPosition::default());
+    }
+}
+
+/// Refreshes the custom multiline caret blink state for focused text boxes.
+pub fn refresh_last_beacon_ui_text_box_cursors(
+    time: Res<Time>,
+    input_focus: Res<InputFocus>,
+    mut caret_blink: ResMut<LastBeaconUiTextBoxCaretBlink>,
+    text_box_states: Res<LastBeaconUiTextBoxStates>,
+    text_inputs: Query<(&LastBeaconUiTextInput, Option<&Children>)>,
+    children_query: Query<&Children>,
+    mut text_query: Query<&mut Text>,
+) {
+    let next_caret_is_visible = (time.elapsed_secs() * 2.0).floor() as i32 % 2 == 0;
+    if caret_blink.caret_is_visible == next_caret_is_visible && !input_focus.is_changed() {
+        return;
+    }
+    caret_blink.caret_is_visible = next_caret_is_visible;
+
+    for (input_entity, text_box_state) in &text_box_states.boxes {
+        let Ok((text_input, input_children)) = text_inputs.get(*input_entity) else {
+            continue;
+        };
+        if !text_input.multiline {
+            continue;
+        }
+        let Some(text_entity) =
+            first_descendant_with_rendered_text(input_children, &children_query, &text_query)
+        else {
+            continue;
+        };
+        if let Ok(mut text) = text_query.get_mut(text_entity) {
+            let text_box_has_focus = input_focus.get() == Some(*input_entity);
+            let should_show_caret = text_box_has_focus && caret_blink.caret_is_visible;
+            text.0 = visible_text_box_lines(
+                &text_box_state.value,
+                text_box_state.first_visible_line,
+                should_show_caret,
+            );
+        }
     }
 }
 
@@ -1096,13 +1142,30 @@ fn format_value(value: f32) -> String {
     }
 }
 
-fn visible_text_box_lines(value: &str, first_visible_line: usize) -> String {
-    value
+fn visible_text_box_lines(
+    value: &str,
+    first_visible_line: usize,
+    should_show_caret: bool,
+) -> String {
+    let total_line_count = value.lines().count().max(1);
+    let mut visible_lines = value
         .lines()
         .skip(first_visible_line)
         .take(TEXT_BOX_VISIBLE_LINES)
-        .collect::<Vec<_>>()
-        .join("\n")
+        .map(str::to_string)
+        .collect::<Vec<_>>();
+    if visible_lines.is_empty() {
+        visible_lines.push(String::new());
+    }
+
+    let last_visible_line = first_visible_line + visible_lines.len();
+    if should_show_caret && last_visible_line >= total_line_count {
+        if let Some(last_line) = visible_lines.last_mut() {
+            last_line.push('|');
+        }
+    }
+
+    visible_lines.join("\n")
 }
 
 fn max_first_visible_text_box_line(value: &str) -> usize {
@@ -1125,7 +1188,11 @@ fn refresh_text_box_view(
         return;
     };
     if let Ok(mut text) = text_query.get_mut(text_entity) {
-        text.0 = visible_text_box_lines(&text_box_state.value, text_box_state.first_visible_line);
+        text.0 = visible_text_box_lines(
+            &text_box_state.value,
+            text_box_state.first_visible_line,
+            false,
+        );
     }
 
     let max_first_visible_line = max_first_visible_text_box_line(&text_box_state.value);
