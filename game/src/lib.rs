@@ -175,7 +175,14 @@ impl Plugin for LastBeaconPlugin {
                 // stack's visibility sync runs this frame. See
                 // `queue_last_beacon_bsn_widgets`'s doc comment.
                 ui_widgets::queue_last_beacon_bsn_widgets.after(propagate_loaded_bsn_scene_owners),
-                ui_widgets::apply_last_beacon_ui_font,
+                // Must run after both apply passes that create TextFont
+                // components, so text always gets its final font before
+                // Bevy's PostUpdate text/layout systems rasterize glyphs —
+                // otherwise text briefly renders with the wrong font and
+                // visibly re-renders once corrected a frame later.
+                ui_widgets::apply_last_beacon_ui_font
+                    .after(apply_pending_bsn_instances)
+                    .after(ui_widgets::apply_pending_last_beacon_bsn_widgets),
                 ui_widgets::initialize_last_beacon_ui_text_inputs,
                 ui_widgets::focus_last_beacon_ui_text_inputs,
                 ui_widgets::initialize_last_beacon_ui_text_scroll_tracks,
