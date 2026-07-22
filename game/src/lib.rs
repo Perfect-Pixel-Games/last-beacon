@@ -467,7 +467,6 @@ fn generate_placeholder_cube_scene(
 
     commands
         .entity(placeholder_scene_entity)
-        .add_children(&[cube_entity, light_entity, camera_entity])
         .insert(LastBeaconPlaceholderCubeSceneGenerated {
             cube_entity,
             light_entity,
@@ -657,6 +656,14 @@ mod tests {
         assert!(
             cameras.iter(app.world()).all(|camera| !camera.is_active),
             "prepared/off-stack placeholder cameras must stay inactive until activation"
+        );
+        let mut generated_children = app
+            .world_mut()
+            .query_filtered::<&ChildOf, With<SpinningCube>>();
+        assert_eq!(
+            generated_children.iter(app.world()).count(),
+            0,
+            "preloaded 3D placeholder content should stay top-level so it does not inherit UI hierarchy transforms"
         );
     }
 
