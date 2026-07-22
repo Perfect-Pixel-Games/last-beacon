@@ -29,7 +29,7 @@
   root completion.
 
 ## Repository State
-- Root commit/push state: `Scene-transition profiling implementation committed in 9ea72dd04742b87839e732abd7111e7fc08819c2; final tracker follow-up pending push`
+- Root commit/push state: `Scene-transition profiling implementation commit 9ea72dd04742b87839e732abd7111e7fc08819c2 and profiling tracker updates pushed to origin/feature/scene-pop-in-investigation`
 - Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd, font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646, and BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a pushed to origin/feature/scene-pop-in-investigation`
 - Root submodule pointer update: `Committed in root profiling implementation commit 9ea72dd04742b87839e732abd7111e7fc08819c2`
 - Root pull request state: `Pending`
@@ -163,7 +163,7 @@
 - User confirmation: `Pending — user should play-test to confirm the pop-in is actually gone; static screenshots can't prove that`
 
 ## Phase 5: Scene Transition Profiling Setup
-**Status:** Complete; final tracker follow-up pending push
+**Status:** Complete; pushed to origin/feature/scene-pop-in-investigation
 **Goal:** Make the BSN scene-transition spike measurable in normal local builds and collect enough evidence to separate scene construction, nested widget construction, and font/rendering symptoms.
 
 ### Tasks
@@ -235,4 +235,4 @@
 - `2026-07-21`: User reported a large lag spike when opening scenes, post-fix. Investigated with `superpowers:systematic-debugging`; see Notes/Issues for the full evidence trail and root-cause conclusion. All temporary diagnostic code reverted (never committed).
 - `2026-07-21`: User decided to accept the stutter as-is, understanding it as a pre-existing Bevy pipeline/glyph-atlas warm-up cost unmasked (not introduced) by the pop-in fix. Feature considered complete. Root and engine branches remain pushed to `origin/feature/scene-pop-in-investigation`; no PRs opened yet.
 - `2026-07-21` (round 2): User reopened the lag spike as "extreme" and reported fonts still streaming in, asking for a real fix. Investigated further with `superpowers:systematic-debugging`; see Notes/Issues for the full evidence trail. Found and fixed the font-streaming root cause (missing system ordering between `apply_last_beacon_ui_font` and the systems that create `TextFont` components — engine commit `609ab9a6aa963abadc0e55cfa5e78a22334bd646`). For the lag spike, built and empirically disproved a pipeline pre-warm mitigation, then conclusively isolated the true cause via a decisive differential test (disabling all Visibility gating, reproducing byte-for-byte pre-fix behavior): the spike is intrinsic to `scene_patch.apply()`'s reflection-based construction cost, unrelated to Visibility/rendering/this feature entirely, and was always present. This is out of scope for the scene-pop-in-fix branch; reporting findings to user for direction on next steps.
-- `2026-07-22`: User asked to continue on the same feature/branch and set up profiling for the massive scene-transition lag spikes. Added permanent profiling hooks around Foundation BSN resolve/apply and Last Beacon nested-widget resolve/apply, a `scripts/profile-scene.cmd` Chrome-trace launch path, and profiling docs. Focused engine/game format, check, clippy, test, and doc generation passed. Engine profiling hooks committed and pushed as `0b419a403373e7bf7dd42ea547660e4ec97b047a`; root profiling implementation commit created as `9ea72dd04742b87839e732abd7111e7fc08819c2`; final tracker follow-up will be pushed with the branch.
+- `2026-07-22`: User asked to continue on the same feature/branch and set up profiling for the massive scene-transition lag spikes. Added permanent profiling hooks around Foundation BSN resolve/apply and Last Beacon nested-widget resolve/apply, a `scripts/profile-scene.cmd` Chrome-trace launch path, and profiling docs. Focused engine/game format, check, clippy, test, and doc generation passed. Engine profiling hooks committed and pushed as `0b419a403373e7bf7dd42ea547660e4ec97b047a`; root profiling implementation commit `9ea72dd04742b87839e732abd7111e7fc08819c2` and tracker follow-up pushed to `origin/feature/scene-pop-in-investigation`.
