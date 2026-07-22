@@ -196,7 +196,6 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::drag_last_beacon_ui_text_box_scrollbars,
                 ui_widgets::scroll_last_beacon_ui_text_inputs,
                 ui_widgets::request_last_beacon_ui_text_box_caret_scroll_for_keyboard_input,
-                initialize_last_beacon_placeholder_cube_scenes,
             ),
         )
         .add_systems(
@@ -227,6 +226,12 @@ impl Plugin for LastBeaconPlugin {
             PostUpdate,
             scenes::spawn_requested_last_beacon_scene_drivers
                 .in_set(FoundationSceneStackSet::ActivateSceneContent),
+        )
+        .add_systems(
+            PostUpdate,
+            initialize_last_beacon_placeholder_cube_scenes
+                .after(FoundationSceneStackSet::ActivateSceneContent)
+                .before(FoundationSceneStackSet::SyncVisibility),
         )
         .add_systems(
             PostUpdate,
@@ -363,6 +368,7 @@ fn initialize_last_beacon_placeholder_cube_scenes(
     mut cameras: Query<&mut Camera>,
     placeholder_scenes: PlaceholderCubeSceneInitQuery,
     scene_owners: Query<&SceneOwner>,
+    hierarchy_entities: Query<(Option<&ChildOf>, Option<&FoundationBsnInstance>)>,
 ) {
     for (placeholder_scene_entity, placeholder_scene, scene_owner, parent_link, generated_scene) in
         &placeholder_scenes
@@ -376,6 +382,7 @@ fn initialize_last_beacon_placeholder_cube_scenes(
                 &mut materials,
                 placeholder_scene_entity,
                 placeholder_scene,
+                &hierarchy_entities,
             )
         };
 
@@ -415,6 +422,7 @@ fn generate_placeholder_cube_scene(
     materials: &mut Assets<StandardMaterial>,
     placeholder_scene_entity: Entity,
     placeholder_scene: &LastBeaconPlaceholderCubeScene,
+    hierarchy_entities: &Query<(Option<&ChildOf>, Option<&FoundationBsnInstance>)>,
 ) -> LastBeaconPlaceholderCubeSceneGenerated {
     let cube_size = placeholder_scene.cube_size;
     let cube_mesh = meshes.add(Cuboid::from_size(Vec3::splat(cube_size)));
@@ -465,6 +473,14 @@ fn generate_placeholder_cube_scene(
         ))
         .id();
 
+    if let Some(bsn_root_entity) =
+        find_bsn_instance_root(placeholder_scene_entity, hierarchy_entities)
+    {
+        commands
+            .entity(bsn_root_entity)
+            .add_children(&[cube_entity, light_entity, camera_entity]);
+    }
+
     commands
         .entity(placeholder_scene_entity)
         .insert(LastBeaconPlaceholderCubeSceneGenerated {
@@ -477,6 +493,20 @@ fn generate_placeholder_cube_scene(
         cube_entity,
         light_entity,
         camera_entity,
+    }
+}
+
+fn find_bsn_instance_root(
+    entity: Entity,
+    hierarchy_entities: &Query<(Option<&ChildOf>, Option<&FoundationBsnInstance>)>,
+) -> Option<Entity> {
+    let mut current_entity = entity;
+    loop {
+        let (parent_link, bsn_instance) = hierarchy_entities.get(current_entity).ok()?;
+        if bsn_instance.is_some() {
+            return Some(current_entity);
+        }
+        current_entity = parent_link?.parent();
     }
 }
 
@@ -664,6 +694,45 @@ mod tests {
             generated_children.iter(app.world()).count(),
             0,
             "preloaded 3D placeholder content should stay top-level so it does not inherit UI hierarchy transforms"
+        );
+    }
+
+    #[test]
+    fn cached_placeholder_cube_scene_under_bsn_root_preloads_under_that_root() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<Assets<Mesh>>();
+        app.init_resource::<Assets<StandardMaterial>>();
+        app.add_systems(Update, initialize_last_beacon_placeholder_cube_scenes);
+
+        let bsn_root_entity = app
+            .world_mut()
+            .spawn(FoundationBsnInstance {
+                asset_path: "scenes/main_menu.bsn".to_string(),
+                scene_owner: None,
+                parent: None,
+                scene_handle: Handle::default(),
+            })
+            .id();
+        app.world_mut().spawn((
+            LastBeaconPlaceholderCubeScene {
+                cube_color: "green".to_string(),
+                cube_size: 2.0,
+            },
+            ChildOf(bsn_root_entity),
+        ));
+        app.update();
+
+        let mut cubes = app
+            .world_mut()
+            .query_filtered::<&ChildOf, With<SpinningCube>>();
+        let cube_parent = cubes
+            .single(app.world())
+            .expect("preloaded main-menu placeholder should generate one cube");
+        assert_eq!(
+            cube_parent.parent(),
+            bsn_root_entity,
+            "preloaded generated 3D content should be attached to the BSN root so activation and cleanup own it without inheriting UI node transforms"
         );
     }
 
