@@ -150,14 +150,19 @@ fn converted_pixel_perfect_scene_spawns_authored_text_through_foundation_bridge(
         "scene preload should become ready before activation"
     );
 
-    app.world_mut().write_message(SceneLoadRequested {
-        scene_id: SceneId(7),
-        source: scene_source,
-    });
+    app.world_mut()
+        .write_message(SceneCommand::open(scene_source));
 
     for _frame_number in 0..60 {
         app.update();
     }
+
+    let active_scene_id = app
+        .world()
+        .resource::<SceneStack>()
+        .current()
+        .map(|scene_entry| scene_entry.id)
+        .expect("prepared splash should activate into the scene stack");
 
     let mut text_query = app.world_mut().query::<(&Text, Option<&SceneOwner>)>();
     let texts = text_query
@@ -166,10 +171,10 @@ fn converted_pixel_perfect_scene_spawns_authored_text_through_foundation_bridge(
         .collect::<Vec<_>>();
 
     assert!(
-        texts
-            .iter()
-            .any(|(text, _scene_owner)| text == "Pixel Perfect"),
-        "the Foundation BSN bridge should spawn the authored Pixel Perfect text; found {texts:?}",
+        texts.iter().any(|(text, scene_owner)| {
+            text == "Pixel Perfect" && *scene_owner == Some(SceneOwner { scene_id: active_scene_id })
+        }),
+        "the Foundation BSN bridge should spawn the authored Pixel Perfect text with scene ownership; found {texts:?}",
     );
 }
 
