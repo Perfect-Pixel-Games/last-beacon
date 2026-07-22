@@ -8,12 +8,12 @@
 - Engine branch: `feature/scene-pop-in-investigation`
 - Root branch base verification: `Verified: dev (7cacf7cabfff058305c08d9988dc15bd935f49e4) is an ancestor of this branch; only the investigation doc commit sits on top`
 - Engine branch base verification: `Verified: created feature/scene-pop-in-investigation from engine origin/dev at 1bc59f9a0039dfe412b735c869a90f38a0d58582 on 2026-07-20`
-- Engine submodule pointer: `Async scene cache pipeline engine commit df6966386c72e1f74411b3303a9de26682664745 committed and pushed; root pointer update pending`
+- Engine submodule pointer: `Updated to async scene cache pipeline engine commit df69663a9224cd62fd715a7af3822a1af286e239; root pointer committed and pushed`
 - Overall status: `Phase 6 implemented: scene opens now prepare asynchronously, prepared BSN scenes can activate from cache, and Last Beacon registers common preload relationships`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Implementation complete with gpt-5.4; root commit/push state pending`
+- Current handoff state: `Implementation complete with gpt-5.4 and pushed for review/play-test`
 - Created: `2026-07-20`
 - Last updated: `2026-07-22`
 
@@ -29,9 +29,9 @@
   root completion.
 
 ## Repository State
-- Root commit/push state: `Async scene cache root commit pending`
-- Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd, font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646, BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a, and async scene cache pipeline commit df6966386c72e1f74411b3303a9de26682664745 pushed to origin/feature/scene-pop-in-investigation`
-- Root submodule pointer update: `Pending root commit for engine commit df6966386c72e1f74411b3303a9de26682664745`
+- Root commit/push state: `Async scene cache root commit af91da1aaafba944bbc044617a526d4db13313e3 pushed to origin/feature/scene-pop-in-investigation`
+- Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd, font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646, BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a, and async scene cache pipeline commit df69663a9224cd62fd715a7af3822a1af286e239 pushed to origin/feature/scene-pop-in-investigation`
+- Root submodule pointer update: `Committed in root async scene cache commit af91da1aaafba944bbc044617a526d4db13313e3 for engine commit df69663a9224cd62fd715a7af3822a1af286e239`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -273,4 +273,4 @@
 - `2026-07-21` (round 2): User reopened the lag spike as "extreme" and reported fonts still streaming in, asking for a real fix. Investigated further with `superpowers:systematic-debugging`; see Notes/Issues for the full evidence trail. Found and fixed the font-streaming root cause (missing system ordering between `apply_last_beacon_ui_font` and the systems that create `TextFont` components — engine commit `609ab9a6aa963abadc0e55cfa5e78a22334bd646`). For the lag spike, built and empirically disproved a pipeline pre-warm mitigation, then conclusively isolated the true cause via a decisive differential test (disabling all Visibility gating, reproducing byte-for-byte pre-fix behavior): the spike is intrinsic to `scene_patch.apply()`'s reflection-based construction cost, unrelated to Visibility/rendering/this feature entirely, and was always present. This is out of scope for the scene-pop-in-fix branch; reporting findings to user for direction on next steps.
 - `2026-07-22`: User asked to continue on the same feature/branch and set up profiling for the massive scene-transition lag spikes. Added permanent profiling hooks around Foundation BSN resolve/apply and Last Beacon nested-widget resolve/apply, a `scripts/profile-scene.cmd` Chrome-trace launch path, and profiling docs. Focused engine/game format, check, clippy, test, and doc generation passed. Engine profiling hooks committed and pushed as `0b419a403373e7bf7dd42ea547660e4ec97b047a`; root profiling implementation commit `9ea72dd04742b87839e732abd7111e7fc08819c2` and tracker follow-up pushed to `origin/feature/scene-pop-in-investigation`.
 - `2026-07-22`: User approved the diagnosis and requested core scene-stack async loading plus preloaded/cached scene activation on the same branch. Updated `plan.md` with the async scene loading/cache architecture and added Phase 6 to this tracker.
-- `2026-07-22`: Implemented Phase 6. Foundation scene-stack mutations now queue transition batches, BSN scenes prepare through `ScenePreloadRequested` / `ScenePreloadReady` / `ScenePreloadFailed`, transition status is exposed through `SceneTransitionStatus`, prepared BSN roots activate from cache and immediately begin a background refill, and Last Beacon registers preload relationships for splash/menu/gameplay/beacon flows. Engine/root focused validation plus `engine/scripts/validate-project.cmd` and `scripts/validate.cmd` passed.
+- `2026-07-22`: Implemented Phase 6. Foundation scene-stack mutations now queue transition batches, BSN scenes prepare through `ScenePreloadRequested` / `ScenePreloadReady` / `ScenePreloadFailed`, transition status is exposed through `SceneTransitionStatus`, prepared BSN roots activate from cache and immediately begin a background refill, and Last Beacon registers preload relationships for splash/menu/gameplay/beacon flows. Engine/root focused validation plus `engine/scripts/validate-project.cmd` and `scripts/validate.cmd` passed. Engine changes committed and pushed as `df69663a9224cd62fd715a7af3822a1af286e239`; root integration and submodule pointer committed and pushed as `af91da1aaafba944bbc044617a526d4db13313e3`.
