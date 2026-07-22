@@ -9,12 +9,12 @@
 - Engine branch: `feature/scene-pop-in-investigation`
 - Engine branch status: `Required before implementation; engine submodule is currently detached at 1bc59f9a0039dfe412b735c869a90f38a0d58582, which is engine origin/dev tip`
 - Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582 (unchanged so far)`
-- Status: `Planned`
+- Status: `Expanded on 2026-07-22 with async scene loading and scene preloading/cache plan; awaiting user approval before implementation`
 - Planning model: `gpt-5.5`
 - Implementation model: `gpt-5.4`
 - Review model: `gpt-5.5`
 - Created: `2026-07-20`
-- Last updated: `2026-07-20`
+- Last updated: `2026-07-22`
 
 ## Branch Note
 `feature-plan-docs` normally requires a fresh `feature/*` branch per feature.
@@ -294,6 +294,68 @@ Bevy behavior needs to be researched.
 - Confirm font preload doesn't measurably delay first splash frame.
 - Manually confirm no visible pop-in across main menu, options, at least
   one Beacon page, ui_playground, and a main-menu revisit.
+
+## 2026-07-22 Scope Expansion: Async Scene Loading And Scene Cache
+
+### User Request
+After profiling confirmed that transition stalls come from synchronous BSN `ScenePatch::apply` construction, the user requested two core scene-stack capabilities on the same feature branch:
+
+1. A system that asynchronously loads target scenes, then displays them only when every target is ready. This should be the backbone for a future loading-screen solution.
+2. A system that preloads and caches scenes so menus and other common UI elements can be added to the stack instantly. Scenes should be able to preload other scenes, and scene loading must be asynchronous; synchronous transition-time loads are not acceptable.
+
+### Architectural Direction
+This belongs primarily in `engine/crates/foundation-runtime-library` as a core scene-stack capability. Last Beacon should only provide game-specific preload registrations and manual validation coverage.
+
+Foundation should split scene transitions into explicit stages:
+
+1. **Request.** A scene command declares the desired stack mutation and target scene sources.
+2. **Prepare.** Foundation resolves the target sources through an asynchronous preparation/cache resource instead of constructing visible scene content directly in the transition path.
+3. **Ready.** Prepared scene content exists off-stack or in a cache in a hidden/non-interactive state, with its BSN asset load/resolve/apply work already settled.
+4. **Activate.** The scene stack applies the stack mutation and attaches/retags prepared content with the new `SceneOwner` only after every target scene in the transition group is ready.
+5. **Display.** Existing readiness gating then controls final visibility so game-side nested loads still have a chance to settle before the scene appears.
+
+### Proposed Engine APIs And Systems
+- Add a reusable scene preparation/cache resource, likely `ScenePreparationCache`, keyed by a stable `SceneCacheKey` derived from `SceneSource` and any future variant information needed to distinguish differently-authored instances.
+- Add scene preparation states such as `Requested`, `LoadingAsset`, `Applying`, `Ready`, `Activating`, and `Failed`. For BSN scenes, `LoadingAsset` uses `AssetServer::load`; `Ready` means a hidden cached root has already received its `ScenePatch::apply` content or a failure state has settled.
+- Add public scene-stack messages/events for preparation lifecycle, such as `ScenePreloadRequested`, `ScenePreloadReady`, `ScenePreloadFailed`, and/or `SceneTransitionReady`. Final names can be adjusted during implementation, but the behavior should be public and documented.
+- Extend `SceneCommand` or add helper commands so callers can request preloading independently from opening, for example `SceneCommand::Preload { source }` and `SceneCommandsExt::preload_scene(...)`.
+- Make ordinary `Open` / `ClearAndOpen` commands route through the async preparation path by default. If a requested scene is not ready, Foundation should keep the current stack stable or enter an explicit pending-transition state rather than spawning the target synchronously into the visible stack.
+- Add transition-group support for multi-scene opens (for example startup override lists or console `open a b c`): every scene in the group should prepare first; activation happens only when all required targets are ready.
+- Add a scene-authored preload mechanism so a scene can prime likely next scenes. Initial implementation can be data-driven through registered scene metadata (for example registry entries that list preload targets) rather than requiring `.bsn` syntax changes.
+- Integrate cache invalidation with existing `.bsn` hot reload. If a cached asset reloads, the cached prepared root must be rebuilt or marked stale before activation.
+
+### Important Constraint: Applying Is Still Main-Thread ECS Work
+Bevy `World` mutation and `ScenePatch::apply` cannot be moved wholesale to arbitrary background threads. The async/cache design eliminates transition-time synchronous loading by moving preparation earlier and keeping target scenes hidden until ready. If profiling still shows unacceptable frame spikes while preloading happens in the background/loading-screen phase, a follow-up implementation should budget or chunk the apply step across multiple frames rather than calling `ScenePatch::apply` for a large scene in one frame.
+
+The first implementation should therefore avoid any synchronous apply on the click-to-transition path. It is acceptable for a preload request to do main-thread apply work before the player asks to open that scene, because the cached result will make activation instant. For cold, uncached scene opens, the stack should wait in a pending/loading state until preparation completes instead of showing a black half-loaded target.
+
+### Proposed Phases
+1. **Engine design pass:** Add scene preparation/cache types, lifecycle messages, and command/API shape in `scene_stack.rs` and BSN bridge ownership in `bsn_assets.rs`.
+2. **Async cold-open path:** Route scene opens through preparation and activate only when all requested scenes are ready.
+3. **Preload/cache path:** Allow scenes/systems to preload scene sources, keep prepared hidden roots cached, activate cached scenes instantly, and cleanly release/rebuild stale cache entries.
+4. **Last Beacon integration:** Register practical menu/UI preload relationships, such as main menu preloading options/credits and heavy UI playground targets where appropriate.
+5. **Documentation/validation:** Document the lifecycle in `engine/docs/scene-system.md`, update root docs if Last Beacon gets preload metadata, and validate engine/root behavior.
+
+### Risks And Open Questions
+- Cache keys must avoid returning the wrong prepared instance for scenes that need unique runtime parameters in the future.
+- Cached scene roots must not receive a final `SceneOwner` too early, or cleanup of an unrelated stack scene could despawn cached content. Activation should assign/propagate the actual stack `SceneOwner` when the prepared root is moved into the active stack.
+- Some scenes may not be safe to cache indefinitely if they hold runtime state. Initial policy should favor static UI/menu scenes and provide explicit cache release/invalidation APIs.
+- Cold opens without a configured loading screen need a clear behavior. Recommended initial behavior: keep the current stack visible/interactable policy explicit while target scenes prepare, then swap when ready. A future loading-screen scene can subscribe to the same transition lifecycle.
+- If `ScenePatch::apply` remains too expensive during preload, budgeted/chunked apply may be required as a second stage. This plan should leave room for that without requiring it in the first cache implementation.
+
+### Additional Success Criteria
+- Opening a scene never constructs BSN content synchronously in the same transition path that makes the scene visible.
+- Cold scene opens prepare asynchronously and only activate/display after all requested target scenes are ready.
+- Preloaded cached scenes can be activated into the scene stack without re-running the expensive BSN asset load/resolve/apply path.
+- A scene or scene metadata can declare likely next scenes to preload.
+- Existing `ScenePresentation`, `SceneOwner` cleanup, readiness gating, and hot reload semantics remain coherent.
+- Failed scene preparation produces an explicit failure state/message and does not leave the stack permanently stuck.
+
+### Additional Testing Methodology
+- Engine unit tests for scene preparation state transitions, cold open deferral, all-targets-ready activation, cached instant activation, cache invalidation on hot reload, and failed preparation behavior.
+- Engine docs generation after adding public APIs.
+- Last Beacon tests or smoke validation proving registered preload relationships request the expected scene sources.
+- Manual profiling with `scripts/profile-scene.cmd`: compare a cold open versus a cached menu open and verify cached activation avoids `foundation_bsn_apply` on the transition frame.
 
 ## Success Criteria
 - Opening any Last Beacon scene shows already-complete, already-styled
