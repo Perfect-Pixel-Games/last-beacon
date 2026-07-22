@@ -368,7 +368,6 @@ fn initialize_last_beacon_placeholder_cube_scenes(
     mut cameras: Query<&mut Camera>,
     placeholder_scenes: PlaceholderCubeSceneInitQuery,
     scene_owners: Query<&SceneOwner>,
-    hierarchy_entities: Query<(Option<&ChildOf>, Option<&FoundationBsnInstance>)>,
 ) {
     for (placeholder_scene_entity, placeholder_scene, scene_owner, parent_link, generated_scene) in
         &placeholder_scenes
@@ -382,7 +381,6 @@ fn initialize_last_beacon_placeholder_cube_scenes(
                 &mut materials,
                 placeholder_scene_entity,
                 placeholder_scene,
-                &hierarchy_entities,
             )
         };
 
@@ -405,7 +403,7 @@ fn initialize_last_beacon_placeholder_cube_scenes(
         ] {
             commands
                 .entity(generated_entity)
-                .insert(effective_scene_owner);
+                .insert((effective_scene_owner, Visibility::Inherited));
         }
         if let Ok(mut camera) = cameras.get_mut(generated_scene.camera_entity) {
             camera.is_active = true;
@@ -422,7 +420,6 @@ fn generate_placeholder_cube_scene(
     materials: &mut Assets<StandardMaterial>,
     placeholder_scene_entity: Entity,
     placeholder_scene: &LastBeaconPlaceholderCubeScene,
-    hierarchy_entities: &Query<(Option<&ChildOf>, Option<&FoundationBsnInstance>)>,
 ) -> LastBeaconPlaceholderCubeSceneGenerated {
     let cube_size = placeholder_scene.cube_size;
     let cube_mesh = meshes.add(Cuboid::from_size(Vec3::splat(cube_size)));
@@ -438,6 +435,7 @@ fn generate_placeholder_cube_scene(
             MeshMaterial3d(cube_material),
             Transform::from_translation(cube_position),
             SpinningCube,
+            Visibility::Hidden,
             Name::new("Last Beacon Placeholder Cube"),
         ))
         .id();
@@ -454,6 +452,7 @@ fn generate_placeholder_cube_scene(
                 ..default()
             },
             Transform::from_translation(light_position).looking_at(light_target, Vec3::Y),
+            Visibility::Hidden,
             Name::new("Last Beacon Placeholder Light"),
         ))
         .id();
@@ -469,17 +468,10 @@ fn generate_placeholder_cube_scene(
                 ..default()
             },
             Transform::from_translation(camera_position).looking_at(camera_target, Vec3::Y),
+            Visibility::Hidden,
             Name::new("Last Beacon Placeholder Camera"),
         ))
         .id();
-
-    if let Some(bsn_root_entity) =
-        find_bsn_instance_root(placeholder_scene_entity, hierarchy_entities)
-    {
-        commands
-            .entity(bsn_root_entity)
-            .add_children(&[cube_entity, light_entity, camera_entity]);
-    }
 
     commands
         .entity(placeholder_scene_entity)
@@ -493,20 +485,6 @@ fn generate_placeholder_cube_scene(
         cube_entity,
         light_entity,
         camera_entity,
-    }
-}
-
-fn find_bsn_instance_root(
-    entity: Entity,
-    hierarchy_entities: &Query<(Option<&ChildOf>, Option<&FoundationBsnInstance>)>,
-) -> Option<Entity> {
-    let mut current_entity = entity;
-    loop {
-        let (parent_link, bsn_instance) = hierarchy_entities.get(current_entity).ok()?;
-        if bsn_instance.is_some() {
-            return Some(current_entity);
-        }
-        current_entity = parent_link?.parent();
     }
 }
 
@@ -698,7 +676,7 @@ mod tests {
     }
 
     #[test]
-    fn cached_placeholder_cube_scene_under_bsn_root_preloads_under_that_root() {
+    fn cached_placeholder_cube_scene_under_bsn_root_preloads_hidden_top_level_content() {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
         app.init_resource::<Assets<Mesh>>();
@@ -723,16 +701,23 @@ mod tests {
         ));
         app.update();
 
-        let mut cubes = app
+        let mut cube_children = app
             .world_mut()
             .query_filtered::<&ChildOf, With<SpinningCube>>();
-        let cube_parent = cubes
-            .single(app.world())
-            .expect("preloaded main-menu placeholder should generate one cube");
         assert_eq!(
-            cube_parent.parent(),
-            bsn_root_entity,
-            "preloaded generated 3D content should be attached to the BSN root so activation and cleanup own it without inheriting UI node transforms"
+            cube_children.iter(app.world()).count(),
+            0,
+            "preloaded generated 3D content should stay top-level so it does not inherit BSN/UI hierarchy transforms"
+        );
+        let mut cubes = app
+            .world_mut()
+            .query_filtered::<&Visibility, With<SpinningCube>>();
+        assert_eq!(
+            *cubes
+                .single(app.world())
+                .expect("preloaded main-menu placeholder should generate one hidden cube"),
+            Visibility::Hidden,
+            "preloaded generated 3D content should stay hidden while its BSN cache root is off-stack"
         );
     }
 
@@ -761,14 +746,30 @@ mod tests {
             .insert(expected_scene_owner);
         app.update();
 
-        let mut cubes = app.world_mut().query::<(&SpinningCube, &SceneOwner)>();
+        let mut cubes = app
+            .world_mut()
+            .query::<(&SpinningCube, &SceneOwner, &Visibility)>();
+        let active_cube_count = cubes
+            .iter(app.world())
+            .filter(|(_, scene_owner, visibility)| {
+                **scene_owner == expected_scene_owner && **visibility == Visibility::Inherited
+            })
+            .count();
         assert_eq!(
-            cubes
+            active_cube_count,
+            1,
+            "cached placeholder scenes should reveal one owned cube once they become active scene-owned content"
+        );
+        let mut cameras = app.world_mut().query::<(&Camera, &SceneOwner)>();
+        assert_eq!(
+            cameras
                 .iter(app.world())
-                .filter(|(_, scene_owner)| **scene_owner == expected_scene_owner)
+                .filter(|(camera, scene_owner)| {
+                    camera.is_active && **scene_owner == expected_scene_owner
+                })
                 .count(),
             1,
-            "cached placeholder scenes should spawn their cube once they become active scene-owned content"
+            "cached placeholder scenes should activate one owned camera once scene ownership is assigned"
         );
     }
 
