@@ -351,8 +351,14 @@ fn initialize_last_beacon_placeholder_cube_scenes(
     for (placeholder_scene_entity, placeholder_scene, scene_owner, parent_link) in
         &placeholder_scenes
     {
-        let effective_scene_owner =
-            effective_placeholder_scene_owner(scene_owner.copied(), parent_link, &scene_owners);
+        let Some(effective_scene_owner) =
+            effective_placeholder_scene_owner(scene_owner.copied(), parent_link, &scene_owners)
+        else {
+            debug!(
+                "Skipping LastBeaconPlaceholderCubeScene on {placeholder_scene_entity:?} because it is not owned by an active scene"
+            );
+            continue;
+        };
         debug!(
             "Initializing LastBeaconPlaceholderCubeScene on {placeholder_scene_entity:?} with scene_owner={effective_scene_owner:?}"
         );
@@ -402,10 +408,10 @@ fn initialize_last_beacon_placeholder_cube_scenes(
             ))
             .id();
 
-        if let Some(scene_owner) = effective_scene_owner {
-            for generated_entity in [cube_entity, light_entity, camera_entity] {
-                commands.entity(generated_entity).insert(scene_owner);
-            }
+        for generated_entity in [cube_entity, light_entity, camera_entity] {
+            commands
+                .entity(generated_entity)
+                .insert(effective_scene_owner);
         }
     }
 }
@@ -533,6 +539,59 @@ mod tests {
             app.world().get::<Node>(menu_root).map(|node| node.display),
             Some(Display::Flex),
             "closing settings should restore marked menu UI display",
+        );
+    }
+
+    #[test]
+    fn unowned_placeholder_cube_scene_does_not_spawn_runtime_entities() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<Assets<Mesh>>();
+        app.init_resource::<Assets<StandardMaterial>>();
+        app.add_systems(Update, initialize_last_beacon_placeholder_cube_scenes);
+
+        app.world_mut().spawn(LastBeaconPlaceholderCubeScene {
+            cube_color: "green".to_string(),
+            cube_size: 2.0,
+        });
+        app.update();
+
+        let mut cubes = app.world_mut().query::<&SpinningCube>();
+        assert_eq!(
+            cubes.iter(app.world()).count(),
+            0,
+            "prepared/off-stack placeholder scenes must not spawn unowned cubes"
+        );
+    }
+
+    #[test]
+    fn scene_owned_placeholder_cube_scene_spawns_owned_runtime_entities() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<Assets<Mesh>>();
+        app.init_resource::<Assets<StandardMaterial>>();
+        app.add_systems(Update, initialize_last_beacon_placeholder_cube_scenes);
+
+        let expected_scene_owner = SceneOwner {
+            scene_id: SceneId(9),
+        };
+        app.world_mut().spawn((
+            LastBeaconPlaceholderCubeScene {
+                cube_color: "green".to_string(),
+                cube_size: 2.0,
+            },
+            expected_scene_owner,
+        ));
+        app.update();
+
+        let mut generated_entities = app.world_mut().query::<&SceneOwner>();
+        let owned_generated_count = generated_entities
+            .iter(app.world())
+            .filter(|scene_owner| **scene_owner == expected_scene_owner)
+            .count();
+        assert_eq!(
+            owned_generated_count, 4,
+            "the authored marker plus generated cube, light, and camera should all be scene-owned"
         );
     }
 
