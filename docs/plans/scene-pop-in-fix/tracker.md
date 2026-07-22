@@ -8,12 +8,12 @@
 - Engine branch: `feature/scene-pop-in-investigation`
 - Root branch base verification: `Verified: dev (7cacf7cabfff058305c08d9988dc15bd935f49e4) is an ancestor of this branch; only the investigation doc commit sits on top`
 - Engine branch base verification: `Verified: created feature/scene-pop-in-investigation from engine origin/dev at 1bc59f9a0039dfe412b735c869a90f38a0d58582 on 2026-07-20`
-- Engine submodule pointer: `Updated to engine BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a; root pointer committed in 9ea72dd04742b87839e732abd7111e7fc08819c2`
-- Overall status: `Planning expanded for async scene loading and scene cache; awaiting user approval before implementation`
+- Engine submodule pointer: `Async scene cache pipeline engine commit df6966386c72e1f74411b3303a9de26682664745 committed and pushed; root pointer update pending`
+- Overall status: `Phase 6 implemented: scene opens now prepare asynchronously, prepared BSN scenes can activate from cache, and Last Beacon registers common preload relationships`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Planning update complete with gpt-5.5; awaiting user approval for gpt-5.4 implementation`
+- Current handoff state: `Implementation complete with gpt-5.4; root commit/push state pending`
 - Created: `2026-07-20`
 - Last updated: `2026-07-22`
 
@@ -29,9 +29,9 @@
   root completion.
 
 ## Repository State
-- Root commit/push state: `Scene-transition profiling implementation commit 9ea72dd04742b87839e732abd7111e7fc08819c2 and profiling tracker updates pushed to origin/feature/scene-pop-in-investigation`
-- Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd, font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646, and BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a pushed to origin/feature/scene-pop-in-investigation`
-- Root submodule pointer update: `Committed in root profiling implementation commit 9ea72dd04742b87839e732abd7111e7fc08819c2`
+- Root commit/push state: `Async scene cache root commit pending`
+- Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd, font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646, BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a, and async scene cache pipeline commit df6966386c72e1f74411b3303a9de26682664745 pushed to origin/feature/scene-pop-in-investigation`
+- Root submodule pointer update: `Pending root commit for engine commit df6966386c72e1f74411b3303a9de26682664745`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -191,40 +191,40 @@
 - User confirmation: `Pending — profiling setup is ready for local capture; spike reduction still requires a separate BSN apply optimization/chunking decision`
 
 ## Phase 6: Async Scene Loading And Scene Cache
-**Status:** Planned; awaiting user approval
+**Status:** Complete; pending commit/push recording
 **Goal:** Move Foundation scene opening to an asynchronous preparation/activation lifecycle and add preloaded scene caching so prepared menu/UI scenes can be added to the stack without transition-frame BSN construction.
 
 ### Tasks
-- [ ] Add core scene preparation/cache API in Foundation.
-  - Status: Planned
+- [x] Add core scene preparation/cache API in Foundation.
+  - Status: Complete
   - Repository: `engine`
   - Notes: Add a resource/state model for requested/loading/applying/ready/failed prepared scenes, keyed by stable scene source/cache keys.
-- [ ] Route ordinary scene opens through async preparation.
-  - Status: Planned
+- [x] Route ordinary scene opens through async preparation.
+  - Status: Complete
   - Repository: `engine`
   - Notes: Open/clear-and-open should not make target content visible or run transition-time synchronous construction; cold targets should activate only once all requested sources are ready.
-- [ ] Add explicit scene preload/cache commands and lifecycle messages.
-  - Status: Planned
+- [x] Add explicit scene preload/cache commands and lifecycle messages.
+  - Status: Complete
   - Repository: `engine`
   - Notes: Include public APIs for systems/scenes to request preloading and observe ready/failed states. This becomes the loading-screen backbone.
-- [ ] Support activating cached scenes instantly.
-  - Status: Planned
+- [x] Support activating cached scenes instantly.
+  - Status: Complete
   - Repository: `engine`
   - Notes: Prepared hidden roots should receive the active stack `SceneOwner` only at activation, then reuse existing readiness/visibility gates. Hot reload must invalidate/rebuild stale cached roots.
-- [ ] Add Last Beacon preload registrations for likely menu/UI transitions.
-  - Status: Planned
+- [x] Add Last Beacon preload registrations for likely menu/UI transitions.
+  - Status: Complete
   - Repository: `root`
   - Notes: Keep this game-specific; likely candidates include main menu preloading options/credits and any heavy UI test/menu scenes useful for validation.
-- [ ] Update engine/root docs and validation evidence.
-  - Status: Planned
+- [x] Update engine/root docs and validation evidence.
+  - Status: Complete
   - Repository: `both`
   - Notes: Document cold-open, preload, cache activation, failure, hot-reload, and future loading-screen semantics.
 
 ### Validation
-- Engine validation: `Pending`
-- Game validation: `Pending`
-- Documentation generation: `Pending`
-- User confirmation: `Pending — implementation must not start until this planning update is approved`
+- Engine validation: `Passed: cargo check --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-features; cargo clippy --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-targets --all-features -- -D warnings; cargo test --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-features (100 passed); cargo doc --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-features --no-deps; engine/scripts/validate-project.cmd`
+- Game validation: `Passed: cargo check --manifest-path game/Cargo.toml --all-features; cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings; cargo test --manifest-path game/Cargo.toml --all-features (14 lib + 2 integration tests passed); cargo doc --manifest-path game/Cargo.toml --all-features --no-deps; scripts/validate.cmd`
+- Documentation generation: `Passed for engine and game docs`
+- User confirmation: `Not required for implementation completion; user already approved proceeding`
 
 ## Implementation / Review Handoff Notes
 - Use `gpt-5.4` for implementation, `gpt-5.5` for optional final review.
@@ -272,4 +272,5 @@
 - `2026-07-21`: User decided to accept the stutter as-is, understanding it as a pre-existing Bevy pipeline/glyph-atlas warm-up cost unmasked (not introduced) by the pop-in fix. Feature considered complete. Root and engine branches remain pushed to `origin/feature/scene-pop-in-investigation`; no PRs opened yet.
 - `2026-07-21` (round 2): User reopened the lag spike as "extreme" and reported fonts still streaming in, asking for a real fix. Investigated further with `superpowers:systematic-debugging`; see Notes/Issues for the full evidence trail. Found and fixed the font-streaming root cause (missing system ordering between `apply_last_beacon_ui_font` and the systems that create `TextFont` components — engine commit `609ab9a6aa963abadc0e55cfa5e78a22334bd646`). For the lag spike, built and empirically disproved a pipeline pre-warm mitigation, then conclusively isolated the true cause via a decisive differential test (disabling all Visibility gating, reproducing byte-for-byte pre-fix behavior): the spike is intrinsic to `scene_patch.apply()`'s reflection-based construction cost, unrelated to Visibility/rendering/this feature entirely, and was always present. This is out of scope for the scene-pop-in-fix branch; reporting findings to user for direction on next steps.
 - `2026-07-22`: User asked to continue on the same feature/branch and set up profiling for the massive scene-transition lag spikes. Added permanent profiling hooks around Foundation BSN resolve/apply and Last Beacon nested-widget resolve/apply, a `scripts/profile-scene.cmd` Chrome-trace launch path, and profiling docs. Focused engine/game format, check, clippy, test, and doc generation passed. Engine profiling hooks committed and pushed as `0b419a403373e7bf7dd42ea547660e4ec97b047a`; root profiling implementation commit `9ea72dd04742b87839e732abd7111e7fc08819c2` and tracker follow-up pushed to `origin/feature/scene-pop-in-investigation`.
-- `2026-07-22`: User approved the diagnosis and requested core scene-stack async loading plus preloaded/cached scene activation on the same branch. Updated `plan.md` with the async scene loading/cache architecture and added Phase 6 to this tracker. Implementation is intentionally blocked until the user approves this planning update.
+- `2026-07-22`: User approved the diagnosis and requested core scene-stack async loading plus preloaded/cached scene activation on the same branch. Updated `plan.md` with the async scene loading/cache architecture and added Phase 6 to this tracker.
+- `2026-07-22`: Implemented Phase 6. Foundation scene-stack mutations now queue transition batches, BSN scenes prepare through `ScenePreloadRequested` / `ScenePreloadReady` / `ScenePreloadFailed`, transition status is exposed through `SceneTransitionStatus`, prepared BSN roots activate from cache and immediately begin a background refill, and Last Beacon registers preload relationships for splash/menu/gameplay/beacon flows. Engine/root focused validation plus `engine/scripts/validate-project.cmd` and `scripts/validate.cmd` passed.

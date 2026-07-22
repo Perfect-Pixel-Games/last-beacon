@@ -72,6 +72,53 @@ pub fn register_last_beacon_bsn_scenes(mut registry: ResMut<FoundationBsnSceneRe
     registry.register_scene(PAUSE_MENU_SCENE, "scenes/pause_menu.bsn");
 }
 
+/// Registers scene preload relationships used to keep common UI transitions warm.
+pub fn register_last_beacon_scene_preloads(mut preload_registry: ResMut<ScenePreloadRegistry>) {
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(PIXEL_PERFECT_SPLASH_SCENE),
+        [SceneSource::bsn_scene(BEVY_SPLASH_SCENE)],
+    );
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(BEVY_SPLASH_SCENE),
+        [SceneSource::bsn_scene(MAIN_MENU_SCENE)],
+    );
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(MAIN_MENU_SCENE),
+        [
+            SceneSource::bsn_scene(OPTIONS_MENU_SCENE),
+            SceneSource::bsn_scene(CREDITS_SCENE),
+            SceneSource::bsn_scene(BEACON_SCENE),
+            SceneSource::bsn_scene(GAMEPLAY_LEVEL_SCENE),
+        ],
+    );
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(BEACON_SCENE),
+        [
+            SceneSource::bsn_scene(DASHBOARD_SCENE),
+            SceneSource::bsn_scene(HANGAR_SCENE),
+            SceneSource::bsn_scene(GARAGE_SCENE),
+            SceneSource::bsn_scene(MISSION_CONTROL_SCENE),
+            SceneSource::bsn_scene(FABRICATION_SCENE),
+            SceneSource::bsn_scene(SILO_UPGRADES_SCENE),
+            SceneSource::bsn_scene(OPTIONS_MENU_SCENE),
+        ],
+    );
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(GAMEPLAY_LEVEL_SCENE),
+        [
+            SceneSource::bsn_scene(PAUSE_MENU_SCENE),
+            SceneSource::bsn_scene(MAIN_MENU_SCENE),
+        ],
+    );
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(PAUSE_MENU_SCENE),
+        [
+            SceneSource::bsn_scene(OPTIONS_MENU_SCENE),
+            SceneSource::bsn_scene(MAIN_MENU_SCENE),
+        ],
+    );
+}
+
 /// Opens the first LastBeacon scene-stack entry.
 pub fn open_initial_scene(mut scene_commands: MessageWriter<SceneCommand>) {
     let startup_scene_commands = startup_scene_commands_or_default(
@@ -249,6 +296,37 @@ mod tests {
                         .with_key("startup-splash")
                         .with_presentation(ScenePresentation::FULLSCREEN),
                 ),
+            ]
+        );
+    }
+
+    #[test]
+    fn scene_preload_registry_registers_common_ui_targets() {
+        let mut app = App::new();
+        app.insert_resource(ScenePreloadRegistry::default());
+        app.add_systems(Startup, register_last_beacon_scene_preloads);
+        app.update();
+
+        let preload_registry = app.world().resource::<ScenePreloadRegistry>();
+        assert_eq!(
+            preload_registry.preload_targets(&SceneSource::bsn_scene(MAIN_MENU_SCENE)),
+            &[
+                SceneSource::bsn_scene(OPTIONS_MENU_SCENE),
+                SceneSource::bsn_scene(CREDITS_SCENE),
+                SceneSource::bsn_scene(BEACON_SCENE),
+                SceneSource::bsn_scene(GAMEPLAY_LEVEL_SCENE),
+            ]
+        );
+        assert_eq!(
+            preload_registry.preload_targets(&SceneSource::bsn_scene(BEACON_SCENE)),
+            &[
+                SceneSource::bsn_scene(DASHBOARD_SCENE),
+                SceneSource::bsn_scene(HANGAR_SCENE),
+                SceneSource::bsn_scene(GARAGE_SCENE),
+                SceneSource::bsn_scene(MISSION_CONTROL_SCENE),
+                SceneSource::bsn_scene(FABRICATION_SCENE),
+                SceneSource::bsn_scene(SILO_UPGRADES_SCENE),
+                SceneSource::bsn_scene(OPTIONS_MENU_SCENE),
             ]
         );
     }

@@ -161,6 +161,7 @@ impl Plugin for LastBeaconPlugin {
             (
                 ui_widgets::preload_last_beacon_ui_fonts,
                 scenes::register_last_beacon_bsn_scenes,
+                scenes::register_last_beacon_scene_preloads,
                 scenes::open_initial_scene,
             )
                 .chain(),
@@ -168,7 +169,6 @@ impl Plugin for LastBeaconPlugin {
         .add_systems(
             Update,
             (
-                scenes::spawn_requested_last_beacon_scene_drivers,
                 scenes::navigate_last_beacon_beacon_pages,
                 // Must run after Foundation propagates SceneOwner onto newly
                 // applied scene content, so newly-discovered widget slots are
@@ -216,6 +216,11 @@ impl Plugin for LastBeaconPlugin {
         .add_systems(
             Update,
             ui_widgets::apply_pending_last_beacon_bsn_widgets.run_if(foundation_is_not_paused),
+        )
+        .add_systems(
+            PostUpdate,
+            scenes::spawn_requested_last_beacon_scene_drivers
+                .in_set(FoundationSceneStackSet::ActivateSceneContent),
         )
         .add_systems(
             PostUpdate,
@@ -502,6 +507,10 @@ mod tests {
                 SceneSource::bsn_scene(scenes::OPTIONS_MENU_SCENE),
                 settings_options,
             ));
+        app.update();
+        app.world_mut().write_message(ScenePreloadReady {
+            source: SceneSource::bsn_scene(scenes::OPTIONS_MENU_SCENE),
+        });
         app.update();
 
         assert_eq!(

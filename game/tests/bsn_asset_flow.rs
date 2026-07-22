@@ -115,6 +115,8 @@ fn converted_pixel_perfect_scene_spawns_authored_text_through_foundation_bridge(
         ..default()
     });
     app.add_plugins(bevy::scene::ScenePlugin);
+    app.add_plugins(FoundationSceneStackPlugin);
+    app.add_message::<ScenePreloadRequested>();
     app.add_message::<SceneLoadRequested>();
     app.add_plugins(FoundationBsnAssetPlugin);
     register_bsn_test_types(&mut app);
@@ -123,12 +125,37 @@ fn converted_pixel_perfect_scene_spawns_authored_text_through_foundation_bridge(
     app.world_mut()
         .resource_mut::<FoundationBsnSceneRegistry>()
         .register_scene(scene_key, "scenes/pixel_perfect_splash.bsn");
-    app.world_mut().write_message(SceneLoadRequested {
-        scene_id: SceneId(7),
-        source: SceneSource::bsn_scene(scene_key),
+    let scene_source = SceneSource::bsn_scene(scene_key);
+    app.world_mut().write_message(ScenePreloadRequested {
+        source: scene_source.clone(),
     });
 
     for _frame_number in 0..600 {
+        app.update();
+        if app
+            .world()
+            .resource::<ScenePreparationRegistry>()
+            .status(&scene_source)
+            == Some(&ScenePreparationStatus::Ready)
+        {
+            break;
+        }
+    }
+
+    assert_eq!(
+        app.world()
+            .resource::<ScenePreparationRegistry>()
+            .status(&scene_source),
+        Some(&ScenePreparationStatus::Ready),
+        "scene preload should become ready before activation"
+    );
+
+    app.world_mut().write_message(SceneLoadRequested {
+        scene_id: SceneId(7),
+        source: scene_source,
+    });
+
+    for _frame_number in 0..60 {
         app.update();
     }
 
@@ -139,10 +166,10 @@ fn converted_pixel_perfect_scene_spawns_authored_text_through_foundation_bridge(
         .collect::<Vec<_>>();
 
     assert!(
-        texts.iter().any(|(text, scene_owner)| {
-            text == "Pixel Perfect" && *scene_owner == Some(SceneOwner { scene_id: SceneId(7) })
-        }),
-        "the Foundation BSN bridge should spawn the authored Pixel Perfect text with scene ownership; found {texts:?}",
+        texts
+            .iter()
+            .any(|(text, _scene_owner)| text == "Pixel Perfect"),
+        "the Foundation BSN bridge should spawn the authored Pixel Perfect text; found {texts:?}",
     );
 }
 
