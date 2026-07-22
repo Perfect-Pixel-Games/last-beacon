@@ -16,7 +16,6 @@ bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::sr
     blue: 0.0,
     alpha: 1.0,
 }))
-foundation_runtime_library::menu::FoundationCloseOnEscape
 bevy_ecs::hierarchy::Children [
     #LastBeaconCreditsRoll
     bevy_ui::ui_node::Node {
