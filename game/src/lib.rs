@@ -333,6 +333,16 @@ impl Default for LastBeaconPlaceholderCubeScene {
 #[reflect(Component)]
 pub struct SpinningCube;
 
+#[derive(Clone, Copy, Debug, Default, Component)]
+struct LastBeaconPlaceholderCubeSceneInitialized;
+
+#[derive(Clone, Copy, Debug, Component)]
+struct LastBeaconPlaceholderCubeSceneGenerated {
+    cube_entity: Entity,
+    light_entity: Entity,
+    camera_entity: Entity,
+}
+
 type PlaceholderCubeSceneInitQuery<'world, 'state> = Query<
     'world,
     'state,
@@ -341,25 +351,39 @@ type PlaceholderCubeSceneInitQuery<'world, 'state> = Query<
         &'static LastBeaconPlaceholderCubeScene,
         Option<&'static SceneOwner>,
         Option<&'static ChildOf>,
+        Option<&'static LastBeaconPlaceholderCubeSceneGenerated>,
     ),
-    Added<LastBeaconPlaceholderCubeScene>,
+    Without<LastBeaconPlaceholderCubeSceneInitialized>,
 >;
 
 fn initialize_last_beacon_placeholder_cube_scenes(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut cameras: Query<&mut Camera>,
     placeholder_scenes: PlaceholderCubeSceneInitQuery,
     scene_owners: Query<&SceneOwner>,
 ) {
-    for (placeholder_scene_entity, placeholder_scene, scene_owner, parent_link) in
+    for (placeholder_scene_entity, placeholder_scene, scene_owner, parent_link, generated_scene) in
         &placeholder_scenes
     {
+        let generated_scene = if let Some(generated_scene) = generated_scene {
+            *generated_scene
+        } else {
+            generate_placeholder_cube_scene(
+                &mut commands,
+                &mut meshes,
+                &mut materials,
+                placeholder_scene_entity,
+                placeholder_scene,
+            )
+        };
+
         let Some(effective_scene_owner) =
             effective_placeholder_scene_owner(scene_owner.copied(), parent_link, &scene_owners)
         else {
             debug!(
-                "Skipping LastBeaconPlaceholderCubeScene on {placeholder_scene_entity:?} because it is not owned by an active scene"
+                "Prepared LastBeaconPlaceholderCubeScene on {placeholder_scene_entity:?}; waiting for active scene ownership"
             );
             continue;
         };
@@ -367,56 +391,93 @@ fn initialize_last_beacon_placeholder_cube_scenes(
             "Initializing LastBeaconPlaceholderCubeScene on {placeholder_scene_entity:?} with scene_owner={effective_scene_owner:?}"
         );
 
-        let cube_size = placeholder_scene.cube_size;
-        let cube_mesh = meshes.add(Cuboid::from_size(Vec3::splat(cube_size)));
-        let cube_material = materials.add(StandardMaterial {
-            base_color: placeholder_cube_color(&placeholder_scene.cube_color),
-            ..default()
-        });
-        let cube_position = Vec3::new(0.0, cube_size * 0.5, 0.0);
-
-        let cube_entity = commands
-            .spawn((
-                Mesh3d(cube_mesh),
-                MeshMaterial3d(cube_material),
-                Transform::from_translation(cube_position),
-                SpinningCube,
-                Name::new("Last Beacon Placeholder Cube"),
-            ))
-            .id();
-
-        let light_illuminance = 12_000.0;
-        let light_position = Vec3::new(3.0, 5.0, 3.0);
-        let light_target = Vec3::ZERO;
-
-        let light_entity = commands
-            .spawn((
-                DirectionalLight {
-                    illuminance: light_illuminance,
-                    shadow_maps_enabled: true,
-                    ..default()
-                },
-                Transform::from_translation(light_position).looking_at(light_target, Vec3::Y),
-                Name::new("Last Beacon Placeholder Light"),
-            ))
-            .id();
-
-        let camera_position = Vec3::new(4.0, 3.0, 6.0);
-        let camera_target = Vec3::new(0.0, 0.75, 0.0);
-
-        let camera_entity = commands
-            .spawn((
-                Camera3d::default(),
-                Transform::from_translation(camera_position).looking_at(camera_target, Vec3::Y),
-                Name::new("Last Beacon Placeholder Camera"),
-            ))
-            .id();
-
-        for generated_entity in [cube_entity, light_entity, camera_entity] {
+        for generated_entity in [
+            generated_scene.cube_entity,
+            generated_scene.light_entity,
+            generated_scene.camera_entity,
+        ] {
             commands
                 .entity(generated_entity)
                 .insert(effective_scene_owner);
         }
+        if let Ok(mut camera) = cameras.get_mut(generated_scene.camera_entity) {
+            camera.is_active = true;
+        }
+        commands
+            .entity(placeholder_scene_entity)
+            .insert(LastBeaconPlaceholderCubeSceneInitialized);
+    }
+}
+
+fn generate_placeholder_cube_scene(
+    commands: &mut Commands,
+    meshes: &mut Assets<Mesh>,
+    materials: &mut Assets<StandardMaterial>,
+    placeholder_scene_entity: Entity,
+    placeholder_scene: &LastBeaconPlaceholderCubeScene,
+) -> LastBeaconPlaceholderCubeSceneGenerated {
+    let cube_size = placeholder_scene.cube_size;
+    let cube_mesh = meshes.add(Cuboid::from_size(Vec3::splat(cube_size)));
+    let cube_material = materials.add(StandardMaterial {
+        base_color: placeholder_cube_color(&placeholder_scene.cube_color),
+        ..default()
+    });
+    let cube_position = Vec3::new(0.0, cube_size * 0.5, 0.0);
+
+    let cube_entity = commands
+        .spawn((
+            Mesh3d(cube_mesh),
+            MeshMaterial3d(cube_material),
+            Transform::from_translation(cube_position),
+            SpinningCube,
+            Name::new("Last Beacon Placeholder Cube"),
+        ))
+        .id();
+
+    let light_illuminance = 12_000.0;
+    let light_position = Vec3::new(3.0, 5.0, 3.0);
+    let light_target = Vec3::ZERO;
+
+    let light_entity = commands
+        .spawn((
+            DirectionalLight {
+                illuminance: light_illuminance,
+                shadow_maps_enabled: true,
+                ..default()
+            },
+            Transform::from_translation(light_position).looking_at(light_target, Vec3::Y),
+            Name::new("Last Beacon Placeholder Light"),
+        ))
+        .id();
+
+    let camera_position = Vec3::new(4.0, 3.0, 6.0);
+    let camera_target = Vec3::new(0.0, 0.75, 0.0);
+
+    let camera_entity = commands
+        .spawn((
+            Camera3d::default(),
+            Camera {
+                is_active: false,
+                ..default()
+            },
+            Transform::from_translation(camera_position).looking_at(camera_target, Vec3::Y),
+            Name::new("Last Beacon Placeholder Camera"),
+        ))
+        .id();
+
+    commands
+        .entity(placeholder_scene_entity)
+        .add_children(&[cube_entity, light_entity, camera_entity])
+        .insert(LastBeaconPlaceholderCubeSceneGenerated {
+            cube_entity,
+            light_entity,
+            camera_entity,
+        });
+
+    LastBeaconPlaceholderCubeSceneGenerated {
+        cube_entity,
+        light_entity,
+        camera_entity,
     }
 }
 
@@ -565,7 +626,7 @@ mod tests {
     }
 
     #[test]
-    fn unowned_placeholder_cube_scene_does_not_spawn_runtime_entities() {
+    fn unowned_placeholder_cube_scene_preloads_inactive_runtime_entities() {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
         app.init_resource::<Assets<Mesh>>();
@@ -578,11 +639,60 @@ mod tests {
         });
         app.update();
 
-        let mut cubes = app.world_mut().query::<&SpinningCube>();
+        let mut cubes = app
+            .world_mut()
+            .query::<(&SpinningCube, Option<&SceneOwner>)>();
         assert_eq!(
             cubes.iter(app.world()).count(),
-            0,
-            "prepared/off-stack placeholder scenes must not spawn unowned cubes"
+            1,
+            "prepared/off-stack placeholder scenes should preload their cube entity"
+        );
+        assert!(
+            cubes
+                .iter(app.world())
+                .all(|(_, scene_owner)| scene_owner.is_none()),
+            "prepared/off-stack placeholder scene entities must stay unowned until activation"
+        );
+        let mut cameras = app.world_mut().query::<&Camera>();
+        assert!(
+            cameras.iter(app.world()).all(|camera| !camera.is_active),
+            "prepared/off-stack placeholder cameras must stay inactive until activation"
+        );
+    }
+
+    #[test]
+    fn cached_placeholder_cube_scene_spawns_after_scene_owner_is_assigned() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<Assets<Mesh>>();
+        app.init_resource::<Assets<StandardMaterial>>();
+        app.add_systems(Update, initialize_last_beacon_placeholder_cube_scenes);
+
+        let placeholder_entity = app
+            .world_mut()
+            .spawn(LastBeaconPlaceholderCubeScene {
+                cube_color: "green".to_string(),
+                cube_size: 2.0,
+            })
+            .id();
+        app.update();
+
+        let expected_scene_owner = SceneOwner {
+            scene_id: SceneId(10),
+        };
+        app.world_mut()
+            .entity_mut(placeholder_entity)
+            .insert(expected_scene_owner);
+        app.update();
+
+        let mut cubes = app.world_mut().query::<(&SpinningCube, &SceneOwner)>();
+        assert_eq!(
+            cubes
+                .iter(app.world())
+                .filter(|(_, scene_owner)| **scene_owner == expected_scene_owner)
+                .count(),
+            1,
+            "cached placeholder scenes should spawn their cube once they become active scene-owned content"
         );
     }
 
