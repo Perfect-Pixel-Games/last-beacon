@@ -8,7 +8,7 @@
 - Engine branch: `feature/scene-pop-in-investigation`
 - Root branch base verification: `Verified: dev (7cacf7cabfff058305c08d9988dc15bd935f49e4) is an ancestor of this branch; only the investigation doc commit sits on top`
 - Engine branch base verification: `Verified: created feature/scene-pop-in-investigation from engine origin/dev at 1bc59f9a0039dfe412b735c869a90f38a0d58582 on 2026-07-20`
-- Engine submodule pointer: `Updated to splash completion message engine commit 8a675c6e825eb17eff6c6042f057282b91f95c58; root pointer commit pending`
+- Engine submodule pointer: `Updated to splash completion message engine commit 8a675c6e825eb17eff6c6042f057282b91f95c58; root pointer committed and pushed`
 - Overall status: `Phase 6 implemented; refining Last Beacon preload relationships to the intended three scene groups`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
@@ -29,9 +29,9 @@
   root completion.
 
 ## Repository State
-- Root commit/push state: `Main-menu root orchestration commit pending`
+- Root commit/push state: `Main-menu root orchestration commit 1cc46f30e62e7c6ba90108950564e4b188c8b67e pushed to origin/feature/scene-pop-in-investigation`
 - Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd, font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646, BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a, async scene cache pipeline commit df69663a9224cd62fd715a7af3822a1af286e239, and splash completion message commit 8a675c6e825eb17eff6c6042f057282b91f95c58 pushed to origin/feature/scene-pop-in-investigation`
-- Root submodule pointer update: `Pending root commit for engine commit 8a675c6e825eb17eff6c6042f057282b91f95c58`
+- Root submodule pointer update: `Committed in root main-menu root orchestration commit 1cc46f30e62e7c6ba90108950564e4b188c8b67e for engine commit 8a675c6e825eb17eff6c6042f057282b91f95c58`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -275,4 +275,4 @@
 - `2026-07-22`: User approved the diagnosis and requested core scene-stack async loading plus preloaded/cached scene activation on the same branch. Updated `plan.md` with the async scene loading/cache architecture and added Phase 6 to this tracker.
 - `2026-07-22`: Implemented Phase 6. Foundation scene-stack mutations now queue transition batches, BSN scenes prepare through `ScenePreloadRequested` / `ScenePreloadReady` / `ScenePreloadFailed`, transition status is exposed through `SceneTransitionStatus`, prepared BSN roots activate from cache and immediately begin a background refill, and Last Beacon registers preload relationships for splash/menu/gameplay/beacon flows. Engine/root focused validation plus `engine/scripts/validate-project.cmd` and `scripts/validate.cmd` passed. Engine changes committed and pushed as `df69663a9224cd62fd715a7af3822a1af286e239`; root integration and submodule pointer committed and pushed as `af91da1aaafba944bbc044617a526d4db13313e3`.
 - `2026-07-22`: User requested a narrower preload policy with three clear areas to avoid over-caching: Main Menu area should only warm splash_pixel_perfect, splash_bevy, main_menu, and options_menu; Beacon should only warm Beacon pages plus options_menu; Gameplay should only warm pause_menu plus options_menu. Refining `game/src/scenes/mod.rs` and its tests to match that exact grouping and remove unintended cross-area warming.
-- `2026-07-22`: User clarified that the Main Menu area should have a dedicated main-menu root scene that owns the preload group and splash ordering. Splash scenes should still define their timing/visuals but should not know which scene comes next. Implemented this as a Last Beacon runtime root scene plus a Foundation `FoundationSplashCompleted` message. Moved splash timing data into `pixel_perfect_splash.bsn` and `bevy_splash.bsn`; removed game-side splash driver next-scene configuration.
+- `2026-07-22`: User clarified that the Main Menu area should have a dedicated main-menu root scene that owns the preload group and splash ordering. Splash scenes should still define their timing/visuals but should not know which scene comes next. Implemented this as a Last Beacon runtime root scene plus a Foundation `FoundationSplashCompleted` message. Moved splash timing data into `pixel_perfect_splash.bsn` and `bevy_splash.bsn`; removed game-side splash driver next-scene configuration. Engine commit `8a675c6e825eb17eff6c6042f057282b91f95c58` and root commit `1cc46f30e62e7c6ba90108950564e4b188c8b67e` were pushed after `engine/scripts/validate-project.cmd` and `scripts/validate.cmd` passed.
