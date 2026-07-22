@@ -127,6 +127,7 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<LastBeaconPlaceholderCubeScene>()
         .register_type::<LastBeaconHideWhenSettingsOpen>()
         .register_type::<scenes::LastBeaconBeaconPageButton>()
+        .register_type::<scenes::LastBeaconMainMenuRoot>()
         .register_type::<ui_widgets::LastBeaconBsnWidget>()
         .init_resource::<ui_widgets::LastBeaconBsnWidgetProfilingSettings>()
         .init_resource::<ui_widgets::LastBeaconUiTabSelections>()
@@ -181,6 +182,7 @@ impl Plugin for LastBeaconPlugin {
                 // Bevy's PostUpdate text/layout systems rasterize glyphs —
                 // otherwise text briefly renders with the wrong font and
                 // visibly re-renders once corrected a frame later.
+                scenes::advance_last_beacon_main_menu_roots,
                 ui_widgets::apply_last_beacon_ui_font
                     .after(apply_pending_bsn_instances)
                     .after(ui_widgets::apply_pending_last_beacon_bsn_widgets),

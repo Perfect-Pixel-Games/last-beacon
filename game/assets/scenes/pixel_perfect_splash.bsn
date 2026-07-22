@@ -12,6 +12,17 @@ bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::sr
     alpha: 1.0,
 }))
 foundation_runtime_library::splash_screen::FoundationSplashUiRoot
+foundation_runtime_library::splash_screen::FoundationSplashScreen {
+    timings: foundation_runtime_library::splash_screen::FoundationSplashTimings {
+        fade_in_seconds: 0.75,
+        hold_seconds: 1.0,
+        fade_out_seconds: 0.75,
+    },
+    font_size: 72.0,
+    next_scene_key: "",
+    reset_stack_for_next_scene: false,
+    replace_current_scene: false,
+}
 bevy_ecs::hierarchy::Children [
     bevy_ui::widget::text::Text("Pixel Perfect")
     bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(72.0) }

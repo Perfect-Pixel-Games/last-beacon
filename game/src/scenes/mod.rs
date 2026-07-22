@@ -6,6 +6,8 @@
 use bevy::prelude::*;
 use foundation_runtime_library::prelude::*;
 
+/// Runtime scene key for the main-menu preload and splash-sequence root.
+pub const MAIN_MENU_ROOT_SCENE: &str = "last-beacon/main_menu_root";
 /// Scene key for the first startup splash screen.
 pub const PIXEL_PERFECT_SPLASH_SCENE: &str = "last-beacon/splash_pixel_perfect";
 /// Scene key for the second startup splash screen.
@@ -49,6 +51,19 @@ pub struct LastBeaconBeaconPageButton {
     pub scene_key: String,
 }
 
+#[derive(Clone, Copy, Debug, Component, PartialEq, Eq)]
+pub(crate) enum LastBeaconMainMenuRootPhase {
+    Starting,
+    PixelPerfectSplash,
+    BevySplash,
+    MainMenu,
+}
+
+/// Runtime driver for the main-menu domain's preload and splash sequence.
+#[derive(Clone, Copy, Debug, Component, Reflect)]
+#[reflect(Component)]
+pub struct LastBeaconMainMenuRoot;
+
 /// Registers LastBeacon scene-stack keys with their `.bsn` asset files.
 pub fn register_last_beacon_bsn_scenes(mut registry: ResMut<FoundationBsnSceneRegistry>) {
     // Keep scene keys stable while moving authored scene structure into asset files.
@@ -75,20 +90,12 @@ pub fn register_last_beacon_bsn_scenes(mut registry: ResMut<FoundationBsnSceneRe
 /// Registers scene preload relationships used to keep common UI transitions warm.
 pub fn register_last_beacon_scene_preloads(mut preload_registry: ResMut<ScenePreloadRegistry>) {
     preload_registry.register_preloads(
-        SceneSource::bsn_scene(PIXEL_PERFECT_SPLASH_SCENE),
-        [SceneSource::bsn_scene(BEVY_SPLASH_SCENE)],
-    );
-    preload_registry.register_preloads(
-        SceneSource::bsn_scene(BEVY_SPLASH_SCENE),
-        [SceneSource::bsn_scene(MAIN_MENU_SCENE)],
-    );
-    preload_registry.register_preloads(
-        SceneSource::bsn_scene(MAIN_MENU_SCENE),
+        SceneSource::runtime(MAIN_MENU_ROOT_SCENE),
         [
+            SceneSource::bsn_scene(PIXEL_PERFECT_SPLASH_SCENE),
+            SceneSource::bsn_scene(BEVY_SPLASH_SCENE),
+            SceneSource::bsn_scene(MAIN_MENU_SCENE),
             SceneSource::bsn_scene(OPTIONS_MENU_SCENE),
-            SceneSource::bsn_scene(CREDITS_SCENE),
-            SceneSource::bsn_scene(BEACON_SCENE),
-            SceneSource::bsn_scene(GAMEPLAY_LEVEL_SCENE),
         ],
     );
     preload_registry.register_preloads(
@@ -107,16 +114,10 @@ pub fn register_last_beacon_scene_preloads(mut preload_registry: ResMut<ScenePre
         SceneSource::bsn_scene(GAMEPLAY_LEVEL_SCENE),
         [
             SceneSource::bsn_scene(PAUSE_MENU_SCENE),
-            SceneSource::bsn_scene(MAIN_MENU_SCENE),
-        ],
-    );
-    preload_registry.register_preloads(
-        SceneSource::bsn_scene(PAUSE_MENU_SCENE),
-        [
             SceneSource::bsn_scene(OPTIONS_MENU_SCENE),
-            SceneSource::bsn_scene(MAIN_MENU_SCENE),
         ],
     );
+    preload_registry.register_preloads(SceneSource::bsn_scene(PAUSE_MENU_SCENE), []);
 }
 
 /// Opens the first LastBeacon scene-stack entry.
@@ -138,7 +139,7 @@ pub fn open_initial_scene(mut scene_commands: MessageWriter<SceneCommand>) {
 }
 
 fn default_startup_scene_commands() -> Vec<SceneCommand> {
-    let startup_scene_source = SceneSource::bsn_scene(PIXEL_PERFECT_SPLASH_SCENE);
+    let startup_scene_source = SceneSource::runtime(MAIN_MENU_ROOT_SCENE);
     let startup_scene_options = OpenSceneOptions::default()
         .with_key("startup-splash")
         .with_presentation(ScenePresentation::FULLSCREEN);
@@ -162,25 +163,13 @@ pub fn spawn_requested_last_beacon_scene_drivers(
         let scene_key = scene_source_key(&scene_request.source);
 
         match scene_key.as_deref() {
-            Some(PIXEL_PERFECT_SPLASH_SCENE) => {
-                spawn_splash_driver(
-                    &mut commands,
-                    "Pixel Perfect",
-                    BEVY_SPLASH_SCENE,
-                    false,
-                    true,
+            Some(MAIN_MENU_ROOT_SCENE) => {
+                commands.spawn((
+                    Name::new("Main Menu Root"),
+                    LastBeaconMainMenuRoot,
+                    LastBeaconMainMenuRootPhase::Starting,
                     scene_owner,
-                );
-            }
-            Some(BEVY_SPLASH_SCENE) => {
-                spawn_splash_driver(
-                    &mut commands,
-                    "Bevy",
-                    MAIN_MENU_SCENE,
-                    true,
-                    false,
-                    scene_owner,
-                );
+                ));
             }
             Some(BEACON_SCENE) => {
                 open_beacon_page(&mut scene_commands, DASHBOARD_SCENE);
@@ -192,24 +181,61 @@ pub fn spawn_requested_last_beacon_scene_drivers(
     }
 }
 
-fn spawn_splash_driver(
-    commands: &mut Commands,
-    splash_name: &'static str,
-    next_scene_key: &'static str,
-    reset_stack_for_next_scene: bool,
-    replace_current_scene: bool,
-    scene_owner: SceneOwner,
+/// Advances the main-menu root through its splash sequence and final menu handoff.
+pub(crate) fn advance_last_beacon_main_menu_roots(
+    mut scene_commands: MessageWriter<SceneCommand>,
+    mut splash_completed: MessageReader<FoundationSplashCompleted>,
+    scene_stack: Res<SceneStack>,
+    mut main_menu_roots: Query<&mut LastBeaconMainMenuRootPhase, With<LastBeaconMainMenuRoot>>,
 ) {
-    let splash_timings = FoundationSplashTimings::new(0.75, 1.0, 0.75);
-    let splash_screen = FoundationSplashScreen {
-        timings: splash_timings,
-        font_size: 72.0,
-        next_scene_key: next_scene_key.to_string(),
-        reset_stack_for_next_scene,
-        replace_current_scene,
-    };
+    for mut main_menu_root_phase in &mut main_menu_roots {
+        if *main_menu_root_phase == LastBeaconMainMenuRootPhase::Starting {
+            let splash_options = OpenSceneOptions::default()
+                .with_key("main-menu-pixel-perfect-splash")
+                .with_presentation(ScenePresentation::INPUT_BLOCKING_OVERLAY);
+            scene_commands.write(SceneCommand::open_with_options(
+                SceneSource::bsn_scene(PIXEL_PERFECT_SPLASH_SCENE),
+                splash_options,
+            ));
+            *main_menu_root_phase = LastBeaconMainMenuRootPhase::PixelPerfectSplash;
+        }
+    }
 
-    commands.spawn((Name::new(splash_name), splash_screen, scene_owner));
+    for splash_completed_message in splash_completed.read() {
+        let Some(scene_owner) = splash_completed_message.scene_owner else {
+            continue;
+        };
+        let Some(completed_scene_entry) = scene_stack.get(scene_owner.scene_id) else {
+            continue;
+        };
+        let Some(completed_scene_key) = scene_source_key(&completed_scene_entry.source) else {
+            continue;
+        };
+
+        for mut main_menu_root_phase in &mut main_menu_roots {
+            match (*main_menu_root_phase, completed_scene_key.as_str()) {
+                (LastBeaconMainMenuRootPhase::PixelPerfectSplash, PIXEL_PERFECT_SPLASH_SCENE) => {
+                    scene_commands
+                        .write(SceneCommand::Close(SceneTarget::Id(scene_owner.scene_id)));
+                    let splash_options = OpenSceneOptions::default()
+                        .with_key("main-menu-bevy-splash")
+                        .with_presentation(ScenePresentation::INPUT_BLOCKING_OVERLAY);
+                    scene_commands.write(SceneCommand::open_with_options(
+                        SceneSource::bsn_scene(BEVY_SPLASH_SCENE),
+                        splash_options,
+                    ));
+                    *main_menu_root_phase = LastBeaconMainMenuRootPhase::BevySplash;
+                }
+                (LastBeaconMainMenuRootPhase::BevySplash, BEVY_SPLASH_SCENE) => {
+                    scene_commands.write(SceneCommand::clear_and_open(SceneSource::bsn_scene(
+                        MAIN_MENU_SCENE,
+                    )));
+                    *main_menu_root_phase = LastBeaconMainMenuRootPhase::MainMenu;
+                }
+                _ => {}
+            }
+        }
+    }
 }
 
 /// Replaces the current Beacon page stack entry with a new non-blocking page scene.
@@ -264,6 +290,7 @@ mod tests {
             PIXEL_PERFECT_SPLASH_SCENE,
             "last-beacon/splash_pixel_perfect"
         );
+        assert_eq!(MAIN_MENU_ROOT_SCENE, "last-beacon/main_menu_root");
         assert_eq!(BEVY_SPLASH_SCENE, "last-beacon/splash_bevy");
         assert_eq!(MAIN_MENU_SCENE, "last-beacon/main_menu");
         assert_eq!(OPTIONS_MENU_SCENE, "last-beacon/options_menu");
@@ -283,7 +310,7 @@ mod tests {
     }
 
     #[test]
-    fn default_startup_scene_opens_pixel_perfect_splash() {
+    fn default_startup_scene_opens_main_menu_root() {
         let startup_commands = default_startup_scene_commands();
 
         assert_eq!(
@@ -291,7 +318,7 @@ mod tests {
             vec![
                 SceneCommand::Clear,
                 SceneCommand::open_with_options(
-                    SceneSource::bsn_scene(PIXEL_PERFECT_SPLASH_SCENE),
+                    SceneSource::runtime(MAIN_MENU_ROOT_SCENE),
                     OpenSceneOptions::default()
                         .with_key("startup-splash")
                         .with_presentation(ScenePresentation::FULLSCREEN),
@@ -309,12 +336,12 @@ mod tests {
 
         let preload_registry = app.world().resource::<ScenePreloadRegistry>();
         assert_eq!(
-            preload_registry.preload_targets(&SceneSource::bsn_scene(MAIN_MENU_SCENE)),
+            preload_registry.preload_targets(&SceneSource::runtime(MAIN_MENU_ROOT_SCENE)),
             &[
+                SceneSource::bsn_scene(PIXEL_PERFECT_SPLASH_SCENE),
+                SceneSource::bsn_scene(BEVY_SPLASH_SCENE),
+                SceneSource::bsn_scene(MAIN_MENU_SCENE),
                 SceneSource::bsn_scene(OPTIONS_MENU_SCENE),
-                SceneSource::bsn_scene(CREDITS_SCENE),
-                SceneSource::bsn_scene(BEACON_SCENE),
-                SceneSource::bsn_scene(GAMEPLAY_LEVEL_SCENE),
             ]
         );
         assert_eq!(
@@ -329,6 +356,16 @@ mod tests {
                 SceneSource::bsn_scene(OPTIONS_MENU_SCENE),
             ]
         );
+        assert_eq!(
+            preload_registry.preload_targets(&SceneSource::bsn_scene(GAMEPLAY_LEVEL_SCENE)),
+            &[
+                SceneSource::bsn_scene(PAUSE_MENU_SCENE),
+                SceneSource::bsn_scene(OPTIONS_MENU_SCENE),
+            ]
+        );
+        assert!(preload_registry
+            .preload_targets(&SceneSource::bsn_scene(PAUSE_MENU_SCENE))
+            .is_empty());
     }
 
     #[test]
