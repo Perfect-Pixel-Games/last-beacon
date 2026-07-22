@@ -366,6 +366,7 @@ fn initialize_last_beacon_placeholder_cube_scenes(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut cameras: Query<&mut Camera>,
+    mut visibilities: Query<&mut Visibility>,
     placeholder_scenes: PlaceholderCubeSceneInitQuery,
     scene_owners: Query<&SceneOwner>,
 ) {
@@ -403,7 +404,10 @@ fn initialize_last_beacon_placeholder_cube_scenes(
         ] {
             commands
                 .entity(generated_entity)
-                .insert((effective_scene_owner, Visibility::Inherited));
+                .insert(effective_scene_owner);
+            if let Ok(mut visibility) = visibilities.get_mut(generated_entity) {
+                *visibility = Visibility::Inherited;
+            }
         }
         if let Ok(mut camera) = cameras.get_mut(generated_scene.camera_entity) {
             camera.is_active = true;
