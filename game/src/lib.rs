@@ -123,6 +123,10 @@ impl Plugin for LastBeaconPlugin {
         app.insert_resource(FoundationCreditsAssetRoots {
             roots: vec![asset_root()],
         })
+        .insert_resource(FoundationSplashRuntimeSettings {
+            enabled: true,
+            require_scene_owner: true,
+        })
         .register_type::<SpinningCube>()
         .register_type::<LastBeaconPlaceholderCubeScene>()
         .register_type::<LastBeaconHideWhenSettingsOpen>()
@@ -539,6 +543,24 @@ mod tests {
             app.world().get::<Node>(menu_root).map(|node| node.display),
             Some(Display::Flex),
             "closing settings should restore marked menu UI display",
+        );
+    }
+
+    #[test]
+    fn last_beacon_splash_runtime_requires_scene_ownership() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(FoundationPlugin);
+        app.add_plugins(LastBeaconPlugin);
+
+        let splash_settings = app.world().resource::<FoundationSplashRuntimeSettings>();
+        assert!(
+            splash_settings.enabled,
+            "Last Beacon splash runtime should stay enabled"
+        );
+        assert!(
+            splash_settings.require_scene_owner,
+            "prepared cache copies are unowned, so splash runtime must only process active scene-owned splashes"
         );
     }
 
