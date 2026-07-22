@@ -7,6 +7,7 @@
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,
+    time::{Duration, Instant},
 };
 
 use bevy::{
@@ -16,6 +17,7 @@ use bevy::{
         mouse::{MouseScrollUnit, MouseWheel},
     },
     input_focus::{FocusCause, InputFocus},
+    log::{info_span, warn},
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
     text::{
@@ -474,6 +476,30 @@ type BeaconTabButtonStyleQuery<'w, 's> = Query<
         Without<LastBeaconUiTab>,
     ),
 >;
+
+/// Optional profiling settings for Last Beacon's nested BSN widget apply path.
+///
+/// Set `LAST_BEACON_WIDGET_PROFILE_MS=<milliseconds>` while running the game to
+/// log every widget resolve/apply step that exceeds that threshold. The widget
+/// systems also emit tracing spans for Bevy's `bevy/trace_chrome` and
+/// `bevy/trace_tracy` profiling features.
+#[derive(Clone, Debug, Resource)]
+pub struct LastBeaconBsnWidgetProfilingSettings {
+    slow_step_threshold: Option<Duration>,
+}
+
+impl FromWorld for LastBeaconBsnWidgetProfilingSettings {
+    fn from_world(_world: &mut World) -> Self {
+        let slow_step_threshold = std::env::var("LAST_BEACON_WIDGET_PROFILE_MS")
+            .ok()
+            .and_then(|raw_threshold| raw_threshold.parse::<u64>().ok())
+            .map(Duration::from_millis);
+
+        Self {
+            slow_step_threshold,
+        }
+    }
+}
 
 #[derive(Clone, Debug, Component)]
 struct LastBeaconBsnWidgetPending {
@@ -1861,7 +1887,14 @@ pub fn apply_pending_last_beacon_bsn_widgets(world: &mut World) {
     };
 
     for (widget_slot_entity, asset_path, scene_handle) in pending_widgets {
+        let _widget_span = info_span!(
+            "last_beacon_bsn_widget",
+            asset_path = %asset_path,
+            entity = ?widget_slot_entity,
+        )
+        .entered();
         let scene_patch_id = scene_handle.id();
+        let resolve_started_at = Instant::now();
         let resolve_result = world.resource_scope(
             |world, mut scene_patches: Mut<Assets<ScenePatch>>| -> Result<bool, String> {
                 let Some(scene_patch) = scene_patches.get(scene_patch_id) else {
@@ -1891,6 +1924,14 @@ pub fn apply_pending_last_beacon_bsn_widgets(world: &mut World) {
             },
         );
 
+        log_slow_widget_step(
+            world,
+            "resolve",
+            &asset_path,
+            widget_slot_entity,
+            resolve_started_at.elapsed(),
+        );
+
         let scene_is_ready = match resolve_result {
             Ok(scene_is_ready) => scene_is_ready,
             Err(resolve_error) => {
@@ -1906,6 +1947,13 @@ pub fn apply_pending_last_beacon_bsn_widgets(world: &mut World) {
             continue;
         }
 
+        let _apply_span = info_span!(
+            "last_beacon_bsn_widget_apply",
+            asset_path = %asset_path,
+            entity = ?widget_slot_entity,
+        )
+        .entered();
+        let apply_started_at = Instant::now();
         let apply_result = world.resource_scope(
             |world, scene_patches: Mut<Assets<ScenePatch>>| -> Result<(), String> {
                 let Some(scene_patch) = scene_patches.get(scene_patch_id) else {
@@ -1920,6 +1968,14 @@ pub fn apply_pending_last_beacon_bsn_widgets(world: &mut World) {
                     .apply(&mut widget_slot_entity_mut)
                     .map_err(|apply_error| apply_error.to_string())
             },
+        );
+
+        log_slow_widget_step(
+            world,
+            "apply",
+            &asset_path,
+            widget_slot_entity,
+            apply_started_at.elapsed(),
         );
 
         match apply_result {
@@ -1937,6 +1993,30 @@ pub fn apply_pending_last_beacon_bsn_widgets(world: &mut World) {
             }
         }
     }
+}
+
+fn log_slow_widget_step(
+    world: &World,
+    step_name: &str,
+    asset_path: &str,
+    widget_slot_entity: Entity,
+    elapsed: Duration,
+) {
+    let Some(slow_step_threshold) = world
+        .get_resource::<LastBeaconBsnWidgetProfilingSettings>()
+        .and_then(|settings| settings.slow_step_threshold)
+    else {
+        return;
+    };
+
+    if elapsed < slow_step_threshold {
+        return;
+    }
+
+    warn!(
+        "Last Beacon BSN widget {step_name} for `{asset_path}` on {widget_slot_entity:?} took {:.2} ms",
+        elapsed.as_secs_f64() * 1000.0,
+    );
 }
 
 fn mark_widget_failed(world: &mut World, widget_slot_entity: Entity, failure_reason: String) {

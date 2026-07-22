@@ -128,6 +128,7 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<LastBeaconHideWhenSettingsOpen>()
         .register_type::<scenes::LastBeaconBeaconPageButton>()
         .register_type::<ui_widgets::LastBeaconBsnWidget>()
+        .init_resource::<ui_widgets::LastBeaconBsnWidgetProfilingSettings>()
         .init_resource::<ui_widgets::LastBeaconUiTabSelections>()
         .init_resource::<ui_widgets::LastBeaconUiInputValues>()
         .init_resource::<ui_widgets::LastBeaconUiDropdownStates>()

@@ -8,14 +8,14 @@
 - Engine branch: `feature/scene-pop-in-investigation`
 - Root branch base verification: `Verified: dev (7cacf7cabfff058305c08d9988dc15bd935f49e4) is an ancestor of this branch; only the investigation doc commit sits on top`
 - Engine branch base verification: `Verified: created feature/scene-pop-in-investigation from engine origin/dev at 1bc59f9a0039dfe412b735c869a90f38a0d58582 on 2026-07-20`
-- Engine submodule pointer: `Updated to engine font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646; root pointer commit pending`
-- Overall status: `User reopened the lag-spike issue as "extreme" and asked for a real fix; font-streaming bug fixed and root-caused; lag spike root-caused to a pre-existing, out-of-scope cost — awaiting user direction on how to proceed`
+- Engine submodule pointer: `Updated to engine BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a; root pointer committed in 76268fed47dbb802fe9a8c997bdd92259047b262`
+- Overall status: `Scene-transition profiling setup complete; lag spike still isolated to synchronous BSN ScenePatch::apply construction cost`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Blocked on user decision — see Notes/Issues 2026-07-21 (round 2) for the full evidence and options`
+- Current handoff state: `Ready for user profiling/play-test with gpt-5.4 findings recorded`
 - Created: `2026-07-20`
-- Last updated: `2026-07-21`
+- Last updated: `2026-07-22`
 
 ## Validation Rules
 - Task complete only after required validation passes and documentation
@@ -29,9 +29,9 @@
   root completion.
 
 ## Repository State
-- Root commit/push state: `Investigation doc commit 8f224e4, plan/tracker commit 0804dcf, and prior tracker updates pushed to origin/feature/scene-pop-in-investigation; font-ordering fix commit pending`
-- Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd and font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646 pushed to origin/feature/scene-pop-in-investigation`
-- Root submodule pointer update: `Pending root commit`
+- Root commit/push state: `Scene-transition profiling commit 76268fed47dbb802fe9a8c997bdd92259047b262 pending amend/push after final tracker update`
+- Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd, font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646, and BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a pushed to origin/feature/scene-pop-in-investigation`
+- Root submodule pointer update: `Committed in root profiling commit 76268fed47dbb802fe9a8c997bdd92259047b262; pending amend/push after final tracker update`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -162,6 +162,34 @@
 - Documentation generation: `Passed`
 - User confirmation: `Pending — user should play-test to confirm the pop-in is actually gone; static screenshots can't prove that`
 
+## Phase 5: Scene Transition Profiling Setup
+**Status:** Complete; pending final tracker amend/push
+**Goal:** Make the BSN scene-transition spike measurable in normal local builds and collect enough evidence to separate scene construction, nested widget construction, and font/rendering symptoms.
+
+### Tasks
+- [x] Add low-overhead Foundation BSN profiling hooks.
+  - Status: Complete; committed and pushed in engine commit `0b419a403373e7bf7dd42ea547660e4ec97b047a`
+  - Repository: `engine`
+  - Notes: `apply_pending_bsn_instances` now emits Chrome/Tracy-compatible tracing spans for `foundation_bsn_instance` and `foundation_bsn_apply`, and logs slow resolve/apply steps when `FOUNDATION_BSN_PROFILE_MS` is set.
+- [x] Add low-overhead Last Beacon widget profiling hooks.
+  - Status: Complete; included in root commit `76268fed47dbb802fe9a8c997bdd92259047b262`
+  - Repository: `root`
+  - Notes: `apply_pending_last_beacon_bsn_widgets` now emits tracing spans for `last_beacon_bsn_widget` and `last_beacon_bsn_widget_apply`, and logs slow resolve/apply steps when `LAST_BEACON_WIDGET_PROFILE_MS` is set.
+- [x] Add a repeatable profiling launch path.
+  - Status: Complete; included in root commit `76268fed47dbb802fe9a8c997bdd92259047b262`
+  - Repository: `root`
+  - Notes: Added `scripts/profile-scene.cmd`, which runs the game with `bevy/trace_chrome` and `bevy/debug` under the optimized `foundation-test` profile and defaults both slow-step thresholds to 1ms.
+- [x] Document how to capture and read scene-transition traces.
+  - Status: Complete; engine docs committed in `0b419a403373e7bf7dd42ea547660e4ec97b047a`, root docs included in `76268fed47dbb802fe9a8c997bdd92259047b262`
+  - Repository: `both`
+  - Notes: Added `docs/scene-transition-profiling.md` and extended `engine/docs/scene-system.md` with the Foundation-side profiling knobs.
+
+### Validation
+- Engine validation: `Passed: cargo fmt --manifest-path engine/Cargo.toml --all -- --check; cargo check --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-features; cargo clippy --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-targets --all-features -- -D warnings; cargo test --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-features (97 passed); cargo doc --manifest-path engine/Cargo.toml -p foundation-runtime-library --all-features --no-deps`
+- Game validation: `Passed: cargo fmt --manifest-path game/Cargo.toml -- --check; cargo check --manifest-path game/Cargo.toml --all-features; cargo check --manifest-path game/Cargo.toml --profile foundation-test --features "bevy/trace_chrome,bevy/debug"; cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings; cargo test --manifest-path game/Cargo.toml --all-features (13 lib + 2 integration tests passed); cargo doc --manifest-path game/Cargo.toml --all-features --no-deps`
+- Documentation generation: `Passed for engine and game docs`
+- User confirmation: `Pending — profiling setup is ready for local capture; spike reduction still requires a separate BSN apply optimization/chunking decision`
+
 ## Implementation / Review Handoff Notes
 - Use `gpt-5.4` for implementation, `gpt-5.5` for optional final review.
 - Read `.pi/skills/feature-tracker-update/SKILL.md`, `.pi/skills/rust-workspace-dev/SKILL.md`,
@@ -174,6 +202,7 @@
 - None yet.
 
 ## Notes / Issues / Oversights
+- `2026-07-22`: User asked to continue on the same feature/branch, re-investigate the massive scene-transition lag spikes, and ideally set up profiling. Resuming implementation with `gpt-5.4`; root branch and engine branch both match `feature/scene-pop-in-investigation`, and both still verify `dev` as an ancestor.
 - `2026-07-21`: **Regression reported by user**: "large lag spike whenever opening a scene," after the readiness-gating fix landed. Investigated with `superpowers:systematic-debugging`.
   - Added temporary `FrameTimeDiagnosticsPlugin` + `EntityCountDiagnosticsPlugin` + a frame-time-threshold logger to `game/src/lib.rs` (never committed; reverted via `git checkout` after investigation).
   - Reproduced via `--scene last-beacon/<key>` startup override (GUI mouse-click automation proved unreliable in this environment — several techniques tried and abandoned: `mouse_event` + `SetForegroundWindow`, `AttachThreadInput` + Alt-key-unlock trick, `PostMessage` WM_LBUTTONDOWN/UP direct injection — none reliably registered clicks against the winit window; `--scene` override sidestepped the need for clicking entirely).
@@ -206,3 +235,4 @@
 - `2026-07-21`: User reported a large lag spike when opening scenes, post-fix. Investigated with `superpowers:systematic-debugging`; see Notes/Issues for the full evidence trail and root-cause conclusion. All temporary diagnostic code reverted (never committed).
 - `2026-07-21`: User decided to accept the stutter as-is, understanding it as a pre-existing Bevy pipeline/glyph-atlas warm-up cost unmasked (not introduced) by the pop-in fix. Feature considered complete. Root and engine branches remain pushed to `origin/feature/scene-pop-in-investigation`; no PRs opened yet.
 - `2026-07-21` (round 2): User reopened the lag spike as "extreme" and reported fonts still streaming in, asking for a real fix. Investigated further with `superpowers:systematic-debugging`; see Notes/Issues for the full evidence trail. Found and fixed the font-streaming root cause (missing system ordering between `apply_last_beacon_ui_font` and the systems that create `TextFont` components — engine commit `609ab9a6aa963abadc0e55cfa5e78a22334bd646`). For the lag spike, built and empirically disproved a pipeline pre-warm mitigation, then conclusively isolated the true cause via a decisive differential test (disabling all Visibility gating, reproducing byte-for-byte pre-fix behavior): the spike is intrinsic to `scene_patch.apply()`'s reflection-based construction cost, unrelated to Visibility/rendering/this feature entirely, and was always present. This is out of scope for the scene-pop-in-fix branch; reporting findings to user for direction on next steps.
+- `2026-07-22`: User asked to continue on the same feature/branch and set up profiling for the massive scene-transition lag spikes. Added permanent profiling hooks around Foundation BSN resolve/apply and Last Beacon nested-widget resolve/apply, a `scripts/profile-scene.cmd` Chrome-trace launch path, and profiling docs. Focused engine/game format, check, clippy, test, and doc generation passed. Engine profiling hooks committed and pushed as `0b419a403373e7bf7dd42ea547660e4ec97b047a`; root profiling commit created as `76268fed47dbb802fe9a8c997bdd92259047b262` and will be amended with this tracker update before push.
