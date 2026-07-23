@@ -8,8 +8,8 @@
 - Engine branch: `feature/scene-pop-in-investigation`
 - Root branch base verification: `Verified: dev (7cacf7cabfff058305c08d9988dc15bd935f49e4) is an ancestor of this branch; only the investigation doc commit sits on top`
 - Engine branch base verification: `Verified: created feature/scene-pop-in-investigation from engine origin/dev at 1bc59f9a0039dfe412b735c869a90f38a0d58582 on 2026-07-20`
-- Engine submodule pointer: `Updated to prepared scene readiness engine commit 72f8f620fbad727452ecda46639eb1050a39e61e; root pointer commit pending`
-- Overall status: `Phase 7 prepared-scene readiness/token implementation validated; root pointer commit pending`
+- Engine submodule pointer: `Updated to prepared scene readiness engine commit 72f8f620fbad727452ecda46639eb1050a39e61e; root pointer committed in 420c878 and pushed`
+- Overall status: `Phase 7 prepared-scene readiness/token implementation validated, committed, and pushed`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
@@ -29,9 +29,9 @@
   root completion.
 
 ## Repository State
-- Root commit/push state: `Scene preload dependency commits through 80c4891 pushed to origin/feature/scene-pop-in-investigation; prepared scene readiness root integration pending commit`
+- Root commit/push state: `Prepared scene readiness root integration commit 420c878 pushed to origin/feature/scene-pop-in-investigation; final push-state tracker update pending`
 - Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd, font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646, BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a, async scene cache pipeline commit df69663a9224cd62fd715a7af3822a1af286e239, splash completion message commit 8a675c6e825eb17eff6c6042f057282b91f95c58, cached scene owner activation fix commit 88fd955fd1e068ae4d75bc798a33e55a3df3908f, repeated cache activation fix commit fc002b87cd985d0365b6357e1b9bfc1554ecaa9e, splash visibility timer gate commit 88f89d8fab415dfdb21fc36d78e7112dfb196903, focused Escape handling commit 55a2a8194b4a86b88c5963429004ebe20cee40a3, unowned Escape handler guard commit b6c95b7001c1348b870d95f82b24cd5c20030d75, scene preload dependency wait commit 81272b6b8fd11c7fc7b3b59307e23fe4f54bf2a7, and prepared-scene readiness commit 72f8f620fbad727452ecda46639eb1050a39e61e pushed to origin/feature/scene-pop-in-investigation`
-- Root submodule pointer update: `Pending root commit for engine commit 72f8f620fbad727452ecda46639eb1050a39e61e`
+- Root submodule pointer update: `Committed in root prepared scene readiness binding commit 420c878 for engine commit 72f8f620fbad727452ecda46639eb1050a39e61e`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -227,7 +227,7 @@
 - User confirmation: `Not required for implementation completion; user already approved proceeding`
 
 ## Phase 7: Corrective Foundation Prepared-Scene Architecture Reset
-**Status:** Complete; root pointer/push-state recording pending
+**Status:** Complete; committed and pushed
 **Goal:** Replace patch-layer fixes with a Foundation-owned prepared-scene state machine where `ScenePreloadReady` means the scene source and all declared/nested/runtime readiness work are fully loaded, spawned, hidden, non-interactable, and cached for instant activation.
 
 ### Tasks
@@ -340,4 +340,4 @@
 - `2026-07-22`: User reported Beacon and other parent scenes hitch/delay because sub-scenes load seconds after the parent scene. Root cause: Foundation's transition batch readiness only collected the opened scene source; registered `ScenePreloadRegistry` targets were requested after `SceneAdded`/`SceneFocused`, so parent scenes could become visible before their child/preload scenes were spawned hidden in the prepared cache. Fixed Foundation scene stack command batching so opened scene requirements include the source plus all recursively registered preload dependencies, and direct `SceneCommand::Preload` also prepares registered dependencies. Added regression coverage for parent scene preloads, transitive preload dependencies, and preload commands with dependency targets. Validation passed: focused Foundation scene-stack tests, `engine/scripts/validate-project.cmd`, and `scripts/validate.cmd` exited 0. Engine commit `81272b6b8fd11c7fc7b3b59307e23fe4f54bf2a7` pushed; root submodule pointer commit `9d84b11` pushed.
 - `2026-07-22`: User confirmed the delay/hitch still happens and requested a branch diff against `dev` with a step back toward a solid scene/BSN loading architecture. Audited root and engine diffs, identified that current branch has useful primitives but still marks readiness too early and relies on game-side workarounds. Updated `plan.md` with the corrective Foundation prepared-scene state machine plan and added Phase 7 to this tracker. No code implementation changes made; awaiting user approval before implementation resumes.
 - `2026-07-22`: User approved proceeding in full. Starting Phase 7 implementation: Foundation prepared-scene state machine, readiness tokens, nested readiness integration, budgeted BSN preparation/refill, instant cached activation tests, and Last Beacon workaround cleanup.
-- `2026-07-22`: Implemented Phase 7. Foundation preparation now tracks richer lifecycle states, propagates `ScenePreparationContext` through hidden prepared cache roots, supports generic readiness tokens, delays `ScenePreloadReady` until top-level BSN apply plus all readiness tokens settle, gates cached activation on `ready_emitted`, and limits BSN applies to one per frame by default through `FoundationBsnPreparationBudget`. Last Beacon nested widgets now register readiness tokens while off-stack and only use `SceneContentLoading` for active scene-owned widgets; the redundant main-menu root manual preload gate was removed. Validation passed: `engine/scripts/validate-project.cmd` and `scripts/validate.cmd` exited 0. Engine commit `72f8f620fbad727452ecda46639eb1050a39e61e` pushed; root pointer commit pending.
+- `2026-07-22`: Implemented Phase 7. Foundation preparation now tracks richer lifecycle states, propagates `ScenePreparationContext` through hidden prepared cache roots, supports generic readiness tokens, delays `ScenePreloadReady` until top-level BSN apply plus all readiness tokens settle, gates cached activation on `ready_emitted`, and limits BSN applies to one per frame by default through `FoundationBsnPreparationBudget`. Last Beacon nested widgets now register readiness tokens while off-stack and only use `SceneContentLoading` for active scene-owned widgets; the redundant main-menu root manual preload gate was removed. Validation passed: `engine/scripts/validate-project.cmd` and `scripts/validate.cmd` exited 0. Engine commit `72f8f620fbad727452ecda46639eb1050a39e61e` pushed; root pointer commit `420c878` pushed.
