@@ -357,6 +357,114 @@ The first implementation should therefore avoid any synchronous apply on the cli
 - Last Beacon tests or smoke validation proving registered preload relationships request the expected scene sources.
 - Manual profiling with `scripts/profile-scene.cmd`: compare a cold open versus a cached menu open and verify cached activation avoids `foundation_bsn_apply` on the transition frame.
 
+## 2026-07-22 Corrective Architecture Reset Plan
+
+### Reason For Reset
+User validation showed that the current branch still hitches and delays during Beacon and other parent/sub-scene transitions. A branch diff against `dev` found that the implementation has accumulated useful primitives, but also several symptom-level fixes. The core architectural gap is that Foundation currently marks a prepared BSN scene ready immediately after top-level `ScenePatch::apply`, even though nested scene/widget work, runtime-generated content, dependency cache readiness, and background cache refill work may still be pending. In addition, `ResolvedSceneRoot::resolve` and `ScenePatch::apply` remain synchronous main-thread operations, so preloading only moves the hitch unless apply work is budgeted or completed before the transition is allowed to reveal.
+
+This section supersedes the earlier implementation approach for any remaining work. Preserve useful primitives, but stop adding game-side timing patches.
+
+### Keep From Current Branch
+- `ScenePreloadRegistry` as the authored/declarative dependency graph.
+- `SceneCommand` queueing and transition deferral as the correct place to hold stack mutation until scene requirements are ready.
+- Hidden prepared BSN cache roots as the right activation primitive.
+- Activation by retagging/owning already-prepared cache roots, not applying BSN on the transition frame.
+- Scene-stack visibility gating with `SceneContentLoading` as a final defensive guard.
+- Last Beacon's declarative preload group registrations for Main Menu, Beacon, and Gameplay domains.
+- Profiling hooks as diagnostics only.
+
+### Replace Or Remove
+- Treating top-level BSN `ScenePatch::apply` completion as `ScenePreloadReady`.
+- Game-side readiness hacks that compensate for missing Foundation readiness, including placeholder-specific activation timing and main-menu-specific preload waiting, unless retained only as temporary test fixtures.
+- Last Beacon nested widget loading as a separate readiness universe. It must either move into Foundation as generic nested BSN/prefab loading or participate through a generic Foundation readiness-token API.
+- Immediate unbudgeted cache refill that can synchronously apply a large BSN during an unrelated gameplay/navigation frame.
+- Any transition path that can call `ResolvedSceneRoot::resolve` or `ScenePatch::apply` after the stack has committed the scene being opened.
+
+### Target Foundation Lifecycle
+Foundation should model scene preparation explicitly:
+
+1. `Requested`: a source is requested by a transition or preload command.
+2. `AssetLoading`: external assets are loading asynchronously through `AssetServer`.
+3. `Resolving`: BSN resolution is pending or being budgeted.
+4. `ApplyingTopLevel`: top-level BSN patch is being applied to a hidden off-stack cache root.
+5. `DiscoveringNestedWork`: newly-spawned content is scanned for nested BSN/prefab/runtime readiness contributors.
+6. `PreparingNestedWork`: nested dependencies and runtime readiness tokens are still pending.
+7. `CachedReady`: the source has a hidden, spawned, non-interactable prepared root and all registered/nested/runtime readiness work is settled.
+8. `Activating`: a transition consumes the cached root and assigns the actual stack `SceneOwner`.
+9. `Active`: the scene is in the stack. Activation must not run BSN resolve/apply.
+10. `Failed`: preparation settled unsuccessfully with an explicit reason.
+
+`ScenePreloadReady` must only be emitted at `CachedReady`, never at top-level apply completion.
+
+### Required Foundation Types And APIs
+- Replace or extend `ScenePreparationRegistry` so status represents the full lifecycle above, not just `Requested` / `Ready` / `Failed`.
+- Add a prepared-scene cache resource keyed by `SceneSource`, with records containing at minimum:
+  - source key,
+  - prepared root entity,
+  - lifecycle state,
+  - failure reason,
+  - pending readiness token ids/count,
+  - stale/hot-reload flag,
+  - whether a refill is allowed this frame.
+- Add a generic readiness-token API, for example:
+  - `SceneReadinessToken` / `ScenePreparationToken`,
+  - `request_readiness_token(source_or_prepared_root, label)`,
+  - `settle_readiness_token(token, result)`,
+  - status queries for pending token counts.
+- Expose enough public API for game/runtime systems to register generated content or nested asset work without directly mutating Foundation internals.
+- Make cache refill policy explicit:
+  - consuming a cache entry for activation may enqueue refill,
+  - refill is background/preload work,
+  - refill must be budgeted or deferrable,
+  - refill must not change the active scene's readiness state.
+
+### Required BSN Pipeline Changes
+- `spawn_requested_bsn_scene_preloads` should create/advance a prepared-cache record, not simply spawn a root and wait for `apply_pending_bsn_instances` to mark ready.
+- `apply_pending_bsn_instances` should become an advancement step for prepared records:
+  - resolve/apply only for prepared roots or standalone prefab roots that are explicitly allowed,
+  - mark top-level apply complete,
+  - then run/discover nested readiness work,
+  - emit `ScenePreloadReady` only once all tokens/dependencies settle.
+- Add an apply budget before considering the feature complete if hitches continue during preload:
+  - minimum acceptable implementation: process at most one pending BSN apply per frame or obey a configurable millisecond budget;
+  - preferred implementation: configurable `FoundationBsnPreparationBudget` resource with defaults documented in `engine/docs/scene-system.md`.
+- Cached activation path must do only cheap work:
+  - remove prepared-cache marker,
+  - assign/propagate `SceneOwner`,
+  - set visibility/interactivity state,
+  - emit normal scene lifecycle messages.
+  It must not resolve or apply BSN.
+
+### Required Nested Scene/Widget Strategy
+Preferred: move reusable nested BSN widget/prefab loading into Foundation so both scenes and widgets use the same `ScenePatch` preparation machinery and readiness tokens.
+
+Acceptable first step: keep Last Beacon's `LastBeaconBsnWidget`, but require it to register a Foundation readiness token against the prepared root or source when queued, and settle that token only after widget apply succeeds or fails. This must work while the parent scene is still off-stack in cache, not only after `SceneOwner` exists.
+
+### Required Last Beacon Cleanup
+- Keep `register_last_beacon_scene_preloads` as declarative metadata.
+- Remove main-menu root manual preload gate once Foundation transition requirements handle the full dependency graph.
+- Remove or simplify placeholder cube preload/activation timing hacks after generic runtime readiness tokens exist.
+- Ensure Main Menu, Beacon, and Gameplay preload domains remain separate to control memory use.
+- Keep splash sequencing ownership in the main-menu root, but splash scenes should not define next-scene behavior.
+
+### Revised Implementation Phases
+1. **Pause and baseline branch state.** Mark current implementation as architecturally insufficient in tracker. Do not add more game-side symptom fixes.
+2. **Foundation prepared-scene state machine.** Refactor `scene_stack.rs` and `bsn_assets.rs` around explicit lifecycle states and prepared-cache records. Keep tests for dependency graph waiting, but change readiness expectations to `CachedReady`.
+3. **Foundation readiness tokens.** Add generic token registration/settlement and make `ScenePreloadReady` depend on zero pending tokens.
+4. **Nested BSN/widget integration.** Either migrate `LastBeaconBsnWidget` to Foundation or integrate it through readiness tokens so parent scene readiness covers nested widget apply while off-stack.
+5. **Budgeted BSN preparation.** Add configurable per-frame preparation budget for resolve/apply advancement if profiling still shows hitches from background preloads/refills.
+6. **Instant cached activation verification.** Add tests proving activation from `CachedReady` does not call BSN resolve/apply and makes the scene visible only after source plus dependencies are cached.
+7. **Last Beacon cleanup.** Remove redundant workaround gates and keep only declarative scene preload registration and game-specific orchestration.
+8. **Validation and review.** Run full engine/root validation, update docs, commit engine first, update root submodule pointer, then request final sanity review.
+
+### Revised Success Criteria
+- Opening a scene never reveals until that source and all declared preload dependencies are `CachedReady`.
+- `CachedReady` means spawned hidden cached root plus all nested/runtime readiness work settled.
+- Activating a cached scene never calls BSN resolve/apply on the transition frame.
+- Background cache refill cannot cause a large hitch in unrelated active scenes; it is budgeted or explicitly deferred.
+- Main Menu, Beacon, and Gameplay preload domains remain separate and observable in Last Beacon registrations.
+- The branch contains fewer game-side special cases after cleanup than before the reset, not more.
+
 ## Success Criteria
 - Opening any Last Beacon scene shows already-complete, already-styled
   content the moment it becomes visible — no visible structural build-up

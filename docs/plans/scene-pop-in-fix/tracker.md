@@ -9,11 +9,11 @@
 - Root branch base verification: `Verified: dev (7cacf7cabfff058305c08d9988dc15bd935f49e4) is an ancestor of this branch; only the investigation doc commit sits on top`
 - Engine branch base verification: `Verified: created feature/scene-pop-in-investigation from engine origin/dev at 1bc59f9a0039dfe412b735c869a90f38a0d58582 on 2026-07-20`
 - Engine submodule pointer: `Updated to scene preload dependency wait engine commit 81272b6b8fd11c7fc7b3b59307e23fe4f54bf2a7; root pointer committed in 9d84b11 and pushed`
-- Overall status: `Scene preload dependency readiness fix validated, committed, and pushed`
+- Overall status: `Architecture reset planned after user-confirmed remaining hitches; awaiting approval before implementation resumes`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Implementation refinement validated with gpt-5.4 — scene opens wait for registered preload dependencies before stack activation`
+- Current handoff state: `Planning checkpoint with gpt-5.5 — ready for user review of Foundation prepared-scene state machine reset plan`
 - Created: `2026-07-20`
 - Last updated: `2026-07-22`
 
@@ -226,18 +226,67 @@
 - Documentation generation: `Passed for engine and game docs`
 - User confirmation: `Not required for implementation completion; user already approved proceeding`
 
+## Phase 7: Corrective Foundation Prepared-Scene Architecture Reset
+**Status:** Planned; awaiting user approval before implementation
+**Goal:** Replace patch-layer fixes with a Foundation-owned prepared-scene state machine where `ScenePreloadReady` means the scene source and all declared/nested/runtime readiness work are fully loaded, spawned, hidden, non-interactable, and cached for instant activation.
+
+### Tasks
+- [ ] Pause symptom fixes and preserve the branch audit outcome.
+  - Status: Planned
+  - Repository: `both`
+  - Notes: No more game-side timing patches until Foundation readiness semantics are corrected. Current useful primitives should be preserved where possible, but top-level-BSN-apply-as-ready must be replaced.
+- [ ] Refactor Foundation preparation state in `scene_stack.rs` and `bsn_assets.rs`.
+  - Status: Planned
+  - Repository: `engine`
+  - Notes: Replace the coarse `Requested` / `Ready` / `Failed` model with explicit states such as `Requested`, `AssetLoading`, `Resolving`, `ApplyingTopLevel`, `DiscoveringNestedWork`, `PreparingNestedWork`, `CachedReady`, `Activating`, `Active`, and `Failed`.
+- [ ] Add a prepared-scene cache resource with explicit records.
+  - Status: Planned
+  - Repository: `engine`
+  - Notes: Cache records should include source, prepared root, lifecycle state, pending readiness token count/ids, failure reason, stale/hot-reload state, and refill eligibility.
+- [ ] Add a generic readiness-token API.
+  - Status: Planned
+  - Repository: `engine`
+  - Notes: BSN apply, nested BSN/widget loading, runtime-generated content, and game-specific systems must be able to register and settle pending readiness against a prepared source/root. `ScenePreloadReady` should fire only once all tokens are settled.
+- [ ] Integrate nested BSN/widget work into the Foundation readiness contract.
+  - Status: Planned
+  - Repository: `both`
+  - Notes: Preferred path is moving reusable nested BSN/prefab loading into Foundation. Acceptable first step is adapting `LastBeaconBsnWidget` to use Foundation readiness tokens while the parent scene is still off-stack in cache.
+- [ ] Make BSN preparation budgeted or explicitly deferable.
+  - Status: Planned
+  - Repository: `engine`
+  - Notes: `ResolvedSceneRoot::resolve` / `ScenePatch::apply` remain synchronous main-thread work. Add a `FoundationBsnPreparationBudget` or equivalent so background preload/refill cannot introduce massive gameplay-frame hitches.
+- [ ] Prove instant cached activation.
+  - Status: Planned
+  - Repository: `engine`
+  - Notes: Add tests that activation from `CachedReady` performs no BSN resolve/apply and only retags/unhides prepared content after all dependencies are cached.
+- [ ] Clean up Last Beacon workaround code.
+  - Status: Planned
+  - Repository: `root`
+  - Notes: Keep declarative preload groups and main-menu orchestration, but remove redundant manual preload gates and placeholder timing hacks once generic runtime readiness tokens cover them.
+- [ ] Update docs and validation evidence.
+  - Status: Planned
+  - Repository: `both`
+  - Notes: Update `engine/docs/scene-system.md`, this tracker, and any Last Beacon docs if authored preload/readiness behavior changes.
+
+### Validation
+- Engine validation: `Planned: focused Foundation runtime tests, then engine/scripts/validate-project.cmd`
+- Game validation: `Planned: focused Last Beacon scene/widget tests, then scripts/validate.cmd`
+- Documentation generation: `Planned for changed public APIs and architecture docs`
+- User confirmation: `Required before implementation begins`
+
 ## Implementation / Review Handoff Notes
 - Use `gpt-5.4` for implementation, `gpt-5.5` for optional final review.
 - Read `.pi/skills/feature-tracker-update/SKILL.md`, `.pi/skills/rust-workspace-dev/SKILL.md`,
   `.pi/skills/rust-coding-standards/SKILL.md`, `.pi/skills/gitflow-workflow/SKILL.md`, and
   `.pi/skills/foundation-architecture/SKILL.md` before implementation edits.
 - Do not edit engine files until `engine/` is on `feature/scene-pop-in-investigation` from engine `dev`.
-- See `docs/plans/scene-pop-in-fix/plan.md` for full proposed approach, risks, and alternatives considered.
+- See `docs/plans/scene-pop-in-fix/plan.md`, especially `2026-07-22 Corrective Architecture Reset Plan`, for the revised approach. That section supersedes remaining patch-layer implementation direction.
 
 ## Postponed Work
-- None yet.
+- `2026-07-22`: Further game-side timing patches are postponed. Reason: user-confirmed remaining hitches and branch audit show the problem must be solved in Foundation's prepared-scene readiness semantics, not with additional Last Beacon workaround systems. Impact: implementation should resume only after the Phase 7 reset plan is approved.
 
 ## Notes / Issues / Oversights
+- `2026-07-22`: User reported the scene delay/hitch still occurs and asked to diff the branch from `dev` because the intended architecture is loaded/spawned/hidden cached preload dependencies with no synchronous visible-path BSN work. Branch audit found useful primitives but also symptom fixes. Primary architectural oversights: `ScenePreloadReady` currently fires after top-level BSN apply rather than after all nested/runtime readiness is settled; nested widget/generator work is not generically part of Foundation readiness; immediate cache refill can still run synchronous BSN apply during normal frames; BSN resolve/apply remains unbudgeted main-thread work. Added Phase 7 and a corrective plan section; implementation paused pending user approval.
 - `2026-07-22`: User asked to continue on the same feature/branch, re-investigate the massive scene-transition lag spikes, and ideally set up profiling. Resuming implementation with `gpt-5.4`; root branch and engine branch both match `feature/scene-pop-in-investigation`, and both still verify `dev` as an ancestor.
 - `2026-07-21`: **Regression reported by user**: "large lag spike whenever opening a scene," after the readiness-gating fix landed. Investigated with `superpowers:systematic-debugging`.
   - Added temporary `FrameTimeDiagnosticsPlugin` + `EntityCountDiagnosticsPlugin` + a frame-time-threshold logger to `game/src/lib.rs` (never committed; reverted via `git checkout` after investigation).
@@ -289,3 +338,4 @@
 - `2026-07-22`: User reported the cube is visible but still delayed after main-menu open. Root cause: preloaded generated placeholder entities were activated with deferred `Commands` for both ownership and visibility; even though camera activation was immediate, the visibility flip could miss the main-menu presentation frame. Fixed activation to mutate generated entity `Visibility` immediately in the activation pass while still inserting `SceneOwner` for cleanup/bookkeeping. Validation passed: focused placeholder tests and `scripts/validate.cmd` exited 0. Root commit `e2449e6` pushed.
 - `2026-07-22`: User reported the cube still appears with delay. Root cause: although generated placeholder content was preloaded and visibility was flipped immediately, the same combined system generated placeholder content only in the activation-adjacent PostUpdate pass. That meant Foundation could mark `main_menu.bsn` ready and open the menu before Last Beacon had generated the cube/light/inactive camera during preload. Split the lifecycle into `prepare_last_beacon_placeholder_cube_scenes` in Update after `apply_pending_bsn_instances` (generates hidden/inactive placeholder content during preload) and `activate_last_beacon_placeholder_cube_scenes` in PostUpdate after Foundation activation but before visibility sync (assigns ownership, reveals, activates camera). Validation passed: focused placeholder tests and `scripts/validate.cmd` exited 0. Root commit `0662fcb` pushed.
 - `2026-07-22`: User reported Beacon and other parent scenes hitch/delay because sub-scenes load seconds after the parent scene. Root cause: Foundation's transition batch readiness only collected the opened scene source; registered `ScenePreloadRegistry` targets were requested after `SceneAdded`/`SceneFocused`, so parent scenes could become visible before their child/preload scenes were spawned hidden in the prepared cache. Fixed Foundation scene stack command batching so opened scene requirements include the source plus all recursively registered preload dependencies, and direct `SceneCommand::Preload` also prepares registered dependencies. Added regression coverage for parent scene preloads, transitive preload dependencies, and preload commands with dependency targets. Validation passed: focused Foundation scene-stack tests, `engine/scripts/validate-project.cmd`, and `scripts/validate.cmd` exited 0. Engine commit `81272b6b8fd11c7fc7b3b59307e23fe4f54bf2a7` pushed; root submodule pointer commit `9d84b11` pushed.
+- `2026-07-22`: User confirmed the delay/hitch still happens and requested a branch diff against `dev` with a step back toward a solid scene/BSN loading architecture. Audited root and engine diffs, identified that current branch has useful primitives but still marks readiness too early and relies on game-side workarounds. Updated `plan.md` with the corrective Foundation prepared-scene state machine plan and added Phase 7 to this tracker. No code implementation changes made; awaiting user approval before implementation resumes.
