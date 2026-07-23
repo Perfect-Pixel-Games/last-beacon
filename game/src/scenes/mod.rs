@@ -186,24 +186,10 @@ pub(crate) fn advance_last_beacon_main_menu_roots(
     mut scene_commands: MessageWriter<SceneCommand>,
     mut splash_completed: MessageReader<FoundationSplashCompleted>,
     scene_stack: Res<SceneStack>,
-    preparation_registry: Res<ScenePreparationRegistry>,
     mut main_menu_roots: Query<&mut LastBeaconMainMenuRootPhase, With<LastBeaconMainMenuRoot>>,
 ) {
-    let main_menu_preload_sources = main_menu_preload_sources();
-    let main_menu_preloads_are_ready = main_menu_preload_sources.iter().all(|scene_source| {
-        preparation_registry.status(scene_source) == Some(&ScenePreparationStatus::Ready)
-    });
-
-    for preload_source in &main_menu_preload_sources {
-        scene_commands.write(SceneCommand::preload(preload_source.clone()));
-    }
-
     for mut main_menu_root_phase in &mut main_menu_roots {
         if *main_menu_root_phase == LastBeaconMainMenuRootPhase::Starting {
-            if !main_menu_preloads_are_ready {
-                continue;
-            }
-
             let splash_options = OpenSceneOptions::default()
                 .with_key("main-menu-pixel-perfect-splash")
                 .with_presentation(ScenePresentation::INPUT_BLOCKING_OVERLAY);
@@ -250,15 +236,6 @@ pub(crate) fn advance_last_beacon_main_menu_roots(
             }
         }
     }
-}
-
-fn main_menu_preload_sources() -> Vec<SceneSource> {
-    vec![
-        SceneSource::bsn_scene(PIXEL_PERFECT_SPLASH_SCENE),
-        SceneSource::bsn_scene(BEVY_SPLASH_SCENE),
-        SceneSource::bsn_scene(MAIN_MENU_SCENE),
-        SceneSource::bsn_scene(OPTIONS_MENU_SCENE),
-    ]
 }
 
 /// Replaces the current Beacon page stack entry with a new non-blocking page scene.
@@ -392,7 +369,7 @@ mod tests {
     }
 
     #[test]
-    fn main_menu_root_waits_for_full_preload_group_before_first_splash() {
+    fn main_menu_root_starts_first_splash_after_foundation_activation() {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
         app.add_plugins(FoundationSceneStackPlugin);
@@ -406,40 +383,6 @@ mod tests {
                 scene_id: SceneId(1),
             },
         ));
-        app.update();
-
-        let mut phases = app.world_mut().query::<&LastBeaconMainMenuRootPhase>();
-        assert_eq!(
-            phases
-                .single(app.world())
-                .copied()
-                .expect("test should have one main-menu root phase"),
-            LastBeaconMainMenuRootPhase::Starting,
-            "the splash sequence should not start until Pixel Perfect, Bevy, main menu, and options are all prepared"
-        );
-    }
-
-    #[test]
-    fn main_menu_root_starts_first_splash_after_full_preload_group_is_ready() {
-        let mut app = App::new();
-        app.add_plugins(MinimalPlugins);
-        app.add_plugins(FoundationSceneStackPlugin);
-        app.add_message::<FoundationSplashCompleted>();
-        app.add_systems(Update, advance_last_beacon_main_menu_roots);
-
-        app.world_mut().spawn((
-            LastBeaconMainMenuRoot,
-            LastBeaconMainMenuRootPhase::Starting,
-            SceneOwner {
-                scene_id: SceneId(1),
-            },
-        ));
-        for scene_source in main_menu_preload_sources() {
-            app.world_mut().write_message(ScenePreloadReady {
-                source: scene_source,
-            });
-        }
-        app.update();
         app.update();
 
         let mut phases = app.world_mut().query::<&LastBeaconMainMenuRootPhase>();
@@ -449,7 +392,7 @@ mod tests {
                 .copied()
                 .expect("test should have one main-menu root phase"),
             LastBeaconMainMenuRootPhase::PixelPerfectSplash,
-            "the splash sequence should begin once the full main-menu preload group is ready"
+            "Foundation transition dependencies prepare the preload group before the root activates; the root only sequences splashes"
         );
     }
 

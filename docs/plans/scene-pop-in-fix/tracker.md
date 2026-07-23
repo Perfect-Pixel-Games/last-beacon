@@ -8,12 +8,12 @@
 - Engine branch: `feature/scene-pop-in-investigation`
 - Root branch base verification: `Verified: dev (7cacf7cabfff058305c08d9988dc15bd935f49e4) is an ancestor of this branch; only the investigation doc commit sits on top`
 - Engine branch base verification: `Verified: created feature/scene-pop-in-investigation from engine origin/dev at 1bc59f9a0039dfe412b735c869a90f38a0d58582 on 2026-07-20`
-- Engine submodule pointer: `Updated to scene preload dependency wait engine commit 81272b6b8fd11c7fc7b3b59307e23fe4f54bf2a7; root pointer committed in 9d84b11 and pushed`
-- Overall status: `Architecture reset planned after user-confirmed remaining hitches; awaiting approval before implementation resumes`
+- Engine submodule pointer: `Updated to prepared scene readiness engine commit 72f8f620fbad727452ecda46639eb1050a39e61e; root pointer commit pending`
+- Overall status: `Phase 7 prepared-scene readiness/token implementation validated; root pointer commit pending`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Planning checkpoint with gpt-5.5 — ready for user review of Foundation prepared-scene state machine reset plan`
+- Current handoff state: `Implementation validated with gpt-5.4 — prepared readiness tokens, delayed preload ready, BSN apply budget, and Last Beacon widget integration`
 - Created: `2026-07-20`
 - Last updated: `2026-07-22`
 
@@ -29,9 +29,9 @@
   root completion.
 
 ## Repository State
-- Root commit/push state: `Scene preload dependency engine binding commit 9d84b11 pushed to origin/feature/scene-pop-in-investigation; final push-state tracker update pending`
-- Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd, font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646, BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a, async scene cache pipeline commit df69663a9224cd62fd715a7af3822a1af286e239, splash completion message commit 8a675c6e825eb17eff6c6042f057282b91f95c58, cached scene owner activation fix commit 88fd955fd1e068ae4d75bc798a33e55a3df3908f, repeated cache activation fix commit fc002b87cd985d0365b6357e1b9bfc1554ecaa9e, splash visibility timer gate commit 88f89d8fab415dfdb21fc36d78e7112dfb196903, focused Escape handling commit 55a2a8194b4a86b88c5963429004ebe20cee40a3, unowned Escape handler guard commit b6c95b7001c1348b870d95f82b24cd5c20030d75, and scene preload dependency wait commit 81272b6b8fd11c7fc7b3b59307e23fe4f54bf2a7 pushed to origin/feature/scene-pop-in-investigation`
-- Root submodule pointer update: `Committed in root scene preload dependency binding commit 9d84b11 for engine commit 81272b6b8fd11c7fc7b3b59307e23fe4f54bf2a7`
+- Root commit/push state: `Scene preload dependency commits through 80c4891 pushed to origin/feature/scene-pop-in-investigation; prepared scene readiness root integration pending commit`
+- Engine commit/push state: `Readiness-gating commit 0874b9c4ac462a20adff2fec8ee1b07ab88c78fd, font-ordering-export commit 609ab9a6aa963abadc0e55cfa5e78a22334bd646, BSN profiling hooks commit 0b419a403373e7bf7dd42ea547660e4ec97b047a, async scene cache pipeline commit df69663a9224cd62fd715a7af3822a1af286e239, splash completion message commit 8a675c6e825eb17eff6c6042f057282b91f95c58, cached scene owner activation fix commit 88fd955fd1e068ae4d75bc798a33e55a3df3908f, repeated cache activation fix commit fc002b87cd985d0365b6357e1b9bfc1554ecaa9e, splash visibility timer gate commit 88f89d8fab415dfdb21fc36d78e7112dfb196903, focused Escape handling commit 55a2a8194b4a86b88c5963429004ebe20cee40a3, unowned Escape handler guard commit b6c95b7001c1348b870d95f82b24cd5c20030d75, scene preload dependency wait commit 81272b6b8fd11c7fc7b3b59307e23fe4f54bf2a7, and prepared-scene readiness commit 72f8f620fbad727452ecda46639eb1050a39e61e pushed to origin/feature/scene-pop-in-investigation`
+- Root submodule pointer update: `Pending root commit for engine commit 72f8f620fbad727452ecda46639eb1050a39e61e`
 - Root pull request state: `Pending`
 - Engine pull request state: `Pending`
 
@@ -227,52 +227,52 @@
 - User confirmation: `Not required for implementation completion; user already approved proceeding`
 
 ## Phase 7: Corrective Foundation Prepared-Scene Architecture Reset
-**Status:** Planned; awaiting user approval before implementation
+**Status:** Complete; root pointer/push-state recording pending
 **Goal:** Replace patch-layer fixes with a Foundation-owned prepared-scene state machine where `ScenePreloadReady` means the scene source and all declared/nested/runtime readiness work are fully loaded, spawned, hidden, non-interactable, and cached for instant activation.
 
 ### Tasks
-- [ ] Pause symptom fixes and preserve the branch audit outcome.
-  - Status: Planned
+- [x] Pause symptom fixes and preserve the branch audit outcome.
+  - Status: Complete
   - Repository: `both`
   - Notes: No more game-side timing patches until Foundation readiness semantics are corrected. Current useful primitives should be preserved where possible, but top-level-BSN-apply-as-ready must be replaced.
-- [ ] Refactor Foundation preparation state in `scene_stack.rs` and `bsn_assets.rs`.
-  - Status: Planned
+- [x] Refactor Foundation preparation state in `scene_stack.rs` and `bsn_assets.rs`.
+  - Status: Complete
   - Repository: `engine`
   - Notes: Replace the coarse `Requested` / `Ready` / `Failed` model with explicit states such as `Requested`, `AssetLoading`, `Resolving`, `ApplyingTopLevel`, `DiscoveringNestedWork`, `PreparingNestedWork`, `CachedReady`, `Activating`, `Active`, and `Failed`.
-- [ ] Add a prepared-scene cache resource with explicit records.
-  - Status: Planned
+- [x] Add a prepared-scene cache resource with explicit records.
+  - Status: Complete
   - Repository: `engine`
   - Notes: Cache records should include source, prepared root, lifecycle state, pending readiness token count/ids, failure reason, stale/hot-reload state, and refill eligibility.
-- [ ] Add a generic readiness-token API.
-  - Status: Planned
+- [x] Add a generic readiness-token API.
+  - Status: Complete
   - Repository: `engine`
   - Notes: BSN apply, nested BSN/widget loading, runtime-generated content, and game-specific systems must be able to register and settle pending readiness against a prepared source/root. `ScenePreloadReady` should fire only once all tokens are settled.
-- [ ] Integrate nested BSN/widget work into the Foundation readiness contract.
-  - Status: Planned
+- [x] Integrate nested BSN/widget work into the Foundation readiness contract.
+  - Status: Complete
   - Repository: `both`
   - Notes: Preferred path is moving reusable nested BSN/prefab loading into Foundation. Acceptable first step is adapting `LastBeaconBsnWidget` to use Foundation readiness tokens while the parent scene is still off-stack in cache.
-- [ ] Make BSN preparation budgeted or explicitly deferable.
-  - Status: Planned
+- [x] Make BSN preparation budgeted or explicitly deferable.
+  - Status: Complete
   - Repository: `engine`
   - Notes: `ResolvedSceneRoot::resolve` / `ScenePatch::apply` remain synchronous main-thread work. Add a `FoundationBsnPreparationBudget` or equivalent so background preload/refill cannot introduce massive gameplay-frame hitches.
-- [ ] Prove instant cached activation.
-  - Status: Planned
+- [x] Prove instant cached activation.
+  - Status: Complete
   - Repository: `engine`
   - Notes: Add tests that activation from `CachedReady` performs no BSN resolve/apply and only retags/unhides prepared content after all dependencies are cached.
-- [ ] Clean up Last Beacon workaround code.
-  - Status: Planned
+- [x] Clean up Last Beacon workaround code.
+  - Status: Complete
   - Repository: `root`
   - Notes: Keep declarative preload groups and main-menu orchestration, but remove redundant manual preload gates and placeholder timing hacks once generic runtime readiness tokens cover them.
-- [ ] Update docs and validation evidence.
-  - Status: Planned
+- [x] Update docs and validation evidence.
+  - Status: Complete
   - Repository: `both`
   - Notes: Update `engine/docs/scene-system.md`, this tracker, and any Last Beacon docs if authored preload/readiness behavior changes.
 
 ### Validation
-- Engine validation: `Planned: focused Foundation runtime tests, then engine/scripts/validate-project.cmd`
-- Game validation: `Planned: focused Last Beacon scene/widget tests, then scripts/validate.cmd`
-- Documentation generation: `Planned for changed public APIs and architecture docs`
-- User confirmation: `Required before implementation begins`
+- Engine validation: `Passed: foundation-runtime-library tests (107 passed) and engine/scripts/validate-project.cmd exited 0; docs generated`
+- Game validation: `Passed: focused ui_widgets tests, full game lib tests, and scripts/validate.cmd exited 0; docs generated`
+- Documentation generation: `Passed for engine and game docs`
+- User confirmation: `Received 2026-07-22: "Commit, and proceed in full"`
 
 ## Implementation / Review Handoff Notes
 - Use `gpt-5.4` for implementation, `gpt-5.5` for optional final review.
@@ -339,3 +339,5 @@
 - `2026-07-22`: User reported the cube still appears with delay. Root cause: although generated placeholder content was preloaded and visibility was flipped immediately, the same combined system generated placeholder content only in the activation-adjacent PostUpdate pass. That meant Foundation could mark `main_menu.bsn` ready and open the menu before Last Beacon had generated the cube/light/inactive camera during preload. Split the lifecycle into `prepare_last_beacon_placeholder_cube_scenes` in Update after `apply_pending_bsn_instances` (generates hidden/inactive placeholder content during preload) and `activate_last_beacon_placeholder_cube_scenes` in PostUpdate after Foundation activation but before visibility sync (assigns ownership, reveals, activates camera). Validation passed: focused placeholder tests and `scripts/validate.cmd` exited 0. Root commit `0662fcb` pushed.
 - `2026-07-22`: User reported Beacon and other parent scenes hitch/delay because sub-scenes load seconds after the parent scene. Root cause: Foundation's transition batch readiness only collected the opened scene source; registered `ScenePreloadRegistry` targets were requested after `SceneAdded`/`SceneFocused`, so parent scenes could become visible before their child/preload scenes were spawned hidden in the prepared cache. Fixed Foundation scene stack command batching so opened scene requirements include the source plus all recursively registered preload dependencies, and direct `SceneCommand::Preload` also prepares registered dependencies. Added regression coverage for parent scene preloads, transitive preload dependencies, and preload commands with dependency targets. Validation passed: focused Foundation scene-stack tests, `engine/scripts/validate-project.cmd`, and `scripts/validate.cmd` exited 0. Engine commit `81272b6b8fd11c7fc7b3b59307e23fe4f54bf2a7` pushed; root submodule pointer commit `9d84b11` pushed.
 - `2026-07-22`: User confirmed the delay/hitch still happens and requested a branch diff against `dev` with a step back toward a solid scene/BSN loading architecture. Audited root and engine diffs, identified that current branch has useful primitives but still marks readiness too early and relies on game-side workarounds. Updated `plan.md` with the corrective Foundation prepared-scene state machine plan and added Phase 7 to this tracker. No code implementation changes made; awaiting user approval before implementation resumes.
+- `2026-07-22`: User approved proceeding in full. Starting Phase 7 implementation: Foundation prepared-scene state machine, readiness tokens, nested readiness integration, budgeted BSN preparation/refill, instant cached activation tests, and Last Beacon workaround cleanup.
+- `2026-07-22`: Implemented Phase 7. Foundation preparation now tracks richer lifecycle states, propagates `ScenePreparationContext` through hidden prepared cache roots, supports generic readiness tokens, delays `ScenePreloadReady` until top-level BSN apply plus all readiness tokens settle, gates cached activation on `ready_emitted`, and limits BSN applies to one per frame by default through `FoundationBsnPreparationBudget`. Last Beacon nested widgets now register readiness tokens while off-stack and only use `SceneContentLoading` for active scene-owned widgets; the redundant main-menu root manual preload gate was removed. Validation passed: `engine/scripts/validate-project.cmd` and `scripts/validate.cmd` exited 0. Engine commit `72f8f620fbad727452ecda46639eb1050a39e61e` pushed; root pointer commit pending.

@@ -29,7 +29,10 @@ use bevy::{
     },
     window::PrimaryWindow,
 };
-use foundation_runtime_library::scene_stack::SceneContentLoading;
+use foundation_runtime_library::scene_stack::{
+    SceneContentLoading, SceneOwner, ScenePreparationContext, ScenePreparationRegistry,
+    SceneReadinessToken,
+};
 
 /// Requests that a reusable Last Beacon BSN widget asset be applied to this entity.
 #[derive(Clone, Debug, Default, Component, Reflect)]
@@ -507,11 +510,28 @@ struct LastBeaconBsnWidgetPending {
     scene_handle: Handle<ScenePatch>,
 }
 
+#[derive(Clone, Copy, Debug, Component)]
+struct LastBeaconBsnWidgetReadinessToken {
+    token: SceneReadinessToken,
+}
+
 #[allow(dead_code)]
 #[derive(Clone, Debug, Component)]
 struct LastBeaconBsnWidgetFailed {
     reason: String,
 }
+
+type LastBeaconBsnWidgetQueueQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (
+        Entity,
+        &'static LastBeaconBsnWidget,
+        Option<&'static ScenePreparationContext>,
+        Option<&'static SceneOwner>,
+    ),
+    Added<LastBeaconBsnWidget>,
+>;
 
 /// Starts loading newly-authored widget slots.
 ///
@@ -523,9 +543,10 @@ struct LastBeaconBsnWidgetFailed {
 pub fn queue_last_beacon_bsn_widgets(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    widget_slots: Query<(Entity, &LastBeaconBsnWidget), Added<LastBeaconBsnWidget>>,
+    mut preparation_registry: Option<ResMut<ScenePreparationRegistry>>,
+    widget_slots: LastBeaconBsnWidgetQueueQuery,
 ) {
-    for (widget_slot_entity, widget_slot) in &widget_slots {
+    for (widget_slot_entity, widget_slot, preparation_context, scene_owner) in &widget_slots {
         if widget_slot.asset_path.is_empty() {
             warn!("LastBeaconBsnWidget on {widget_slot_entity:?} has an empty asset path.");
             continue;
@@ -533,16 +554,32 @@ pub fn queue_last_beacon_bsn_widgets(
 
         // Store the handle on the slot so the exclusive apply system can patch this entity later.
         let scene_handle = asset_server.load(widget_slot.asset_path.clone());
-        commands.entity(widget_slot_entity).insert((
-            LastBeaconBsnWidgetPending {
-                asset_path: widget_slot.asset_path.clone(),
-                scene_handle,
-            },
-            // Keep the owning scene hidden until this nested widget also
+        let mut widget_entity_commands = commands.entity(widget_slot_entity);
+        widget_entity_commands.insert(LastBeaconBsnWidgetPending {
+            asset_path: widget_slot.asset_path.clone(),
+            scene_handle,
+        });
+
+        if let (Some(preparation_context), Some(preparation_registry)) =
+            (preparation_context, preparation_registry.as_deref_mut())
+        {
+            let readiness_token = preparation_registry.request_readiness_token(
+                preparation_context.source.clone(),
+                format!("LastBeaconBsnWidget {}", widget_slot.asset_path),
+            );
+            widget_entity_commands.insert(LastBeaconBsnWidgetReadinessToken {
+                token: readiness_token,
+            });
+        }
+
+        if scene_owner.is_some() {
+            // Keep the owning active scene hidden until this nested widget also
             // finishes applying, so it can't pop in after the rest of the
-            // scene is already visible.
-            SceneContentLoading,
-        ));
+            // scene is already visible. Off-stack prepared scenes use the
+            // readiness-token path above instead because they intentionally do
+            // not have a SceneOwner yet.
+            widget_entity_commands.insert(SceneContentLoading);
+        }
     }
 }
 
@@ -1873,20 +1910,25 @@ fn apply_text_color(
 
 pub fn apply_pending_last_beacon_bsn_widgets(world: &mut World) {
     let pending_widgets = {
-        let mut pending_query = world.query::<(Entity, &LastBeaconBsnWidgetPending)>();
+        let mut pending_query = world.query::<(
+            Entity,
+            &LastBeaconBsnWidgetPending,
+            Option<&LastBeaconBsnWidgetReadinessToken>,
+        )>();
         pending_query
             .iter(world)
-            .map(|(widget_slot_entity, pending_widget)| {
+            .map(|(widget_slot_entity, pending_widget, readiness_token)| {
                 (
                     widget_slot_entity,
                     pending_widget.asset_path.clone(),
                     pending_widget.scene_handle.clone(),
+                    readiness_token.copied(),
                 )
             })
             .collect::<Vec<_>>()
     };
 
-    for (widget_slot_entity, asset_path, scene_handle) in pending_widgets {
+    for (widget_slot_entity, asset_path, scene_handle, readiness_token) in pending_widgets {
         let _widget_span = info_span!(
             "last_beacon_bsn_widget",
             asset_path = %asset_path,
@@ -1983,6 +2025,14 @@ pub fn apply_pending_last_beacon_bsn_widgets(world: &mut World) {
                 if let Ok(mut widget_slot_entity_mut) = world.get_entity_mut(widget_slot_entity) {
                     widget_slot_entity_mut.remove::<LastBeaconBsnWidgetPending>();
                     widget_slot_entity_mut.remove::<SceneContentLoading>();
+                    widget_slot_entity_mut.remove::<LastBeaconBsnWidgetReadinessToken>();
+                }
+                if let Some(readiness_token) = readiness_token {
+                    if let Some(mut preparation_registry) =
+                        world.get_resource_mut::<ScenePreparationRegistry>()
+                    {
+                        preparation_registry.settle_readiness_token(readiness_token.token);
+                    }
                 }
             }
             Err(apply_error) => {
@@ -2021,14 +2071,24 @@ fn log_slow_widget_step(
 
 fn mark_widget_failed(world: &mut World, widget_slot_entity: Entity, failure_reason: String) {
     error!("{failure_reason}");
+    let readiness_token = world
+        .get::<LastBeaconBsnWidgetReadinessToken>(widget_slot_entity)
+        .copied();
     if let Ok(mut widget_slot_entity_mut) = world.get_entity_mut(widget_slot_entity) {
         widget_slot_entity_mut.remove::<LastBeaconBsnWidgetPending>();
         // A failed widget load is still a settled outcome: reveal the parent
         // scene instead of hiding it forever because one widget broke.
         widget_slot_entity_mut.remove::<SceneContentLoading>();
+        widget_slot_entity_mut.remove::<LastBeaconBsnWidgetReadinessToken>();
         widget_slot_entity_mut.insert(LastBeaconBsnWidgetFailed {
             reason: failure_reason,
         });
+    }
+    if let Some(readiness_token) = readiness_token {
+        if let Some(mut preparation_registry) = world.get_resource_mut::<ScenePreparationRegistry>()
+        {
+            preparation_registry.settle_readiness_token(readiness_token.token);
+        }
     }
 }
 
@@ -2036,6 +2096,7 @@ fn mark_widget_failed(world: &mut World, widget_slot_entity: Entity, failure_rea
 mod tests {
     use super::*;
     use bevy::asset::LoadState;
+    use foundation_runtime_library::scene_stack::{SceneId, SceneSource};
 
     #[test]
     fn widget_asset_path_is_authored_explicitly() {
@@ -2065,9 +2126,14 @@ mod tests {
 
         let widget_slot_entity = app
             .world_mut()
-            .spawn(LastBeaconBsnWidget {
-                asset_path: "ui/widgets/common/divider.bsn".to_string(),
-            })
+            .spawn((
+                LastBeaconBsnWidget {
+                    asset_path: "ui/widgets/common/divider.bsn".to_string(),
+                },
+                SceneOwner {
+                    scene_id: SceneId(1),
+                },
+            ))
             .id();
 
         app.update();
@@ -2083,6 +2149,48 @@ mod tests {
                 .get::<SceneContentLoading>(widget_slot_entity)
                 .is_some(),
             "widget slot should mark its owning scene as still loading"
+        );
+    }
+
+    #[test]
+    fn queueing_a_prepared_widget_registers_a_readiness_token() {
+        let mut app = test_app_with_assets();
+        app.init_resource::<ScenePreparationRegistry>();
+        app.add_systems(Update, queue_last_beacon_bsn_widgets);
+
+        let scene_source = SceneSource::bsn_scene("last-beacon/main_menu");
+        let widget_slot_entity = app
+            .world_mut()
+            .spawn((
+                LastBeaconBsnWidget {
+                    asset_path: "ui/widgets/common/divider.bsn".to_string(),
+                },
+                ScenePreparationContext {
+                    source: scene_source.clone(),
+                },
+            ))
+            .id();
+
+        app.update();
+
+        assert!(
+            app.world()
+                .get::<LastBeaconBsnWidgetReadinessToken>(widget_slot_entity)
+                .is_some(),
+            "prepared widget slot should register a Foundation readiness token"
+        );
+        assert_eq!(
+            app.world()
+                .resource::<ScenePreparationRegistry>()
+                .pending_readiness_token_count(&scene_source),
+            1,
+            "prepared scene readiness should wait for the nested widget"
+        );
+        assert!(
+            app.world()
+                .get::<SceneContentLoading>(widget_slot_entity)
+                .is_none(),
+            "off-stack prepared widgets use readiness tokens instead of active-scene loading markers"
         );
     }
 
