@@ -190,6 +190,7 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::apply_last_beacon_ui_font
                     .after(apply_pending_bsn_instances)
                     .after(ui_widgets::apply_pending_last_beacon_bsn_widgets),
+                prepare_last_beacon_placeholder_cube_scenes.after(apply_pending_bsn_instances),
                 ui_widgets::initialize_last_beacon_ui_text_inputs,
                 ui_widgets::focus_last_beacon_ui_text_inputs,
                 ui_widgets::initialize_last_beacon_ui_text_scroll_tracks,
@@ -229,7 +230,7 @@ impl Plugin for LastBeaconPlugin {
         )
         .add_systems(
             PostUpdate,
-            initialize_last_beacon_placeholder_cube_scenes
+            activate_last_beacon_placeholder_cube_scenes
                 .after(FoundationSceneStackSet::ActivateSceneContent)
                 .before(FoundationSceneStackSet::SyncVisibility),
         )
@@ -348,53 +349,61 @@ struct LastBeaconPlaceholderCubeSceneGenerated {
     camera_entity: Entity,
 }
 
-type PlaceholderCubeSceneInitQuery<'world, 'state> = Query<
+type PlaceholderCubeScenePrepareQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (Entity, &'static LastBeaconPlaceholderCubeScene),
+    Without<LastBeaconPlaceholderCubeSceneGenerated>,
+>;
+
+type PlaceholderCubeSceneActivateQuery<'world, 'state> = Query<
     'world,
     'state,
     (
         Entity,
-        &'static LastBeaconPlaceholderCubeScene,
+        &'static LastBeaconPlaceholderCubeSceneGenerated,
         Option<&'static SceneOwner>,
         Option<&'static ChildOf>,
-        Option<&'static LastBeaconPlaceholderCubeSceneGenerated>,
     ),
     Without<LastBeaconPlaceholderCubeSceneInitialized>,
 >;
 
-fn initialize_last_beacon_placeholder_cube_scenes(
+fn prepare_last_beacon_placeholder_cube_scenes(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    placeholder_scenes: PlaceholderCubeScenePrepareQuery,
+) {
+    for (placeholder_scene_entity, placeholder_scene) in &placeholder_scenes {
+        generate_placeholder_cube_scene(
+            &mut commands,
+            &mut meshes,
+            &mut materials,
+            placeholder_scene_entity,
+            placeholder_scene,
+        );
+        debug!(
+            "Prepared LastBeaconPlaceholderCubeScene generated content on {placeholder_scene_entity:?}"
+        );
+    }
+}
+
+fn activate_last_beacon_placeholder_cube_scenes(
+    mut commands: Commands,
     mut cameras: Query<&mut Camera>,
     mut visibilities: Query<&mut Visibility>,
-    placeholder_scenes: PlaceholderCubeSceneInitQuery,
+    placeholder_scenes: PlaceholderCubeSceneActivateQuery,
     scene_owners: Query<&SceneOwner>,
 ) {
-    for (placeholder_scene_entity, placeholder_scene, scene_owner, parent_link, generated_scene) in
-        &placeholder_scenes
+    for (placeholder_scene_entity, generated_scene, scene_owner, parent_link) in &placeholder_scenes
     {
-        let generated_scene = if let Some(generated_scene) = generated_scene {
-            *generated_scene
-        } else {
-            generate_placeholder_cube_scene(
-                &mut commands,
-                &mut meshes,
-                &mut materials,
-                placeholder_scene_entity,
-                placeholder_scene,
-            )
-        };
-
         let Some(effective_scene_owner) =
             effective_placeholder_scene_owner(scene_owner.copied(), parent_link, &scene_owners)
         else {
-            debug!(
-                "Prepared LastBeaconPlaceholderCubeScene on {placeholder_scene_entity:?}; waiting for active scene ownership"
-            );
             continue;
         };
         debug!(
-            "Initializing LastBeaconPlaceholderCubeScene on {placeholder_scene_entity:?} with scene_owner={effective_scene_owner:?}"
+            "Activating LastBeaconPlaceholderCubeScene on {placeholder_scene_entity:?} with scene_owner={effective_scene_owner:?}"
         );
 
         for generated_entity in [
@@ -642,7 +651,8 @@ mod tests {
         app.add_plugins(MinimalPlugins);
         app.init_resource::<Assets<Mesh>>();
         app.init_resource::<Assets<StandardMaterial>>();
-        app.add_systems(Update, initialize_last_beacon_placeholder_cube_scenes);
+        app.add_systems(Update, prepare_last_beacon_placeholder_cube_scenes);
+        app.add_systems(PostUpdate, activate_last_beacon_placeholder_cube_scenes);
 
         app.world_mut().spawn(LastBeaconPlaceholderCubeScene {
             cube_color: "green".to_string(),
@@ -685,7 +695,8 @@ mod tests {
         app.add_plugins(MinimalPlugins);
         app.init_resource::<Assets<Mesh>>();
         app.init_resource::<Assets<StandardMaterial>>();
-        app.add_systems(Update, initialize_last_beacon_placeholder_cube_scenes);
+        app.add_systems(Update, prepare_last_beacon_placeholder_cube_scenes);
+        app.add_systems(PostUpdate, activate_last_beacon_placeholder_cube_scenes);
 
         let bsn_root_entity = app
             .world_mut()
@@ -731,7 +742,8 @@ mod tests {
         app.add_plugins(MinimalPlugins);
         app.init_resource::<Assets<Mesh>>();
         app.init_resource::<Assets<StandardMaterial>>();
-        app.add_systems(Update, initialize_last_beacon_placeholder_cube_scenes);
+        app.add_systems(Update, prepare_last_beacon_placeholder_cube_scenes);
+        app.add_systems(PostUpdate, activate_last_beacon_placeholder_cube_scenes);
 
         let placeholder_entity = app
             .world_mut()
@@ -783,7 +795,8 @@ mod tests {
         app.add_plugins(MinimalPlugins);
         app.init_resource::<Assets<Mesh>>();
         app.init_resource::<Assets<StandardMaterial>>();
-        app.add_systems(Update, initialize_last_beacon_placeholder_cube_scenes);
+        app.add_systems(Update, prepare_last_beacon_placeholder_cube_scenes);
+        app.add_systems(PostUpdate, activate_last_beacon_placeholder_cube_scenes);
 
         let expected_scene_owner = SceneOwner {
             scene_id: SceneId(9),
