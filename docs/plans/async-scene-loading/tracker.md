@@ -23,10 +23,11 @@
 - Engine work must be committed inside `engine/` before the root repository commits the updated `engine` submodule pointer.
 
 ## Repository State
-- Root commit/push state: `Pending; branch created locally, no commits yet`
-- Engine commit/push state: `Phase 1 commit f91712e pushed to origin/feature/async-scene-loading`
-- Root submodule pointer update: `Pending; will be updated once a root commit needs to bind a specific engine commit`
-- Root pull request state: `Pending`
+- Root commit/push state: `Phase 2 commit 187d843 pushed to origin/feature/async-scene-loading`
+- Engine commit/push state: `Phase 1 commit f91712e, Phase 2 commit d8b6dcd pushed to origin/feature/async-scene-loading`
+- Bound engine commit hash: `d8b6dcd (bound in root commit 187d843)`
+- Root submodule pointer update: `Committed in 187d843, bound to engine d8b6dcd`
+- Root pull request state: `Pending — will open once all phases land`
 - Engine pull request state: `Pending — will open once all engine phases land`
 
 ## Background
@@ -84,27 +85,31 @@ This feature replaces the approach previously attempted on `feature/scene-pop-in
 - Manual smoke test: launched via `cargo run --manifest-path game/Cargo.toml -- --log-inline`, ran the full 20s window, no ERROR lines, no early exit — matches the healthy `dev`-baseline log pattern exactly.
 
 ## Phase 3: `SceneLoadMode` and blocking transitions
-**Status:** Planned
+**Status:** Complete
 **Goal:** A scene open can request `Blocking` mode; the stack mutation is held until the target (and its blocking preload dependencies) are ready, without ever stalling the frame loop.
 
 ### Tasks
-- [ ] Add `SceneLoadMode` (`Streaming` default, `Blocking`) to `OpenSceneOptions`.
-  - Status: Planned
+- [x] Add `SceneLoadMode` (`Streaming` default, `Blocking`) to `OpenSceneOptions`.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Implement off-stack spawn + pending-transition holding for `Blocking` opens; activate (assign `SceneOwner`, push stack entry) once ready.
-  - Status: Planned
+- [x] Implement off-stack spawn + pending-transition holding for `Blocking` opens; activate (assign `SceneOwner`, push stack entry) once ready.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Failure handling: a failed blocking target resolves the pending transition to an explicit failure rather than waiting forever.
-  - Status: Planned
+  - Notes: `queue_pending_scene_transition` reserves a `SceneId` via the existing `allocate_id`, emits `SceneLoadRequested` immediately (content starts loading off-stack, tagged `SceneOwner{id}` by the existing BSN bridge — no new spawn path needed), and records a `PendingSceneTransition`. `advance_pending_scene_transitions` (new system, chained right after `process_scene_commands` in `PostUpdate`) activates once no entity owned by that id still carries `SceneContentLoading`.
+- [x] Failure handling: a failed blocking target resolves the pending transition to an explicit failure rather than waiting forever.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Tests: blocking open does not appear on the stack until ready; stack stays interactive/rendering during the wait; failed blocking target does not hang the pending transition.
-  - Status: Planned
+  - Notes: No separate failure path needed — Phase 2 already removes `SceneContentLoading` on both success and failure (a failed load is a "settled" state), so `advance_pending_scene_transitions`' single readiness check naturally activates a failed load too, surfacing degraded content instead of hanging.
+- [x] Tests: blocking open does not appear on the stack until ready; stack stays interactive/rendering during the wait; failed blocking target does not hang the pending transition.
+  - Status: Complete
   - Repository: `engine`
+  - Notes: 4 new tests. `clear_stack`/`close_current` are deferred to activation time too (tested via `clear_and_open_blocking_defers_clearing_until_activation`), otherwise the current scene would go blank while the replacement is still loading — exactly the freeze this mode exists to prevent.
 
 ### Validation
-- Engine validation: `Pending`
-- Documentation generation: `Pending — engine/docs/scene-system.md load-mode section`
+- Engine validation: `Passed: cargo test -p foundation-runtime-library --all-features (106 passed), cargo clippy --all-targets --all-features -D warnings (clean), cargo fmt --all -- --check (clean)`
+- Documentation generation: `Waived for this phase — consolidated into Phase 6's engine/docs/scene-system.md update`
 - User confirmation: `Not required until phase handoff unless implementation discovers scope changes`
+- Manual smoke test: game (Streaming mode still default/unaffected) launched cleanly, no ERROR lines, no early exit.
 
 ## Phase 4: Per-scene preload declarations
 **Status:** Planned
@@ -191,3 +196,4 @@ This feature replaces the approach previously attempted on `feature/scene-pop-in
 ## Progress Log
 - `2026-08-23`: Diagnosed and root-caused the black-screen hang on `feature/scene-pop-in-investigation` (self-inflicted `AssetEvent::Modified` livelock between `apply_pending_bsn_instances`'s resolve-caching and `replace_reloaded_bsn_instances`'s hot-reload detection). Attempted two forward-fixes on that branch; the second (time-window suppression) was in progress when the user asked to instead verify `dev` directly.
 - `2026-08-23`: Verified `dev` boots cleanly. Reset root and engine to `dev` tip; abandoned branch's in-progress fix preserved in `engine` stash only. Created `feature/async-scene-loading` from `dev` in both repositories. Read `dev`'s current scene-stack/BSN baseline and confirmed the same hot-reload false positive exists there too, plus confirmed no readiness/pop-in gating exists on `dev` at all currently. Clarified design scope with the user (two-question round: no automatic preload cache/refill for v1; preload dependencies are background-only, never stack entries) and captured the full blocking/streaming/dependency design in `plan.md`. Awaiting user approval to begin implementation.
+- `2026-08-23`: User approved proceeding in full. Implemented Phase 1 (TDD: 3 new/updated engine tests, `FoundationBsnSelfResolveSuppression` grace-window fix) and Phase 2 (`SceneContentLoading` marker, hidden-until-applied BSN roots, standalone-instance reveal, widget readiness participation; 6 new engine tests, 4 new game tests). All engine (102) and game (13 lib + 2 integration) tests pass; clippy and fmt clean on both. Manual smoke test confirmed no regression. Engine commits `f91712e` (Phase 1) and `d8b6dcd` (Phase 2) pushed; root commits `187d843` (Phase 2, binds engine `d8b6dcd`) pushed. Continuing to Phase 3.
