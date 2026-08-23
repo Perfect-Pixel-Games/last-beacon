@@ -72,6 +72,30 @@ pub fn register_last_beacon_bsn_scenes(mut registry: ResMut<FoundationBsnSceneRe
     registry.register_scene(PAUSE_MENU_SCENE, "scenes/pause_menu.bsn");
 }
 
+/// Registers LastBeacon scene preload relationships so likely next scenes stay warm.
+///
+/// Registering a preload target only starts warming its `.bsn` asset ahead of
+/// time; it does not spawn scene content or make that scene instant to open.
+/// See `ScenePreloadRegistry`'s docs for why this stays intentionally simple.
+pub fn register_last_beacon_scene_preloads(mut preload_registry: ResMut<ScenePreloadRegistry>) {
+    // The player can pause at any time during gameplay, so keep the pause
+    // menu warm from the moment gameplay starts.
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(GAMEPLAY_LEVEL_SCENE),
+        [ScenePreloadTarget::background(SceneSource::bsn_scene(
+            PAUSE_MENU_SCENE.to_string(),
+        ))],
+    );
+    // Pausing is the most common path into settings, so keep options warm
+    // from the moment the pause menu appears too.
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(PAUSE_MENU_SCENE),
+        [ScenePreloadTarget::background(SceneSource::bsn_scene(
+            OPTIONS_MENU_SCENE.to_string(),
+        ))],
+    );
+}
+
 /// Opens the first LastBeacon scene-stack entry.
 pub fn open_initial_scene(mut scene_commands: MessageWriter<SceneCommand>) {
     let startup_scene_commands = startup_scene_commands_or_default(
@@ -281,6 +305,28 @@ mod tests {
         assert_eq!(
             registry.resolve_scene_path(UI_PLAYGROUND_SCENE),
             "scenes/ui_playground.bsn"
+        );
+    }
+
+    #[test]
+    fn scene_preload_registrations_keep_pause_and_options_warm() {
+        let mut app = App::new();
+        app.insert_resource(ScenePreloadRegistry::default());
+        app.add_systems(Startup, register_last_beacon_scene_preloads);
+        app.update();
+
+        let preload_registry = app.world().resource::<ScenePreloadRegistry>();
+        assert_eq!(
+            preload_registry.preload_targets(&SceneSource::bsn_scene(GAMEPLAY_LEVEL_SCENE)),
+            &[ScenePreloadTarget::background(SceneSource::bsn_scene(
+                PAUSE_MENU_SCENE
+            ))]
+        );
+        assert_eq!(
+            preload_registry.preload_targets(&SceneSource::bsn_scene(PAUSE_MENU_SCENE)),
+            &[ScenePreloadTarget::background(SceneSource::bsn_scene(
+                OPTIONS_MENU_SCENE
+            ))]
         );
     }
 }

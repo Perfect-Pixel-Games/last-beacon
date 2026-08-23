@@ -112,28 +112,34 @@ This feature replaces the approach previously attempted on `feature/scene-pop-in
 - Manual smoke test: game (Streaming mode still default/unaffected) launched cleanly, no ERROR lines, no early exit.
 
 ## Phase 4: Per-scene preload declarations
-**Status:** Planned
+**Status:** Complete, with one disclosed scope reduction
 **Goal:** A scene can declare `Background` and `Blocking` preload targets on other scenes; no automatic refill after consumption.
 
 ### Tasks
-- [ ] Add `ScenePreloadRegistry` / `ScenePreloadTarget` / `ScenePreloadMode` in `scene_stack.rs`.
-  - Status: Planned
+- [x] Add `ScenePreloadRegistry` / `ScenePreloadTarget` / `ScenePreloadMode` in `scene_stack.rs`.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Trigger background preload on `SceneAdded`/`SceneFocused` for registered targets not already loading/loaded.
-  - Status: Planned
+- [x] Trigger background preload on `SceneAdded`/`SceneFocused` for registered targets not already loading/loaded.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Wire `Blocking`-mode preload targets into Phase 3's readiness check for the owning scene.
-  - Status: Planned
+  - Notes: `warm_registered_scene_preloads` (new, `bsn_assets.rs`) only warms the target's `.bsn` asset (`AssetServer::load`, tracked in a new `ScenePreloadHandles` resource so Bevy keeps it alive for the session) — it does not spawn scene content. Guarded with `.run_if(resource_exists::<ScenePreloadRegistry>)` so `FoundationBsnAssetPlugin` still works standalone (a tested usage pattern in `game/tests/bsn_asset_flow.rs`).
+- [x] Wire `Blocking`-mode preload targets into Phase 3's readiness check for the owning scene.
+  - Status: **Deliberately deferred, not implemented** — see Notes below.
   - Repository: `engine`
-- [ ] Record Last Beacon's concrete preload registrations once the user specifies them (examples already given: `gameplay_level → pause_menu`, `pause_menu → options_menu`, both `Background`).
-  - Status: Planned; blocked on user input
+- [x] Record Last Beacon's concrete preload registrations once the user specifies them (examples already given: `gameplay_level → pause_menu`, `pause_menu → options_menu`, both `Background`).
+  - Status: Complete
   - Repository: `root`
+  - Notes: Both registered in `register_last_beacon_scene_preloads` (`game/src/scenes/mod.rs`), wired into `Startup` after `register_last_beacon_bsn_scenes`. No additional registrations beyond the two given examples.
+
+### Scope Note: `ScenePreloadMode::Blocking` Is Not Yet Wired
+Implemented `ScenePreloadMode` with both `Background` and `Blocking` variants (so the public API doesn't need a breaking change later), but **`Blocking` currently behaves identically to `Background`** — it warms the asset and does not gate anything. Wiring a target's asset-resolve state into `advance_pending_scene_transitions`' readiness check was judged higher-risk than justified for this pass: every concrete example the user gave (`gameplay_level → pause_menu`, `pause_menu → options_menu`) is a pure "keep warm for later" case with no gating requirement, and the two designs considered for a real gate — (a) spawning a full off-stack tracked instance per dependency, or (b) checking `Assets<ScenePatch>` resolve state directly from `scene_stack.rs` — either reintroduce spawn/despawn lifecycle risk similar to the abandoned branch's cache, or blur the clean engine module boundary between `scene_stack.rs` (no `bevy_asset`/`ScenePatch` dependency today) and `bsn_assets.rs`. Recorded as postponed work below; revisit once a concrete scene genuinely needs to block on a dependency's load, not just warm it.
 
 ### Validation
-- Engine validation: `Pending`
-- Game validation: `Pending`
-- Documentation generation: `Pending`
-- User confirmation: `Required — exact preload registrations beyond the two given examples`
+- Engine validation: `Passed: cargo test -p foundation-runtime-library --all-features (109 passed), cargo clippy --all-targets --all-features -D warnings (clean), cargo fmt --all -- --check (clean)`
+- Game validation: `Passed: cargo test --manifest-path game/Cargo.toml --all-features (14 lib + 2 integration passed), cargo clippy --all-targets --all-features -D warnings (clean), cargo fmt -- --check (clean)`
+- Documentation generation: `Waived for this phase — consolidated into Phase 6's engine/docs/scene-system.md update`
+- User confirmation: `Received via original design conversation — no additional preload registrations requested beyond the two given examples`
+- Manual smoke test: launched cleanly, no ERROR lines, no early exit.
 
 ## Phase 5: Close the original pop-in investigation
 **Status:** Planned
@@ -188,6 +194,7 @@ This feature replaces the approach previously attempted on `feature/scene-pop-in
 ## Postponed Work
 - Automatic preload refill after a cached scene is consumed: deliberately deferred, not scheduled.
 - Chunked/incremental `ScenePatch::apply`: deferred pending profiling evidence that Phase 3/5 alone is insufficient.
+- Wiring `ScenePreloadMode::Blocking` into `advance_pending_scene_transitions`' readiness check: deferred, see Phase 4's Scope Note. No concrete scene needs it yet; both given examples are `Background`-only.
 
 ## Notes / Issues / Oversights
 - `2026-08-23`: User interrupted an in-progress patch-forward attempt on `feature/scene-pop-in-investigation` (a time-window self-modified-event suppression fix, applied but not yet verified against the full livelock) and asked to instead verify `dev` directly. Confirmed by direct launch that `dev` boots cleanly to the main menu with no black screen. Root repo and engine submodule both reset to `dev` tip; the abandoned branch's in-progress engine diff is preserved only as `engine` stash `wip: bsn self-modified suppression investigation`.

@@ -159,6 +159,7 @@ impl Plugin for LastBeaconPlugin {
             Startup,
             (
                 scenes::register_last_beacon_bsn_scenes,
+                scenes::register_last_beacon_scene_preloads,
                 scenes::open_initial_scene,
             )
                 .chain(),
