@@ -4,10 +4,10 @@
 - Feature slug: `bsn-parser-panic-safety`
 - Feature area: `multi-area`
 - Primary area: `engine`
-- Root branch: `feature/bsn-parser-panic-safety`
-- Engine branch: `feature/bsn-parser-panic-safety`
-- Engine submodule pointer: `6faaf445edbe8fa1ba1548cec72a1d0c5663a669` (current, bound by `feature/async-scene-loading`; this feature branches engine from `dev` at `1bc59f9a0039dfe412b735c869a90f38a0d58582` instead, since the async-scene-loading work is unrelated and not yet merged)
-- Status: `Planned`
+- Root branch: `feature/async-scene-loading` (consolidated; originally implemented on a dedicated `feature/bsn-parser-panic-safety` branch, then cherry-picked onto `feature/async-scene-loading` at the user's request so only one branch is active at a time)
+- Engine branch: `feature/async-scene-loading` (same consolidation)
+- Engine submodule pointer: `004f7f1` (fix commit `004f7f1` cherry-picked from the original `feature/bsn-parser-panic-safety` commit `3b32ed8` onto `feature/async-scene-loading`)
+- Status: `Complete`
 - Planning model: `gpt-5.5`
 - Implementation model: `gpt-5.4`
 - Review model: `gpt-5.5`
