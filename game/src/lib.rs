@@ -174,8 +174,6 @@ impl Plugin for LastBeaconPlugin {
                 // newly-discovered widget slot already carries `SceneOwner`
                 // before it gains `SceneContentLoading`.
                 ui_widgets::queue_last_beacon_bsn_widgets.after(propagate_loaded_bsn_scene_owners),
-                ui_widgets::apply_last_beacon_ui_font,
-                ui_widgets::reveal_last_beacon_text_once_fonts_load,
                 ui_widgets::initialize_last_beacon_ui_text_inputs,
                 ui_widgets::focus_last_beacon_ui_text_inputs,
                 ui_widgets::initialize_last_beacon_ui_text_scroll_tracks,
@@ -208,6 +206,21 @@ impl Plugin for LastBeaconPlugin {
         .add_systems(
             Update,
             ui_widgets::apply_pending_last_beacon_bsn_widgets.run_if(foundation_is_not_paused),
+        )
+        .add_systems(
+            Update,
+            // Must run after both the engine's top-level BSN apply and Last
+            // Beacon's nested widget apply, or text created by either this
+            // same frame keeps its unauthored default font for one full
+            // frame before this system corrects it -- a visible font pop
+            // on every scene open, not just the first one.
+            (
+                ui_widgets::apply_last_beacon_ui_font,
+                ui_widgets::reveal_last_beacon_text_once_fonts_load,
+            )
+                .chain()
+                .after(apply_pending_bsn_instances)
+                .after(ui_widgets::apply_pending_last_beacon_bsn_widgets),
         )
         .add_systems(
             PostUpdate,
