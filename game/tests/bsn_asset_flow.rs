@@ -237,6 +237,66 @@ fn scene_text_never_shows_the_wrong_font_even_transiently() {
     );
 }
 
+#[test]
+fn widget_bearing_scene_still_reveals_while_gameplay_is_paused() {
+    // Regression test: `apply_pending_last_beacon_bsn_widgets` clears the
+    // `SceneContentLoading` marker nested BSN widgets carry while pending.
+    // If that system is gated behind `foundation_is_not_paused`, any scene
+    // opened while paused -- like the options menu opened from the pause
+    // menu -- that contains a nested widget (options_menu.bsn's divider)
+    // never finishes loading and stays hidden forever, since gameplay
+    // stays paused for as long as that scene is open.
+    let _bsn_asset_test_guard = BSN_ASSET_TEST_LOCK
+        .lock()
+        .expect("BSN asset test lock should not be poisoned");
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins);
+    app.add_plugins(bevy::asset::AssetPlugin {
+        file_path: asset_root().to_string_lossy().to_string(),
+        ..default()
+    });
+    app.add_plugins(bevy::scene::ScenePlugin);
+    app.add_message::<SceneLoadRequested>();
+    app.add_plugins(FoundationBsnAssetPlugin);
+    register_bsn_test_types(&mut app);
+    app.init_resource::<FoundationPauseState>();
+    app.world_mut()
+        .resource_mut::<FoundationPauseState>()
+        .paused = true;
+    app.add_systems(
+        Update,
+        (
+            queue_last_beacon_bsn_widgets,
+            apply_pending_last_beacon_bsn_widgets,
+        )
+            .chain()
+            .after(propagate_loaded_bsn_scene_owners),
+    );
+
+    let scene_key = "last-beacon/options_menu";
+    app.world_mut()
+        .resource_mut::<FoundationBsnSceneRegistry>()
+        .register_scene(scene_key, "scenes/options_menu.bsn");
+    app.world_mut().write_message(SceneLoadRequested {
+        scene_id: SceneId(11),
+        source: SceneSource::bsn_scene(scene_key),
+    });
+
+    for _frame_number in 0..600 {
+        app.update();
+    }
+
+    let still_loading = app
+        .world_mut()
+        .query::<&SceneContentLoading>()
+        .iter(app.world())
+        .count();
+    assert_eq!(
+        still_loading, 0,
+        "a scene opened while gameplay is paused must still finish loading its nested widgets and become visible"
+    );
+}
+
 fn register_bsn_test_types(app: &mut App) {
     app.register_type::<Node>()
         .register_type::<Val>()

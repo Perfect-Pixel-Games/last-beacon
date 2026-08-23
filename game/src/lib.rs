@@ -205,7 +205,13 @@ impl Plugin for LastBeaconPlugin {
         )
         .add_systems(
             Update,
-            ui_widgets::apply_pending_last_beacon_bsn_widgets.run_if(foundation_is_not_paused),
+            // Not gated by `foundation_is_not_paused`: this applies nested
+            // BSN widget content, which UI opened while paused (e.g. the
+            // options menu opened from the pause menu) still needs in order
+            // to finish loading and become visible. Gating it on pause left
+            // any such scene hidden forever, since gameplay stays paused for
+            // as long as that scene is open.
+            ui_widgets::apply_pending_last_beacon_bsn_widgets,
         )
         .add_systems(
             Update,
