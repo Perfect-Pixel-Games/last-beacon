@@ -1,18 +1,21 @@
 use std::sync::Mutex;
 
-use bevy::{prelude::*, scene::ScenePatch};
+use bevy::{prelude::*, scene::ScenePatch, text::FontSource};
 use foundation_runtime_library::prelude::*;
 use last_beacon::{
     asset_root,
     scenes::LastBeaconBeaconPageButton,
     ui_widgets::{
+        apply_last_beacon_ui_font, apply_pending_last_beacon_bsn_widgets,
+        queue_last_beacon_bsn_widgets, reveal_last_beacon_text_once_fonts_load,
         LastBeaconBeaconPrimaryButton, LastBeaconBeaconTabButton, LastBeaconBsnWidget,
         LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiDropdownIcon,
-        LastBeaconUiDropdownPanel, LastBeaconUiDropdownToggle, LastBeaconUiNumberInput,
-        LastBeaconUiRadioIcon, LastBeaconUiSlider, LastBeaconUiSliderFill, LastBeaconUiSymbolIcon,
-        LastBeaconUiTab, LastBeaconUiTabPanel, LastBeaconUiTextHorizontalScrollThumb,
-        LastBeaconUiTextHorizontalScrollTrack, LastBeaconUiTextInput, LastBeaconUiTextScrollThumb,
-        LastBeaconUiTextScrollTrack, LastBeaconUiValueButton, LastBeaconUiValueText,
+        LastBeaconUiDropdownPanel, LastBeaconUiDropdownToggle, LastBeaconUiFontHandles,
+        LastBeaconUiNumberInput, LastBeaconUiRadioIcon, LastBeaconUiSlider, LastBeaconUiSliderFill,
+        LastBeaconUiSymbolIcon, LastBeaconUiTab, LastBeaconUiTabPanel,
+        LastBeaconUiTextHorizontalScrollThumb, LastBeaconUiTextHorizontalScrollTrack,
+        LastBeaconUiTextInput, LastBeaconUiTextScrollThumb, LastBeaconUiTextScrollTrack,
+        LastBeaconUiValueButton, LastBeaconUiValueText,
     },
     LastBeaconHideWhenSettingsOpen, LastBeaconPlaceholderCubeScene,
 };
@@ -143,6 +146,154 @@ fn converted_pixel_perfect_scene_spawns_authored_text_through_foundation_bridge(
             text == "Pixel Perfect" && *scene_owner == Some(SceneOwner { scene_id: SceneId(7) })
         }),
         "the Foundation BSN bridge should spawn the authored Pixel Perfect text with scene ownership; found {texts:?}",
+    );
+}
+
+#[test]
+fn scene_text_never_shows_the_wrong_font_even_transiently() {
+    // Regression test: `apply_last_beacon_ui_font` must be ordered after both
+    // the engine's top-level BSN apply and Last Beacon's nested widget apply.
+    // Without that ordering, text created by either system in a given frame
+    // keeps its unauthored default font for one full frame before this
+    // system corrects it -- a real, per-transition font pop, not just a
+    // first-launch one. Checks the invariant every frame, not just at the
+    // end, since a one-frame lag would otherwise pass an eventually-correct
+    // assertion.
+    let _bsn_asset_test_guard = BSN_ASSET_TEST_LOCK
+        .lock()
+        .expect("BSN asset test lock should not be poisoned");
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins);
+    app.add_plugins(bevy::asset::AssetPlugin {
+        file_path: asset_root().to_string_lossy().to_string(),
+        ..default()
+    });
+    app.add_plugins(bevy::scene::ScenePlugin);
+    app.add_plugins(bevy::text::TextPlugin);
+    app.add_message::<SceneLoadRequested>();
+    app.add_plugins(FoundationBsnAssetPlugin);
+    register_bsn_test_types(&mut app);
+    app.init_resource::<LastBeaconUiFontHandles>();
+    app.add_systems(
+        Update,
+        (
+            queue_last_beacon_bsn_widgets,
+            apply_pending_last_beacon_bsn_widgets,
+        )
+            .chain()
+            .after(propagate_loaded_bsn_scene_owners),
+    );
+    app.add_systems(
+        Update,
+        (
+            apply_last_beacon_ui_font,
+            reveal_last_beacon_text_once_fonts_load,
+        )
+            .chain()
+            .after(apply_pending_bsn_instances)
+            .after(apply_pending_last_beacon_bsn_widgets),
+    );
+
+    let scene_key = "last-beacon/main_menu";
+    app.world_mut()
+        .resource_mut::<FoundationBsnSceneRegistry>()
+        .register_scene(scene_key, "scenes/main_menu.bsn");
+    app.world_mut().write_message(SceneLoadRequested {
+        scene_id: SceneId(9),
+        source: SceneSource::bsn_scene(scene_key),
+    });
+
+    let mut text_entities_seen = 0usize;
+    for _frame_number in 0..600 {
+        app.update();
+
+        let font_handles = app.world().resource::<LastBeaconUiFontHandles>();
+        let expected_ui_font_id = font_handles.ui_font.id();
+        let expected_symbol_font_id = font_handles.symbol_font.id();
+        let mut text_font_query = app
+            .world_mut()
+            .query::<(&TextFont, Option<&LastBeaconUiSymbolIcon>)>();
+        for (text_font, symbol_icon) in text_font_query.iter(app.world()) {
+            text_entities_seen += 1;
+            let expected_font_id = if symbol_icon.is_some() {
+                expected_symbol_font_id
+            } else {
+                expected_ui_font_id
+            };
+            let FontSource::Handle(actual_handle) = &text_font.font else {
+                panic!("expected every text entity to use a font handle");
+            };
+            assert_eq!(
+                actual_handle.id(),
+                expected_font_id,
+                "text must never show the wrong font, even for a single frame"
+            );
+        }
+    }
+
+    assert!(
+        text_entities_seen > 0,
+        "the test scene should have produced at least one text entity to check"
+    );
+}
+
+#[test]
+fn widget_bearing_scene_still_reveals_while_gameplay_is_paused() {
+    // Regression test: `apply_pending_last_beacon_bsn_widgets` clears the
+    // `SceneContentLoading` marker nested BSN widgets carry while pending.
+    // If that system is gated behind `foundation_is_not_paused`, any scene
+    // opened while paused -- like the options menu opened from the pause
+    // menu -- that contains a nested widget (options_menu.bsn's divider)
+    // never finishes loading and stays hidden forever, since gameplay
+    // stays paused for as long as that scene is open.
+    let _bsn_asset_test_guard = BSN_ASSET_TEST_LOCK
+        .lock()
+        .expect("BSN asset test lock should not be poisoned");
+    let mut app = App::new();
+    app.add_plugins(MinimalPlugins);
+    app.add_plugins(bevy::asset::AssetPlugin {
+        file_path: asset_root().to_string_lossy().to_string(),
+        ..default()
+    });
+    app.add_plugins(bevy::scene::ScenePlugin);
+    app.add_message::<SceneLoadRequested>();
+    app.add_plugins(FoundationBsnAssetPlugin);
+    register_bsn_test_types(&mut app);
+    app.init_resource::<FoundationPauseState>();
+    app.world_mut()
+        .resource_mut::<FoundationPauseState>()
+        .paused = true;
+    app.add_systems(
+        Update,
+        (
+            queue_last_beacon_bsn_widgets,
+            apply_pending_last_beacon_bsn_widgets,
+        )
+            .chain()
+            .after(propagate_loaded_bsn_scene_owners),
+    );
+
+    let scene_key = "last-beacon/options_menu";
+    app.world_mut()
+        .resource_mut::<FoundationBsnSceneRegistry>()
+        .register_scene(scene_key, "scenes/options_menu.bsn");
+    app.world_mut().write_message(SceneLoadRequested {
+        scene_id: SceneId(11),
+        source: SceneSource::bsn_scene(scene_key),
+    });
+
+    for _frame_number in 0..600 {
+        app.update();
+    }
+
+    let still_loading = app
+        .world_mut()
+        .query::<&SceneContentLoading>()
+        .iter(app.world())
+        .count();
+    assert_eq!(
+        still_loading, 0,
+        "a scene opened while gameplay is paused must still finish loading its nested widgets and become visible"
     );
 }
 

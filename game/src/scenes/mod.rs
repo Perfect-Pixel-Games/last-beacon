@@ -72,6 +72,51 @@ pub fn register_last_beacon_bsn_scenes(mut registry: ResMut<FoundationBsnSceneRe
     registry.register_scene(PAUSE_MENU_SCENE, "scenes/pause_menu.bsn");
 }
 
+/// Registers LastBeacon scene preload relationships so likely next scenes stay warm.
+///
+/// Registering a preload target only starts warming its `.bsn` asset ahead of
+/// time; it does not spawn scene content or make that scene instant to open.
+/// See `ScenePreloadRegistry`'s docs for why this stays intentionally simple.
+pub fn register_last_beacon_scene_preloads(mut preload_registry: ResMut<ScenePreloadRegistry>) {
+    // The player can pause at any time during gameplay, so keep the pause
+    // menu warm from the moment gameplay starts.
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(GAMEPLAY_LEVEL_SCENE),
+        [ScenePreloadTarget::background(SceneSource::bsn_scene(
+            PAUSE_MENU_SCENE.to_string(),
+        ))],
+    );
+    // Pausing is the most common path into settings, so keep options warm
+    // from the moment the pause menu appears too.
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(PAUSE_MENU_SCENE),
+        [ScenePreloadTarget::background(SceneSource::bsn_scene(
+            OPTIONS_MENU_SCENE.to_string(),
+        ))],
+    );
+    // Settings is one tap away from the main menu too.
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(MAIN_MENU_SCENE),
+        [ScenePreloadTarget::background(SceneSource::bsn_scene(
+            OPTIONS_MENU_SCENE.to_string(),
+        ))],
+    );
+    // The hangar is the hub for every other Beacon page, so keep them all
+    // warm from the moment the hangar appears.
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(HANGAR_SCENE),
+        [
+            ScenePreloadTarget::background(SceneSource::bsn_scene(DASHBOARD_SCENE.to_string())),
+            ScenePreloadTarget::background(SceneSource::bsn_scene(GARAGE_SCENE.to_string())),
+            ScenePreloadTarget::background(SceneSource::bsn_scene(
+                MISSION_CONTROL_SCENE.to_string(),
+            )),
+            ScenePreloadTarget::background(SceneSource::bsn_scene(FABRICATION_SCENE.to_string())),
+            ScenePreloadTarget::background(SceneSource::bsn_scene(SILO_UPGRADES_SCENE.to_string())),
+        ],
+    );
+}
+
 /// Opens the first LastBeacon scene-stack entry.
 pub fn open_initial_scene(mut scene_commands: MessageWriter<SceneCommand>) {
     let startup_scene_commands = startup_scene_commands_or_default(
@@ -122,16 +167,22 @@ pub fn spawn_requested_last_beacon_scene_drivers(
                     BEVY_SPLASH_SCENE,
                     false,
                     true,
+                    SceneLoadMode::Streaming,
                     scene_owner,
                 );
             }
             Some(BEVY_SPLASH_SCENE) => {
+                // Blocking closes the original scene-pop-in investigation:
+                // the splash only hands off once main_menu.bsn (including
+                // its nested widgets) has fully applied, so the menu never
+                // shows a partially built or unstyled frame.
                 spawn_splash_driver(
                     &mut commands,
                     "Bevy",
                     MAIN_MENU_SCENE,
                     true,
                     false,
+                    SceneLoadMode::Blocking,
                     scene_owner,
                 );
             }
@@ -145,12 +196,14 @@ pub fn spawn_requested_last_beacon_scene_drivers(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn spawn_splash_driver(
     commands: &mut Commands,
     splash_name: &'static str,
     next_scene_key: &'static str,
     reset_stack_for_next_scene: bool,
     replace_current_scene: bool,
+    load_mode: SceneLoadMode,
     scene_owner: SceneOwner,
 ) {
     let splash_timings = FoundationSplashTimings::new(0.75, 1.0, 0.75);
@@ -160,6 +213,7 @@ fn spawn_splash_driver(
         next_scene_key: next_scene_key.to_string(),
         reset_stack_for_next_scene,
         replace_current_scene,
+        load_mode,
     };
 
     commands.spawn((Name::new(splash_name), splash_screen, scene_owner));
@@ -282,5 +336,115 @@ mod tests {
             registry.resolve_scene_path(UI_PLAYGROUND_SCENE),
             "scenes/ui_playground.bsn"
         );
+    }
+
+    #[test]
+    fn scene_preload_registrations_keep_pause_and_options_warm() {
+        let mut app = App::new();
+        app.insert_resource(ScenePreloadRegistry::default());
+        app.add_systems(Startup, register_last_beacon_scene_preloads);
+        app.update();
+
+        let preload_registry = app.world().resource::<ScenePreloadRegistry>();
+        assert_eq!(
+            preload_registry.preload_targets(&SceneSource::bsn_scene(GAMEPLAY_LEVEL_SCENE)),
+            &[ScenePreloadTarget::background(SceneSource::bsn_scene(
+                PAUSE_MENU_SCENE
+            ))]
+        );
+        assert_eq!(
+            preload_registry.preload_targets(&SceneSource::bsn_scene(PAUSE_MENU_SCENE)),
+            &[ScenePreloadTarget::background(SceneSource::bsn_scene(
+                OPTIONS_MENU_SCENE
+            ))]
+        );
+    }
+
+    #[test]
+    fn main_menu_preloads_options_menu() {
+        let mut app = App::new();
+        app.insert_resource(ScenePreloadRegistry::default());
+        app.add_systems(Startup, register_last_beacon_scene_preloads);
+        app.update();
+
+        let preload_registry = app.world().resource::<ScenePreloadRegistry>();
+        assert_eq!(
+            preload_registry.preload_targets(&SceneSource::bsn_scene(MAIN_MENU_SCENE)),
+            &[ScenePreloadTarget::background(SceneSource::bsn_scene(
+                OPTIONS_MENU_SCENE
+            ))]
+        );
+    }
+
+    #[test]
+    fn hangar_preloads_every_other_beacon_page() {
+        let mut app = App::new();
+        app.insert_resource(ScenePreloadRegistry::default());
+        app.add_systems(Startup, register_last_beacon_scene_preloads);
+        app.update();
+
+        let preload_registry = app.world().resource::<ScenePreloadRegistry>();
+        let hangar_targets =
+            preload_registry.preload_targets(&SceneSource::bsn_scene(HANGAR_SCENE));
+        let mut hangar_target_sources = hangar_targets
+            .iter()
+            .map(|target| target.source.clone())
+            .collect::<Vec<_>>();
+        hangar_target_sources.sort_by_key(|source| match source {
+            SceneSource::BsnScene { key } => key.clone(),
+            SceneSource::Runtime { key } => key.0.clone(),
+        });
+
+        let mut expected_sources = vec![
+            SceneSource::bsn_scene(DASHBOARD_SCENE),
+            SceneSource::bsn_scene(GARAGE_SCENE),
+            SceneSource::bsn_scene(MISSION_CONTROL_SCENE),
+            SceneSource::bsn_scene(FABRICATION_SCENE),
+            SceneSource::bsn_scene(SILO_UPGRADES_SCENE),
+        ];
+        expected_sources.sort_by_key(|source| match source {
+            SceneSource::BsnScene { key } => key.clone(),
+            SceneSource::Runtime { key } => key.0.clone(),
+        });
+
+        assert_eq!(hangar_target_sources, expected_sources);
+        assert!(
+            hangar_targets
+                .iter()
+                .all(|target| target.mode == ScenePreloadMode::Background),
+            "hangar's Beacon-page preloads should all be background, not blocking"
+        );
+    }
+
+    #[test]
+    fn no_other_preload_relationships_are_registered() {
+        // The user was explicit: exactly these four owners, no more, no less.
+        let mut app = App::new();
+        app.insert_resource(ScenePreloadRegistry::default());
+        app.add_systems(Startup, register_last_beacon_scene_preloads);
+        app.update();
+
+        let preload_registry = app.world().resource::<ScenePreloadRegistry>();
+        let scenes_with_no_preloads = [
+            OPTIONS_MENU_SCENE,
+            DASHBOARD_SCENE,
+            GARAGE_SCENE,
+            MISSION_CONTROL_SCENE,
+            FABRICATION_SCENE,
+            SILO_UPGRADES_SCENE,
+            BEACON_SCENE,
+            CREDITS_SCENE,
+            UI_PLAYGROUND_SCENE,
+            PIXEL_PERFECT_SPLASH_SCENE,
+            BEVY_SPLASH_SCENE,
+        ];
+        for scene_key in scenes_with_no_preloads {
+            assert!(
+                preload_registry
+                    .preload_targets(&SceneSource::bsn_scene(scene_key))
+                    .is_empty(),
+                "{scene_key} should have no registered preload targets"
+            );
+        }
     }
 }

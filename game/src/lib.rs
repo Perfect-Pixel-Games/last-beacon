@@ -128,6 +128,7 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<LastBeaconHideWhenSettingsOpen>()
         .register_type::<scenes::LastBeaconBeaconPageButton>()
         .register_type::<ui_widgets::LastBeaconBsnWidget>()
+        .init_resource::<ui_widgets::LastBeaconUiFontHandles>()
         .init_resource::<ui_widgets::LastBeaconUiTabSelections>()
         .init_resource::<ui_widgets::LastBeaconUiInputValues>()
         .init_resource::<ui_widgets::LastBeaconUiDropdownStates>()
@@ -159,6 +160,7 @@ impl Plugin for LastBeaconPlugin {
             Startup,
             (
                 scenes::register_last_beacon_bsn_scenes,
+                scenes::register_last_beacon_scene_preloads,
                 scenes::open_initial_scene,
             )
                 .chain(),
@@ -168,8 +170,10 @@ impl Plugin for LastBeaconPlugin {
             (
                 scenes::spawn_requested_last_beacon_scene_drivers,
                 scenes::navigate_last_beacon_beacon_pages,
-                ui_widgets::queue_last_beacon_bsn_widgets,
-                ui_widgets::apply_last_beacon_ui_font,
+                // Ordered after Foundation's own scene-owner propagation so a
+                // newly-discovered widget slot already carries `SceneOwner`
+                // before it gains `SceneContentLoading`.
+                ui_widgets::queue_last_beacon_bsn_widgets.after(propagate_loaded_bsn_scene_owners),
                 ui_widgets::initialize_last_beacon_ui_text_inputs,
                 ui_widgets::focus_last_beacon_ui_text_inputs,
                 ui_widgets::initialize_last_beacon_ui_text_scroll_tracks,
@@ -201,7 +205,28 @@ impl Plugin for LastBeaconPlugin {
         )
         .add_systems(
             Update,
-            ui_widgets::apply_pending_last_beacon_bsn_widgets.run_if(foundation_is_not_paused),
+            // Not gated by `foundation_is_not_paused`: this applies nested
+            // BSN widget content, which UI opened while paused (e.g. the
+            // options menu opened from the pause menu) still needs in order
+            // to finish loading and become visible. Gating it on pause left
+            // any such scene hidden forever, since gameplay stays paused for
+            // as long as that scene is open.
+            ui_widgets::apply_pending_last_beacon_bsn_widgets,
+        )
+        .add_systems(
+            Update,
+            // Must run after both the engine's top-level BSN apply and Last
+            // Beacon's nested widget apply, or text created by either this
+            // same frame keeps its unauthored default font for one full
+            // frame before this system corrects it -- a visible font pop
+            // on every scene open, not just the first one.
+            (
+                ui_widgets::apply_last_beacon_ui_font,
+                ui_widgets::reveal_last_beacon_text_once_fonts_load,
+            )
+                .chain()
+                .after(apply_pending_bsn_instances)
+                .after(ui_widgets::apply_pending_last_beacon_bsn_widgets),
         )
         .add_systems(
             PostUpdate,
