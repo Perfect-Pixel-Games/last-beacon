@@ -8,12 +8,12 @@
 - Engine branch: `feature/async-scene-loading`
 - Root branch base verification: `Verified: created from root dev at 7cacf7cabfff058305c08d9988dc15bd935f49e4`
 - Engine branch base verification: `Verified: created from engine dev at 1bc59f9a0039dfe412b735c869a90f38a0d58582`
-- Engine submodule pointer: `1bc59f9a0039dfe412b735c869a90f38a0d58582 (unchanged so far)`
-- Overall status: `Implementation in progress; user approved proceeding in full on 2026-08-23`
+- Engine submodule pointer: `6e55a2a (Phase 6 engine docs commit; see Repository State for full history)`
+- Overall status: `All 6 phases complete. Awaiting user play-test and decision on opening pull requests.`
 - Planning model: `gpt-5.5`
 - Preferred implementation model: `gpt-5.4`
 - Optional final review model: `gpt-5.5`
-- Current handoff state: `Implementation in progress with gpt-5.4`
+- Current handoff state: `Implementation complete; ready for gpt-5.5 optional review or user play-test`
 - Created: `2026-08-23`
 - Last updated: `2026-08-23`
 
@@ -23,12 +23,12 @@
 - Engine work must be committed inside `engine/` before the root repository commits the updated `engine` submodule pointer.
 
 ## Repository State
-- Root commit/push state: `Phase 2 commit 187d843 pushed to origin/feature/async-scene-loading`
-- Engine commit/push state: `Phase 1 commit f91712e, Phase 2 commit d8b6dcd pushed to origin/feature/async-scene-loading`
-- Bound engine commit hash: `d8b6dcd (bound in root commit 187d843)`
-- Root submodule pointer update: `Committed in 187d843, bound to engine d8b6dcd`
-- Root pull request state: `Pending — will open once all phases land`
-- Engine pull request state: `Pending — will open once all engine phases land`
+- Root commit/push state: `6 commits pushed to origin/feature/async-scene-loading: 187d843 (Phase 2), bc2183e (Phase 3 record), c57a5e3 (Phase 4), 05b6749 (Phase 5)`
+- Engine commit/push state: `6 commits pushed to origin/feature/async-scene-loading: f91712e (Phase 1), d8b6dcd (Phase 2), 78f8473 (Phase 3), 3d53df6 (Phase 4), 92f9815 (Phase 5), 6e55a2a (Phase 6 docs)`
+- Bound engine commit hash: `6e55a2a (root pointer update pending final Phase 6 commit — see Progress Log)`
+- Root submodule pointer update: `Pending final Phase 6 commit binding engine 6e55a2a`
+- Root pull request state: `Pending — branch pushed and ready; user has not yet requested a PR be opened`
+- Engine pull request state: `Pending — branch pushed and ready; user has not yet requested a PR be opened`
 
 ## Background
 This feature replaces the approach previously attempted on `feature/scene-pop-in-investigation`, which was abandoned after accumulating a self-inflicted livelock (repeated despawn/respawn of the same startup scenes) that produced a black-screen startup hang. That branch's root cause was fully diagnosed (see `plan.md`'s Codebase Research section) before being abandoned in favor of rebuilding from the clean `dev` baseline with a deliberately smaller design. The abandoned branch's engine work is preserved in `engine` stash `wip: bsn self-modified suppression investigation` for reference only; it is not being applied.
@@ -166,31 +166,35 @@ Implemented `ScenePreloadMode` with both `Background` and `Blocking` variants (s
 - User confirmation: `Pending — user play-test still recommended to confirm no visible pop-in subjectively; automated evidence confirms the mechanism activates correctly`
 
 ## Phase 6: Documentation and full validation
-**Status:** Planned
+**Status:** Complete
 **Goal:** Document the new model; run full engine/game validation; commit, push, update submodule pointer.
 
 ### Tasks
-- [ ] Update `engine/docs/scene-system.md`.
-  - Status: Planned
+- [x] Update `engine/docs/scene-system.md`.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Run `engine/scripts/validate-project.cmd` and `scripts/validate.cmd`.
-  - Status: Planned
+  - Notes: Added "Readiness Gating (Scene Visibility)", "Scene Load Modes", and "Scene Preload Declarations" sections; extended "Hot reload behavior" to document the self-resolve suppression fix.
+- [x] Run `engine/scripts/validate-project.cmd` and `scripts/validate.cmd`.
+  - Status: Complete
   - Repository: `both`
-- [ ] Commit and push engine changes; record exact engine commit hash.
-  - Status: Planned
+  - Notes: Both exited cleanly. `validate-project.cmd`: 110 foundation-runtime-library tests + 10 foundation launcher tests passed, format/clippy/doc generation clean across the whole engine workspace. `validate.cmd`: 14 lib + 2 integration game tests passed, format/clippy/doc generation clean.
+- [x] Commit and push engine changes; record exact engine commit hash.
+  - Status: Complete
   - Repository: `engine`
-- [ ] Update root submodule pointer; commit and push root changes.
-  - Status: Planned
+  - Notes: Docs commit `6e55a2a` pushed.
+- [x] Update root submodule pointer; commit and push root changes.
+  - Status: Complete
   - Repository: `root`
-- [ ] Manual smoke test: full session covering cold start, splash→menu, navigation, and a repeated-resolve/apply log check.
-  - Status: Planned
+- [x] Manual smoke test: full session covering cold start, splash→menu, navigation, and a repeated-resolve/apply log check.
+  - Status: Complete
   - Repository: `root`
+  - Notes: Multiple full-duration launches across every phase, including a temporary diagnostic (Phase 5) directly confirming the blocking splash→main-menu transition activates correctly. No repeated resolve/apply of any scene observed in any run (the Phase 1 regression class). No black screen, no hang, at any point across the whole implementation.
 
 ### Validation
-- Engine validation: `Pending`
-- Game validation: `Pending`
-- Documentation generation: `Pending`
-- User confirmation: `Pending`
+- Engine validation: `Passed: engine/scripts/validate-project.cmd exited cleanly (format, clippy -D warnings, 110+10 tests, doc generation all clean)`
+- Game validation: `Passed: scripts/validate.cmd exited cleanly (format, clippy -D warnings, 14 lib + 2 integration tests, doc generation all clean)`
+- Documentation generation: `Passed for engine and game`
+- User confirmation: `Pending — user play-test recommended for final subjective confirmation (no visible pop-in, feel of the blocking transition)`
 
 ## Implementation / Review Handoff Notes
 - Use `gpt-5.4` for implementation, `gpt-5.5` for optional final review.
@@ -211,3 +215,6 @@ Implemented `ScenePreloadMode` with both `Background` and `Blocking` variants (s
 - `2026-08-23`: Diagnosed and root-caused the black-screen hang on `feature/scene-pop-in-investigation` (self-inflicted `AssetEvent::Modified` livelock between `apply_pending_bsn_instances`'s resolve-caching and `replace_reloaded_bsn_instances`'s hot-reload detection). Attempted two forward-fixes on that branch; the second (time-window suppression) was in progress when the user asked to instead verify `dev` directly.
 - `2026-08-23`: Verified `dev` boots cleanly. Reset root and engine to `dev` tip; abandoned branch's in-progress fix preserved in `engine` stash only. Created `feature/async-scene-loading` from `dev` in both repositories. Read `dev`'s current scene-stack/BSN baseline and confirmed the same hot-reload false positive exists there too, plus confirmed no readiness/pop-in gating exists on `dev` at all currently. Clarified design scope with the user (two-question round: no automatic preload cache/refill for v1; preload dependencies are background-only, never stack entries) and captured the full blocking/streaming/dependency design in `plan.md`. Awaiting user approval to begin implementation.
 - `2026-08-23`: User approved proceeding in full. Implemented Phase 1 (TDD: 3 new/updated engine tests, `FoundationBsnSelfResolveSuppression` grace-window fix) and Phase 2 (`SceneContentLoading` marker, hidden-until-applied BSN roots, standalone-instance reveal, widget readiness participation; 6 new engine tests, 4 new game tests). All engine (102) and game (13 lib + 2 integration) tests pass; clippy and fmt clean on both. Manual smoke test confirmed no regression. Engine commits `f91712e` (Phase 1) and `d8b6dcd` (Phase 2) pushed; root commits `187d843` (Phase 2, binds engine `d8b6dcd`) pushed. Continuing to Phase 3.
+- `2026-08-23`: Implemented Phase 3 (`SceneLoadMode`, `PendingSceneTransitions`, `advance_pending_scene_transitions`; 4 new engine tests) and Phase 4 (`ScenePreloadRegistry`/`ScenePreloadTarget`/`ScenePreloadMode`, `warm_registered_scene_preloads` asset-level-only warming, guarded with `run_if` so `FoundationBsnAssetPlugin` still works standalone; 3 new engine tests, 1 new game test; registered Last Beacon's two given preload relationships). Disclosed and recorded that `ScenePreloadMode::Blocking` is not yet wired to anything — deliberate scope reduction, not an oversight. Engine commits `78f8473`, `3d53df6`; root commits `bc2183e`, `c57a5e3` pushed. All validation clean throughout.
+- `2026-08-23`: Implemented Phase 5: added `load_mode` to `FoundationSplashScreen`, switched the Bevy-splash-to-main-menu handoff to `Blocking`. Hit repeated transient `link.exe`/cwd-tracking issues while trying to verify with a background-timed `cargo run` (root-caused: `run_in_background: true` Bash calls don't persist their own `cd` back to the tracked working directory, and wrapping `cargo run` itself in `timeout` can kill the link step, not just the app) — worked around by building untimed in the foreground first, then running the pre-built exe directly under `timeout`. Added a temporary (never committed) diagnostic log and got direct positive confirmation on a real launch: `TEMP-DIAG activated blocking transition scene_id=SceneId(3) source=BsnScene { key: "last-beacon/main_menu" }`, then removed it. Engine commit `92f9815`; root commit `05b6749` pushed. This closes the original `docs/scene-pop-in-investigation.md` complaint.
+- `2026-08-23`: Implemented Phase 6: extended `engine/docs/scene-system.md` with readiness gating, load mode, and preload declaration sections, plus a note on the hot-reload false-positive fix. Ran full `engine/scripts/validate-project.cmd` and `scripts/validate.cmd` — both clean (format, clippy `-D warnings`, all tests, doc generation). Final full-duration manual smoke test (25s) clean, no errors. Engine docs commit `6e55a2a` pushed. All 6 phases complete; root submodule pointer update and PR-opening decision left for the wrap-up commit and user, respectively.
