@@ -27,6 +27,7 @@ use bevy::{
     },
     window::PrimaryWindow,
 };
+use foundation_runtime_library::scene_stack::{SceneContentLoading, SceneOwner};
 
 /// Requests that a reusable Last Beacon BSN widget asset be applied to this entity.
 #[derive(Clone, Debug, Default, Component, Reflect)]
@@ -487,12 +488,21 @@ struct LastBeaconBsnWidgetFailed {
 }
 
 /// Starts loading newly-authored widget slots.
+///
+/// This must run after Foundation's `propagate_loaded_bsn_scene_owners` so a
+/// widget slot already carries [`SceneOwner`] before it gains
+/// [`SceneContentLoading`] here — otherwise the marker could briefly apply to
+/// no scene, letting the parent scene reveal for one frame before hiding
+/// again once ownership catches up.
 pub fn queue_last_beacon_bsn_widgets(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    widget_slots: Query<(Entity, &LastBeaconBsnWidget), Added<LastBeaconBsnWidget>>,
+    widget_slots: Query<
+        (Entity, &LastBeaconBsnWidget, Option<&SceneOwner>),
+        Added<LastBeaconBsnWidget>,
+    >,
 ) {
-    for (widget_slot_entity, widget_slot) in &widget_slots {
+    for (widget_slot_entity, widget_slot, scene_owner) in &widget_slots {
         if widget_slot.asset_path.is_empty() {
             warn!("LastBeaconBsnWidget on {widget_slot_entity:?} has an empty asset path.");
             continue;
@@ -500,12 +510,18 @@ pub fn queue_last_beacon_bsn_widgets(
 
         // Store the handle on the slot so the exclusive apply system can patch this entity later.
         let scene_handle = asset_server.load(widget_slot.asset_path.clone());
-        commands
-            .entity(widget_slot_entity)
-            .insert(LastBeaconBsnWidgetPending {
-                asset_path: widget_slot.asset_path.clone(),
-                scene_handle,
-            });
+        let mut widget_entity_commands = commands.entity(widget_slot_entity);
+        widget_entity_commands.insert(LastBeaconBsnWidgetPending {
+            asset_path: widget_slot.asset_path.clone(),
+            scene_handle,
+        });
+
+        if scene_owner.is_some() {
+            // Keep the owning scene hidden until this nested widget also
+            // finishes applying, so it can't pop in after the rest of the
+            // scene is already visible.
+            widget_entity_commands.insert(SceneContentLoading);
+        }
     }
 }
 
@@ -1902,6 +1918,7 @@ pub fn apply_pending_last_beacon_bsn_widgets(world: &mut World) {
             Ok(()) => {
                 if let Ok(mut widget_slot_entity_mut) = world.get_entity_mut(widget_slot_entity) {
                     widget_slot_entity_mut.remove::<LastBeaconBsnWidgetPending>();
+                    widget_slot_entity_mut.remove::<SceneContentLoading>();
                 }
             }
             Err(apply_error) => {
@@ -1918,6 +1935,9 @@ fn mark_widget_failed(world: &mut World, widget_slot_entity: Entity, failure_rea
     error!("{failure_reason}");
     if let Ok(mut widget_slot_entity_mut) = world.get_entity_mut(widget_slot_entity) {
         widget_slot_entity_mut.remove::<LastBeaconBsnWidgetPending>();
+        // A failed widget load is still a settled outcome: reveal the parent
+        // scene instead of hiding it forever because one widget broke.
+        widget_slot_entity_mut.remove::<SceneContentLoading>();
         widget_slot_entity_mut.insert(LastBeaconBsnWidgetFailed {
             reason: failure_reason,
         });
@@ -1927,6 +1947,7 @@ fn mark_widget_failed(world: &mut World, widget_slot_entity: Entity, failure_rea
 #[cfg(test)]
 mod tests {
     use super::*;
+    use foundation_runtime_library::scene_stack::SceneId;
 
     #[test]
     fn widget_asset_path_is_authored_explicitly() {
@@ -1935,5 +1956,200 @@ mod tests {
         };
 
         assert_eq!(widget.asset_path, "ui/widgets/main_menu/title.bsn");
+    }
+
+    #[test]
+    fn queueing_a_scene_owned_widget_slot_marks_the_scene_as_still_loading() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(bevy::asset::AssetPlugin {
+            file_path: ".".to_string(),
+            ..default()
+        });
+        app.init_asset::<ScenePatch>();
+        app.add_systems(Update, queue_last_beacon_bsn_widgets);
+
+        let scene_owner = SceneOwner {
+            scene_id: SceneId(1),
+        };
+        let widget_slot_entity = app
+            .world_mut()
+            .spawn((
+                LastBeaconBsnWidget {
+                    asset_path: "ui/widgets/common/divider.bsn".to_string(),
+                },
+                scene_owner,
+            ))
+            .id();
+
+        app.update();
+
+        assert!(
+            app.world()
+                .get::<SceneContentLoading>(widget_slot_entity)
+                .is_some(),
+            "a scene-owned widget slot must mark its scene as still loading while pending"
+        );
+        assert!(app
+            .world()
+            .get::<LastBeaconBsnWidgetPending>(widget_slot_entity)
+            .is_some());
+    }
+
+    #[test]
+    fn queueing_an_unowned_widget_slot_does_not_mark_anything_loading() {
+        // Standalone widgets (no SceneOwner yet) have no scene to hide, so
+        // they must not gain a marker that nothing will ever clear correctly.
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(bevy::asset::AssetPlugin {
+            file_path: ".".to_string(),
+            ..default()
+        });
+        app.init_asset::<ScenePatch>();
+        app.add_systems(Update, queue_last_beacon_bsn_widgets);
+
+        let widget_slot_entity = app
+            .world_mut()
+            .spawn(LastBeaconBsnWidget {
+                asset_path: "ui/widgets/common/divider.bsn".to_string(),
+            })
+            .id();
+
+        app.update();
+
+        assert!(app
+            .world()
+            .get::<SceneContentLoading>(widget_slot_entity)
+            .is_none());
+    }
+
+    #[test]
+    fn applying_a_widget_clears_the_scene_loading_marker() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(bevy::asset::AssetPlugin {
+            file_path: ".".to_string(),
+            ..default()
+        });
+        app.init_asset::<ScenePatch>();
+        app.add_systems(
+            Update,
+            (
+                queue_last_beacon_bsn_widgets,
+                apply_pending_last_beacon_bsn_widgets,
+            )
+                .chain(),
+        );
+
+        let scene_owner = SceneOwner {
+            scene_id: SceneId(1),
+        };
+        let widget_slot_entity = app
+            .world_mut()
+            .spawn((
+                LastBeaconBsnWidget {
+                    asset_path: "ui/widgets/common/divider.bsn".to_string(),
+                },
+                scene_owner,
+            ))
+            .id();
+
+        // Replace the asset-server-loaded handle with an inline scene patch
+        // so the widget can actually resolve/apply without touching disk.
+        let scene_patch = {
+            let asset_server = app.world().resource::<AssetServer>();
+            ScenePatch::load(asset_server, bevy::scene::bsn! { LastBeaconUiSymbolIcon })
+        };
+        let scene_handle = app
+            .world_mut()
+            .resource_mut::<Assets<ScenePatch>>()
+            .add(scene_patch);
+        app.update();
+        app.world_mut()
+            .entity_mut(widget_slot_entity)
+            .insert(LastBeaconBsnWidgetPending {
+                asset_path: "ui/widgets/common/divider.bsn".to_string(),
+                scene_handle,
+            });
+
+        app.update();
+        app.update();
+
+        assert!(
+            app.world()
+                .get::<SceneContentLoading>(widget_slot_entity)
+                .is_none(),
+            "the scene loading marker must clear once the widget finishes applying"
+        );
+        assert!(app
+            .world()
+            .get::<LastBeaconBsnWidgetPending>(widget_slot_entity)
+            .is_none());
+    }
+
+    struct FailingWidgetScene;
+
+    impl bevy::scene::Scene for FailingWidgetScene {
+        fn resolve(
+            self,
+            _context: &mut bevy::scene::ResolveContext,
+            _scene: &mut bevy::scene::ResolvedScene,
+        ) -> Result<(), bevy::scene::ResolveSceneError> {
+            Err(bevy::scene::ResolveSceneError::MissingScene)
+        }
+
+        fn register_dependencies(&self, _dependencies: &mut bevy::scene::SceneDependencies) {}
+    }
+
+    #[test]
+    fn a_failed_widget_load_still_clears_the_scene_loading_marker() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(bevy::asset::AssetPlugin {
+            file_path: ".".to_string(),
+            ..default()
+        });
+        app.init_asset::<ScenePatch>();
+        app.add_systems(Update, apply_pending_last_beacon_bsn_widgets);
+
+        let scene_handle = app
+            .world_mut()
+            .resource_mut::<Assets<ScenePatch>>()
+            .add(ScenePatch {
+                scene: Some(Box::new(FailingWidgetScene)),
+                dependencies: Vec::new(),
+                resolved: None,
+            });
+        let scene_owner = SceneOwner {
+            scene_id: SceneId(1),
+        };
+        let widget_slot_entity = app
+            .world_mut()
+            .spawn((
+                LastBeaconBsnWidget {
+                    asset_path: "ui/widgets/common/missing.bsn".to_string(),
+                },
+                scene_owner,
+                SceneContentLoading,
+                LastBeaconBsnWidgetPending {
+                    asset_path: "ui/widgets/common/missing.bsn".to_string(),
+                    scene_handle,
+                },
+            ))
+            .id();
+
+        app.update();
+
+        assert!(
+            app.world()
+                .get::<SceneContentLoading>(widget_slot_entity)
+                .is_none(),
+            "a failed widget load must not hide its parent scene forever"
+        );
+        assert!(app
+            .world()
+            .get::<LastBeaconBsnWidgetFailed>(widget_slot_entity)
+            .is_some());
     }
 }

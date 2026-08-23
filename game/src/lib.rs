@@ -168,7 +168,10 @@ impl Plugin for LastBeaconPlugin {
             (
                 scenes::spawn_requested_last_beacon_scene_drivers,
                 scenes::navigate_last_beacon_beacon_pages,
-                ui_widgets::queue_last_beacon_bsn_widgets,
+                // Ordered after Foundation's own scene-owner propagation so a
+                // newly-discovered widget slot already carries `SceneOwner`
+                // before it gains `SceneContentLoading`.
+                ui_widgets::queue_last_beacon_bsn_widgets.after(propagate_loaded_bsn_scene_owners),
                 ui_widgets::apply_last_beacon_ui_font,
                 ui_widgets::initialize_last_beacon_ui_text_inputs,
                 ui_widgets::focus_last_beacon_ui_text_inputs,
