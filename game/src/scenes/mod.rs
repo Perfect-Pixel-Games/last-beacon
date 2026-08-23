@@ -94,6 +94,27 @@ pub fn register_last_beacon_scene_preloads(mut preload_registry: ResMut<ScenePre
             OPTIONS_MENU_SCENE.to_string(),
         ))],
     );
+    // Settings is one tap away from the main menu too.
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(MAIN_MENU_SCENE),
+        [ScenePreloadTarget::background(SceneSource::bsn_scene(
+            OPTIONS_MENU_SCENE.to_string(),
+        ))],
+    );
+    // The hangar is the hub for every other Beacon page, so keep them all
+    // warm from the moment the hangar appears.
+    preload_registry.register_preloads(
+        SceneSource::bsn_scene(HANGAR_SCENE),
+        [
+            ScenePreloadTarget::background(SceneSource::bsn_scene(DASHBOARD_SCENE.to_string())),
+            ScenePreloadTarget::background(SceneSource::bsn_scene(GARAGE_SCENE.to_string())),
+            ScenePreloadTarget::background(SceneSource::bsn_scene(
+                MISSION_CONTROL_SCENE.to_string(),
+            )),
+            ScenePreloadTarget::background(SceneSource::bsn_scene(FABRICATION_SCENE.to_string())),
+            ScenePreloadTarget::background(SceneSource::bsn_scene(SILO_UPGRADES_SCENE.to_string())),
+        ],
+    );
 }
 
 /// Opens the first LastBeacon scene-stack entry.
@@ -337,5 +358,93 @@ mod tests {
                 OPTIONS_MENU_SCENE
             ))]
         );
+    }
+
+    #[test]
+    fn main_menu_preloads_options_menu() {
+        let mut app = App::new();
+        app.insert_resource(ScenePreloadRegistry::default());
+        app.add_systems(Startup, register_last_beacon_scene_preloads);
+        app.update();
+
+        let preload_registry = app.world().resource::<ScenePreloadRegistry>();
+        assert_eq!(
+            preload_registry.preload_targets(&SceneSource::bsn_scene(MAIN_MENU_SCENE)),
+            &[ScenePreloadTarget::background(SceneSource::bsn_scene(
+                OPTIONS_MENU_SCENE
+            ))]
+        );
+    }
+
+    #[test]
+    fn hangar_preloads_every_other_beacon_page() {
+        let mut app = App::new();
+        app.insert_resource(ScenePreloadRegistry::default());
+        app.add_systems(Startup, register_last_beacon_scene_preloads);
+        app.update();
+
+        let preload_registry = app.world().resource::<ScenePreloadRegistry>();
+        let hangar_targets =
+            preload_registry.preload_targets(&SceneSource::bsn_scene(HANGAR_SCENE));
+        let mut hangar_target_sources = hangar_targets
+            .iter()
+            .map(|target| target.source.clone())
+            .collect::<Vec<_>>();
+        hangar_target_sources.sort_by_key(|source| match source {
+            SceneSource::BsnScene { key } => key.clone(),
+            SceneSource::Runtime { key } => key.0.clone(),
+        });
+
+        let mut expected_sources = vec![
+            SceneSource::bsn_scene(DASHBOARD_SCENE),
+            SceneSource::bsn_scene(GARAGE_SCENE),
+            SceneSource::bsn_scene(MISSION_CONTROL_SCENE),
+            SceneSource::bsn_scene(FABRICATION_SCENE),
+            SceneSource::bsn_scene(SILO_UPGRADES_SCENE),
+        ];
+        expected_sources.sort_by_key(|source| match source {
+            SceneSource::BsnScene { key } => key.clone(),
+            SceneSource::Runtime { key } => key.0.clone(),
+        });
+
+        assert_eq!(hangar_target_sources, expected_sources);
+        assert!(
+            hangar_targets
+                .iter()
+                .all(|target| target.mode == ScenePreloadMode::Background),
+            "hangar's Beacon-page preloads should all be background, not blocking"
+        );
+    }
+
+    #[test]
+    fn no_other_preload_relationships_are_registered() {
+        // The user was explicit: exactly these four owners, no more, no less.
+        let mut app = App::new();
+        app.insert_resource(ScenePreloadRegistry::default());
+        app.add_systems(Startup, register_last_beacon_scene_preloads);
+        app.update();
+
+        let preload_registry = app.world().resource::<ScenePreloadRegistry>();
+        let scenes_with_no_preloads = [
+            OPTIONS_MENU_SCENE,
+            DASHBOARD_SCENE,
+            GARAGE_SCENE,
+            MISSION_CONTROL_SCENE,
+            FABRICATION_SCENE,
+            SILO_UPGRADES_SCENE,
+            BEACON_SCENE,
+            CREDITS_SCENE,
+            UI_PLAYGROUND_SCENE,
+            PIXEL_PERFECT_SPLASH_SCENE,
+            BEVY_SPLASH_SCENE,
+        ];
+        for scene_key in scenes_with_no_preloads {
+            assert!(
+                preload_registry
+                    .preload_targets(&SceneSource::bsn_scene(scene_key))
+                    .is_empty(),
+                "{scene_key} should have no registered preload targets"
+            );
+        }
     }
 }
