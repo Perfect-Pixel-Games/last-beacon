@@ -525,21 +525,105 @@ pub fn queue_last_beacon_bsn_widgets(
     }
 }
 
-/// Applies loaded widget scene patches onto their slot entities.
-/// Applies Last Beacon's current UI font to newly spawned text.
-pub fn apply_last_beacon_ui_font(
-    asset_server: Res<AssetServer>,
-    mut text_fonts: Query<(&mut TextFont, Option<&LastBeaconUiSymbolIcon>), Added<TextFont>>,
-) {
-    let ui_font = asset_server.load("fonts/NotoSans-Regular.ttf");
-    let symbol_font = asset_server.load("fonts/NotoSansSymbols2-Regular.ttf");
-    for (mut text_font, symbol_icon) in &mut text_fonts {
-        let font_handle = if symbol_icon.is_some() {
-            symbol_font.clone()
-        } else {
-            ui_font.clone()
+/// Holds a permanent strong reference to Last Beacon's shared UI fonts.
+///
+/// Without this, the only strong references to these font handles would live
+/// on `TextFont` components, which despawn along with their scene. If every
+/// visible piece of text happens to despawn at once (for example, closing a
+/// Beacon page and opening the next one in the same frame, with a gap before
+/// the new page's text exists), the font's reference count can hit zero and
+/// Bevy unloads it — the next scene's text then has to reload it from
+/// scratch, causing a visible pop from fallback glyphs to the real font.
+/// Loading both fonts once here and holding the handles for the whole
+/// session keeps them resident permanently.
+#[derive(Resource)]
+pub struct LastBeaconUiFontHandles {
+    /// Shared handle for regular UI text.
+    pub ui_font: Handle<Font>,
+    /// Shared handle for symbol/icon glyphs.
+    pub symbol_font: Handle<Font>,
+}
+
+impl FromWorld for LastBeaconUiFontHandles {
+    fn from_world(world: &mut World) -> Self {
+        // Some minimal test apps build LastBeaconPlugin without asset
+        // infrastructure at all (mirroring FoundationBsnAssetPlugin's own
+        // AssetServer-presence check). Degrade to default handles rather
+        // than panicking; production always has AssetServer available
+        // before this plugin builds.
+        let Some(asset_server) = world.get_resource::<AssetServer>() else {
+            return Self {
+                ui_font: Handle::default(),
+                symbol_font: Handle::default(),
+            };
         };
+        Self {
+            ui_font: asset_server.load("fonts/NotoSans-Regular.ttf"),
+            symbol_font: asset_server.load("fonts/NotoSansSymbols2-Regular.ttf"),
+        }
+    }
+}
+
+/// Applies Last Beacon's shared UI font to newly spawned text.
+///
+/// Text whose font has not finished loading yet is marked
+/// `SceneContentLoading` so its owning scene stays hidden until the swap
+/// from fallback glyphs to the real font has already happened — the font
+/// should never visibly pop after a scene is shown.
+/// `reveal_last_beacon_text_once_fonts_load` clears the marker once the
+/// fonts are ready.
+pub fn apply_last_beacon_ui_font(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    font_handles: Res<LastBeaconUiFontHandles>,
+    mut text_fonts: Query<
+        (Entity, &mut TextFont, Option<&LastBeaconUiSymbolIcon>),
+        Added<TextFont>,
+    >,
+) {
+    for (text_entity, mut text_font, symbol_icon) in &mut text_fonts {
+        let font_handle = if symbol_icon.is_some() {
+            font_handles.symbol_font.clone()
+        } else {
+            font_handles.ui_font.clone()
+        };
+        let font_is_loaded = matches!(
+            asset_server.get_load_state(font_handle.id()),
+            Some(bevy::asset::LoadState::Loaded)
+        );
         text_font.font = FontSource::Handle(font_handle);
+
+        if !font_is_loaded {
+            commands.entity(text_entity).insert(SceneContentLoading);
+        }
+    }
+}
+
+/// Clears the loading marker `apply_last_beacon_ui_font` left on text whose
+/// font was not yet loaded, once both shared fonts finish loading.
+///
+/// The fonts load once, early in the session, and `LastBeaconUiFontHandles`
+/// keeps them resident afterward, so this only ever has work to do during
+/// the first moments of a session.
+pub fn reveal_last_beacon_text_once_fonts_load(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    font_handles: Res<LastBeaconUiFontHandles>,
+    loading_text: Query<Entity, (With<TextFont>, With<SceneContentLoading>)>,
+) {
+    let fonts_are_loaded = matches!(
+        asset_server.get_load_state(font_handles.ui_font.id()),
+        Some(bevy::asset::LoadState::Loaded)
+    ) && matches!(
+        asset_server.get_load_state(font_handles.symbol_font.id()),
+        Some(bevy::asset::LoadState::Loaded)
+    );
+    if !fonts_are_loaded {
+        return;
+    }
+
+    for text_entity in &loading_text {
+        commands.entity(text_entity).remove::<SceneContentLoading>();
     }
 }
 
@@ -1994,6 +2078,97 @@ mod tests {
             .world()
             .get::<LastBeaconBsnWidgetPending>(widget_slot_entity)
             .is_some());
+    }
+
+    #[test]
+    fn text_with_an_unloaded_font_is_marked_loading() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        // "." has no font files under it, so the load never completes —
+        // exactly the "not loaded yet" state this test needs to observe.
+        app.add_plugins(bevy::asset::AssetPlugin {
+            file_path: ".".to_string(),
+            ..default()
+        });
+        app.init_asset::<Font>();
+        app.init_resource::<LastBeaconUiFontHandles>();
+        app.add_systems(Update, apply_last_beacon_ui_font);
+
+        let text_entity = app.world_mut().spawn(TextFont::default()).id();
+        app.update();
+
+        assert!(
+            app.world()
+                .get::<SceneContentLoading>(text_entity)
+                .is_some(),
+            "text must stay marked loading until its font finishes loading"
+        );
+    }
+
+    #[test]
+    fn text_finishing_its_font_load_clears_the_loading_marker() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(bevy::asset::AssetPlugin {
+            file_path: crate::asset_root().to_string_lossy().to_string(),
+            ..default()
+        });
+        // The real font loader (not just the Assets<Font> collection) is
+        // required for a load to ever reach LoadState::Loaded.
+        app.add_plugins(bevy::text::TextPlugin);
+        app.init_resource::<LastBeaconUiFontHandles>();
+        app.add_systems(
+            Update,
+            (
+                apply_last_beacon_ui_font,
+                reveal_last_beacon_text_once_fonts_load,
+            )
+                .chain(),
+        );
+
+        let text_entity = app.world_mut().spawn(TextFont::default()).id();
+
+        // Real font files load asynchronously from disk; give it many frames.
+        for _frame_number in 0..600 {
+            app.update();
+        }
+
+        assert!(
+            app.world()
+                .get::<SceneContentLoading>(text_entity)
+                .is_none(),
+            "the loading marker must clear once the shared fonts finish loading"
+        );
+    }
+
+    #[test]
+    fn font_handles_are_reused_across_calls_instead_of_reloaded() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(bevy::asset::AssetPlugin {
+            file_path: ".".to_string(),
+            ..default()
+        });
+        app.init_asset::<Font>();
+        app.init_resource::<LastBeaconUiFontHandles>();
+        app.add_systems(Update, apply_last_beacon_ui_font);
+
+        let first_text_entity = app.world_mut().spawn(TextFont::default()).id();
+        app.update();
+        let second_text_entity = app.world_mut().spawn(TextFont::default()).id();
+        app.update();
+
+        let get_font_handle_id = |world: &World, entity: Entity| {
+            let FontSource::Handle(handle) = &world.get::<TextFont>(entity).unwrap().font else {
+                panic!("expected a font handle");
+            };
+            handle.id()
+        };
+        assert_eq!(
+            get_font_handle_id(app.world(), first_text_entity),
+            get_font_handle_id(app.world(), second_text_entity),
+            "every text entity should share the same persistent font handle, not a freshly loaded one"
+        );
     }
 
     #[test]

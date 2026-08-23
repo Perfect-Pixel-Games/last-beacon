@@ -128,6 +128,7 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<LastBeaconHideWhenSettingsOpen>()
         .register_type::<scenes::LastBeaconBeaconPageButton>()
         .register_type::<ui_widgets::LastBeaconBsnWidget>()
+        .init_resource::<ui_widgets::LastBeaconUiFontHandles>()
         .init_resource::<ui_widgets::LastBeaconUiTabSelections>()
         .init_resource::<ui_widgets::LastBeaconUiInputValues>()
         .init_resource::<ui_widgets::LastBeaconUiDropdownStates>()
@@ -174,6 +175,7 @@ impl Plugin for LastBeaconPlugin {
                 // before it gains `SceneContentLoading`.
                 ui_widgets::queue_last_beacon_bsn_widgets.after(propagate_loaded_bsn_scene_owners),
                 ui_widgets::apply_last_beacon_ui_font,
+                ui_widgets::reveal_last_beacon_text_once_fonts_load,
                 ui_widgets::initialize_last_beacon_ui_text_inputs,
                 ui_widgets::focus_last_beacon_ui_text_inputs,
                 ui_widgets::initialize_last_beacon_ui_text_scroll_tracks,
