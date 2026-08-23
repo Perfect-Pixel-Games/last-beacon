@@ -149,3 +149,47 @@ Update `engine/docs/scene-system.md` with the readiness model, load modes, and p
   - `cargo clippy --manifest-path game/Cargo.toml --all-targets --all-features -- -D warnings`
   - `scripts/validate.cmd` after the engine submodule pointer update
 - Manual/visual validation: launch the game repeatedly (cold start, and after navigating away and back) and confirm no black screen, no hang, no visible pop-in on the splash→main-menu transition, and normal navigation continues to work.
+
+## 2026-08-23 Scope Expansion: Prepared-Instance Preload Caching
+
+### User Request
+After the original 6 phases shipped and the disclosed font-swap fizzle was fixed (persistent `LastBeaconUiFontHandles`, see tracker), the user reported that preloaded scenes still visibly fizzle and are not instant, and required: opening a preloaded scene must be instant with zero visible construction; every other scene (streaming/non-blocking) must never show partial content either — only reveal once the entire scene and its dependencies are loaded.
+
+### Why This Needs Its Own Plan Section
+`ScenePreloadRegistry` (Phase 4) was deliberately scoped to asset-byte warming only (`AssetServer::load`, no spawned content) specifically to avoid reintroducing prepared-instance caching — the exact mechanism responsible for the original `feature/scene-pop-in-investigation` livelock (a 10-state lifecycle enum, a generic cross-system readiness-token API, and automatic cache refill after consumption, compounding into a self-sustaining despawn/respawn loop). That scope cut is exactly what makes "instant" unreachable today: a "preloaded" scene still pays its *entire* construction cost (BSN apply, nested widgets, font settling) fresh at open time, hidden behind `SceneContentLoading` — asset warming only removes disk I/O latency, not that cost. Delivering true instant activation requires actually pre-constructing the scene off-stack ahead of time and reusing that exact entity tree on open. This is the same category of change that caused the original disaster, so it gets a plan and an explicit approval checkpoint rather than being folded into an ordinary follow-up commit.
+
+### Design Principle: Reuse the Existing Machinery, Add the Thinnest Possible Cache Layer
+Phase 3's `Blocking` transition mechanism already does almost everything a prepared-instance cache needs: it reserves a `SceneId`, spawns content off-stack tagged `SceneOwner { scene_id }` (via the existing `SceneLoadRequested` → `spawn_requested_bsn_scenes` → `apply_pending_bsn_instances` pipeline, unchanged), waits for `SceneContentLoading` to clear using the exact readiness gate every other scene already uses, then activates by pushing a `SceneStackEntry` with that same reserved id. The only genuinely new piece is: do that off-stack construction *ahead of time* (triggered by a preload registration, not by an open request), and when the real open request eventually arrives, check whether an entry is already sitting there ready — and if so, skip construction entirely and activate immediately.
+
+This reuses 100% of the already-fixed, already-tested resolve/apply/readiness pipeline (including the Phase 1 self-inflicted-`Modified`-event suppression) and adds nothing new to it. The only new code is a small lookup/activation layer.
+
+### Proposed Design
+- **`PreparedSceneCache` resource** (`scene_stack.rs`), `HashMap<SceneSource, PreparedSceneCacheEntry { root_entity: Entity, scene_id: SceneId }>`. Small, flat, no lifecycle enum beyond what `SceneContentLoading`'s presence/absence already expresses.
+- **`prepare_registered_scene_preloads`** (replaces `warm_registered_scene_preloads`): on `SceneAdded`/`SceneFocused`, for each registered target not already in the cache, reserve a `SceneId`, emit `SceneLoadRequested { scene_id, source }` (spawns off-stack exactly like a `Blocking` transition target does today), and record the cache entry. No behavior change to the spawn/apply/widget/font pipeline itself.
+- **Opening a scene checks the cache first**, for both `Streaming` and `Blocking`:
+  - Cache hit, ready (no `SceneContentLoading` anywhere under it), entity still exists → activate immediately: push the `SceneStackEntry` using the *caller's* requested key/presentation (prepared content never bakes in stack-level presentation, only ever its own structure), remove the cache entry. This is the true "instant" path.
+  - Cache hit, still constructing → `Blocking` waits on the existing off-stack instance (reusing `advance_pending_scene_transitions`, referencing the already-reserved id instead of allocating a new one — no duplicate construction); `Streaming` pushes it immediately, same as today's behavior (readiness gate keeps it hidden until ready — no fizzle, just not instant, matching what the user actually asked for `Streaming` scenes: no fizzle, not necessarily zero latency).
+  - Cache miss → falls through to exactly today's behavior (fresh spawn), unchanged.
+- **Single-consume, no automatic refill**: a cache entry is removed the moment it's activated. If that scene is wanted warm again later, its owning scene must become focused/added again to re-trigger `prepare_registered_scene_preloads` — deliberately not automatic. This is the same "no refill" policy Phase 4 already committed to, now applied to real prepared instances instead of just asset handles; it's the single biggest lever against the original duplicate-activation bug class.
+- **Stale-entity safety net**: dev-time hot reload can despawn/respawn a prepared root out from under the cache (`replace_reloaded_bsn_instances` doesn't know about `PreparedSceneCache`). Rather than wiring cross-module invalidation, activation always checks `world.get_entity(cached_root_entity).is_ok()` first; if the entity is gone, treat it as a cache miss and fall through to a fresh spawn. Simple, defensive, and avoids coupling `bsn_assets.rs` to a `scene_stack.rs`-owned cache.
+
+### Explicitly Ruled Out (why this design avoids the original failure modes)
+- No generic cross-system "readiness token" API — readiness is still just "no `SceneContentLoading` in the owned subtree," unchanged from Phase 2.
+- No automatic refill-after-consume loop — the exact mechanism most directly implicated in the original repeated-apply/duplicate-activation bugs.
+- No new resolve-caching code path — reuses `apply_pending_bsn_instances` and `FoundationBsnSelfResolveSuppression` exactly as they exist today; nothing new can reintroduce the self-inflicted-`Modified`-event livelock.
+- No new lifecycle enum — `PreparedSceneCacheEntry` only needs a `root_entity` and `scene_id`; "is it ready" is still answered by the existing readiness query, not by tracked state on the cache entry itself.
+
+### Affected Files And Systems
+- `engine/crates/foundation-runtime-library/src/scene_stack.rs`: add `PreparedSceneCache`; extend `apply_scene_command`/`queue_pending_scene_transition`/`advance_pending_scene_transitions` to consult it for both `Streaming` and `Blocking` opens.
+- `engine/crates/foundation-runtime-library/src/bsn_assets.rs`: rename/extend `warm_registered_scene_preloads` → `prepare_registered_scene_preloads` to spawn real off-stack content (reusing `spawn_bsn_instance_with_asset_server` via the existing `SceneLoadRequested` path) instead of only calling `AssetServer::load`.
+- `engine/docs/scene-system.md`: document the cache, its single-consume policy, and the stale-entity fallback.
+
+### Risks, Constraints, And Assumptions
+- Memory: preloaded-but-never-opened scenes stay fully constructed and resident (not just asset bytes) until either consumed or the app closes. Acceptable for Last Beacon's current preload set (five lightweight UI pages under hangar, two menus) — worth revisiting only if a future preload target is heavy.
+- `ScenePreloadMode::Blocking` remains unwired (unchanged from Phase 4) — this expansion is about making `Background` preloads genuinely instant, not about the still-unused blocking-dependency gate.
+- This does not change `Streaming` scenes into "instant" — it changes them into "never fizzle, hidden until fully ready," which is what was actually requested for that mode. Only scenes that were *actually preloaded* get the zero-latency activation path.
+
+### Testing Methodology
+- Engine unit tests: cache hit activates without re-triggering `SceneLoadRequested`/re-applying BSN; cache hit still-constructing correctly waits (`Blocking`) or streams (`Streaming`) without duplicate construction; cache miss falls through to today's unchanged behavior; a despawned/stale cached entity is detected and falls back to a fresh spawn instead of panicking or reactivating a dead entity.
+- Manual validation: preload a target (e.g. open `hangar`), wait for it to settle, then open one of its pages — confirm zero visible delay and no BSN-apply log activity on the transition frame (matching the "cached activation avoids reapplying BSN" check from the original Phase 3/Phase 6 plan).
+- Repeat the full multi-launch smoke-test regimen used for every prior phase (no black screen, no hang, no repeated resolve/apply of any scene across a full session).
