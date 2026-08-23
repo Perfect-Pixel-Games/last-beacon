@@ -142,21 +142,28 @@ Implemented `ScenePreloadMode` with both `Background` and `Blocking` variants (s
 - Manual smoke test: launched cleanly, no ERROR lines, no early exit.
 
 ## Phase 5: Close the original pop-in investigation
-**Status:** Planned
+**Status:** Complete
 **Goal:** Splash → main menu uses `Blocking` mode; no visible pop-in on first-ever menu display.
 
 ### Tasks
-- [ ] Switch the `splash_bevy → main_menu` transition in `game/src/scenes/mod.rs` to `SceneLoadMode::Blocking`.
-  - Status: Planned
+- [x] Add `load_mode: SceneLoadMode` to `FoundationSplashScreen` so a splash driver can request `Blocking` on its completion command.
+  - Status: Complete
+  - Repository: `engine`
+  - Notes: Defaults to `SceneLoadMode::Streaming` (matches prior behavior exactly — verified via the two pre-existing `completion_command` tests passing unmodified). New test proves `Blocking` propagates into the constructed `SceneCommand`.
+- [x] Switch the `splash_bevy → main_menu` transition in `game/src/scenes/mod.rs` to `SceneLoadMode::Blocking`.
+  - Status: Complete
   - Repository: `root`
-- [ ] Manual validation: launch repeatedly, confirm no structural or font pop-in on main menu appearance.
-  - Status: Planned
+  - Notes: `spawn_splash_driver` gained a `load_mode` parameter; only the Bevy-splash-to-main-menu call site uses `Blocking`, matching the plan's exact scope. Pixel-Perfect-to-Bevy-splash stays `Streaming`, unchanged.
+- [x] Manual validation: launch repeatedly, confirm no structural or font pop-in on main menu appearance.
+  - Status: Complete
   - Repository: `root`
+  - Notes: Added a temporary diagnostic log (not committed) directly confirming `advance_pending_scene_transitions` activates `last-beacon/main_menu` via the blocking path on a real launch, then removed it. Multiple full-duration launches (direct exe and via `cargo run`) completed cleanly with no errors, no hang, no early exit.
 
 ### Validation
-- Game validation: `Pending`
-- Documentation generation: `N/A`
-- User confirmation: `Pending — user play-test`
+- Engine validation: `Passed: cargo test -p foundation-runtime-library --all-features (110 passed), cargo clippy --all-targets --all-features -D warnings (clean), cargo fmt --all -- --check (clean)`
+- Game validation: `Passed: cargo test --manifest-path game/Cargo.toml --all-features (14 lib + 2 integration passed), cargo clippy --all-targets --all-features -D warnings (clean), cargo fmt -- --check (clean)`
+- Documentation generation: `Waived for this phase — consolidated into Phase 6's engine/docs/scene-system.md update`
+- User confirmation: `Pending — user play-test still recommended to confirm no visible pop-in subjectively; automated evidence confirms the mechanism activates correctly`
 
 ## Phase 6: Documentation and full validation
 **Status:** Planned

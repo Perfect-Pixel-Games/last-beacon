@@ -146,16 +146,22 @@ pub fn spawn_requested_last_beacon_scene_drivers(
                     BEVY_SPLASH_SCENE,
                     false,
                     true,
+                    SceneLoadMode::Streaming,
                     scene_owner,
                 );
             }
             Some(BEVY_SPLASH_SCENE) => {
+                // Blocking closes the original scene-pop-in investigation:
+                // the splash only hands off once main_menu.bsn (including
+                // its nested widgets) has fully applied, so the menu never
+                // shows a partially built or unstyled frame.
                 spawn_splash_driver(
                     &mut commands,
                     "Bevy",
                     MAIN_MENU_SCENE,
                     true,
                     false,
+                    SceneLoadMode::Blocking,
                     scene_owner,
                 );
             }
@@ -169,12 +175,14 @@ pub fn spawn_requested_last_beacon_scene_drivers(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn spawn_splash_driver(
     commands: &mut Commands,
     splash_name: &'static str,
     next_scene_key: &'static str,
     reset_stack_for_next_scene: bool,
     replace_current_scene: bool,
+    load_mode: SceneLoadMode,
     scene_owner: SceneOwner,
 ) {
     let splash_timings = FoundationSplashTimings::new(0.75, 1.0, 0.75);
@@ -184,6 +192,7 @@ fn spawn_splash_driver(
         next_scene_key: next_scene_key.to_string(),
         reset_stack_for_next_scene,
         replace_current_scene,
+        load_mode,
     };
 
     commands.spawn((Name::new(splash_name), splash_screen, scene_owner));
