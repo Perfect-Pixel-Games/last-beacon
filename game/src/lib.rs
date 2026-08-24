@@ -166,6 +166,7 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<ui_widgets::LastBeaconUiSlider>()
         .register_type::<ui_widgets::LastBeaconUiSliderFill>()
         .register_type::<ui_widgets::LastBeaconUiFocusIndicator>()
+        .add_plugins(ui_widgets::LastBeaconUiLayoutWidgetsPlugin)
         .add_systems(
             Startup,
             (

@@ -26,8 +26,8 @@ use bevy::{
         TextEdit, TextLayout, TextLayoutInfo,
     },
     ui::{
-        widget::TextScroll, ComputedUiRenderTargetInfo, Outline, RelativeCursorPosition,
-        UiGlobalTransform,
+        widget::TextScroll, ComputedUiRenderTargetInfo, GridAutoFlow, GridPlacement, Outline,
+        RelativeCursorPosition, RepeatedGridTrack, UiGlobalTransform,
     },
     window::PrimaryWindow,
 };
@@ -311,6 +311,82 @@ impl Default for LastBeaconUiSliderFill {
             target: String::new(),
             min: 0.0,
             max: 100.0,
+        }
+    }
+}
+
+/// Turns this entity into a uniform-column CSS grid container: `column_count`
+/// equal-width columns, with children placed left-to-right and wrapping onto
+/// new rows automatically.
+///
+/// A plain field like this is authored directly in `.bsn`; the equal-width
+/// column tracks themselves (`RepeatedGridTrack::flex`) are constructed in
+/// Rust by `apply_last_beacon_ui_uniform_grid`, because Last Beacon's `.bsn`
+/// grammar only resolves expressions into registered tuple-struct/enum-variant
+/// fields via reflection, not arbitrary associated functions.
+#[derive(Clone, Copy, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiUniformGrid {
+    /// Number of equal-width columns. Values below `1` are treated as `1`.
+    pub column_count: u16,
+}
+
+impl Default for LastBeaconUiUniformGrid {
+    fn default() -> Self {
+        Self { column_count: 1 }
+    }
+}
+
+/// Marks a grid cell that should span more than one column and/or row of its
+/// parent grid container (for example a `LastBeaconUiUniformGrid`).
+#[derive(Clone, Copy, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiGridItem {
+    /// Number of grid columns this item should span. Values below `1` are
+    /// treated as `1` (`GridPlacement::span` panics on `0`).
+    pub column_span: u16,
+    /// Number of grid rows this item should span. Values below `1` are
+    /// treated as `1`.
+    pub row_span: u16,
+}
+
+impl Default for LastBeaconUiGridItem {
+    fn default() -> Self {
+        Self {
+            column_span: 1,
+            row_span: 1,
+        }
+    }
+}
+
+/// Constrains this widget's own size to a clamped aspect ratio band based on
+/// its parent's available content space, so authored UI (for example a HUD
+/// sized around a particular ratio) neither stretches edge-to-edge on an
+/// ultrawide monitor nor squashes below a legible minimum on a narrow one.
+///
+/// Setting `min_aspect_ratio == max_aspect_ratio` locks to a single fixed
+/// ratio; this is the same widget in both cases, not a separate variant.
+/// The immediate parent must center this widget (`align_items: Center,
+/// justify_content: Center`) and must not size itself from this widget's own
+/// size (pin the parent to a stable area, such as the window), or the
+/// system's write-back could feed into a layout oscillation.
+#[derive(Clone, Copy, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiAspectRatioBounds {
+    /// Minimum allowed width-over-height ratio.
+    pub min_aspect_ratio: f32,
+    /// Maximum allowed width-over-height ratio.
+    pub max_aspect_ratio: f32,
+}
+
+impl Default for LastBeaconUiAspectRatioBounds {
+    fn default() -> Self {
+        // Inert by default -- a widget left unconfigured constrains nothing.
+        // `0.0..=INFINITY` can never actually clamp a real (positive, finite)
+        // aspect ratio.
+        Self {
+            min_aspect_ratio: 0.0,
+            max_aspect_ratio: f32::INFINITY,
         }
     }
 }
@@ -2247,6 +2323,120 @@ fn mark_widget_failed(world: &mut World, widget_slot_entity: Entity, failure_rea
     }
 }
 
+/// Configures a newly authored uniform grid container's `Node` for CSS Grid
+/// layout with `column_count` equal-width columns.
+pub fn apply_last_beacon_ui_uniform_grid(
+    mut uniform_grids: Query<(&LastBeaconUiUniformGrid, &mut Node), Added<LastBeaconUiUniformGrid>>,
+) {
+    for (uniform_grid, mut node) in &mut uniform_grids {
+        node.display = Display::Grid;
+        node.grid_auto_flow = GridAutoFlow::Row;
+        node.grid_template_columns = RepeatedGridTrack::flex(uniform_grid.column_count.max(1), 1.0);
+    }
+}
+
+/// Translates an authored span into Bevy's native grid placement.
+///
+/// `GridPlacement::span` panics on a span of `0`, so a `.bsn`-authored `0`
+/// (or default-initialized value) is clamped up to `1` -- Bevy's own default
+/// placement already behaves as "span 1," so this never changes behavior for
+/// an unset value.
+pub fn apply_last_beacon_ui_grid_item_span(
+    mut grid_items: Query<(&LastBeaconUiGridItem, &mut Node), Added<LastBeaconUiGridItem>>,
+) {
+    for (grid_item, mut node) in &mut grid_items {
+        node.grid_column = GridPlacement::span(grid_item.column_span.max(1));
+        node.grid_row = GridPlacement::span(grid_item.row_span.max(1));
+    }
+}
+
+/// Keeps a `LastBeaconUiAspectRatioBounds` widget's own size within its
+/// configured aspect-ratio band, derived from its parent's available content
+/// space.
+///
+/// Runs after layout (`bevy::ui::UiSystems::PostLayout`) so the parent's
+/// `ComputedNode` reflects this frame's actual size, matching the same
+/// "read `ComputedNode`, write a derived `Node` value" shape already used by
+/// `refresh_last_beacon_ui_text_box_scrollbars`.
+pub fn apply_last_beacon_ui_aspect_ratio_bounds(
+    mut aspect_ratio_widgets: Query<(&LastBeaconUiAspectRatioBounds, &ChildOf, &mut Node)>,
+    parent_computed_nodes: Query<&ComputedNode>,
+) {
+    for (aspect_ratio_bounds, child_of, mut node) in &mut aspect_ratio_widgets {
+        let Ok(parent_computed_node) = parent_computed_nodes.get(child_of.parent()) else {
+            continue;
+        };
+        let available_size = parent_computed_node.content_box().size();
+        if available_size.x <= 0.0 || available_size.y <= 0.0 {
+            continue;
+        }
+
+        // A typo'd `min > max` degrades gracefully to the correctly-ordered
+        // clamp instead of producing an inverted (always-empty) range.
+        let (min_aspect_ratio, max_aspect_ratio) =
+            if aspect_ratio_bounds.min_aspect_ratio <= aspect_ratio_bounds.max_aspect_ratio {
+                (
+                    aspect_ratio_bounds.min_aspect_ratio,
+                    aspect_ratio_bounds.max_aspect_ratio,
+                )
+            } else {
+                (
+                    aspect_ratio_bounds.max_aspect_ratio,
+                    aspect_ratio_bounds.min_aspect_ratio,
+                )
+            };
+
+        let available_ratio = available_size.x / available_size.y;
+        let clamped_ratio = available_ratio.clamp(min_aspect_ratio, max_aspect_ratio);
+
+        // "Contain fit": the largest size at `clamped_ratio` that still fits
+        // inside the parent's available content space.
+        let width_at_available_height = available_size.y * clamped_ratio;
+        let target_size = if width_at_available_height <= available_size.x {
+            Vec2::new(width_at_available_height, available_size.y)
+        } else {
+            Vec2::new(available_size.x, available_size.x / clamped_ratio)
+        };
+
+        let target_width = Val::Px(target_size.x);
+        let target_height = Val::Px(target_size.y);
+        if node.width != target_width {
+            node.width = target_width;
+        }
+        if node.height != target_height {
+            node.height = target_height;
+        }
+    }
+}
+
+/// Plugin which registers Last Beacon's grid-span and aspect-ratio layout
+/// widgets.
+///
+/// Grouped into its own plugin, rather than appended directly to
+/// `LastBeaconPlugin`'s builder chain, to mirror how `bevy_feathers` composes
+/// its own controls: one plugin per widget family, added together by a
+/// parent plugin (`ControlsPlugin` there, `LastBeaconPlugin` here).
+pub struct LastBeaconUiLayoutWidgetsPlugin;
+
+impl Plugin for LastBeaconUiLayoutWidgetsPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<LastBeaconUiUniformGrid>()
+            .register_type::<LastBeaconUiGridItem>()
+            .register_type::<LastBeaconUiAspectRatioBounds>()
+            .add_systems(
+                Update,
+                (
+                    apply_last_beacon_ui_uniform_grid,
+                    apply_last_beacon_ui_grid_item_span,
+                ),
+            )
+            .add_systems(
+                PostUpdate,
+                apply_last_beacon_ui_aspect_ratio_bounds.after(bevy::ui::UiSystems::PostLayout),
+            );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -3005,5 +3195,233 @@ mod tests {
             Some("standby".to_string()),
             "Enter on a focused tab must select it the same way a mouse press does"
         );
+    }
+
+    #[test]
+    fn uniform_grid_configures_the_requested_column_count() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_uniform_grid);
+
+        let uniform_grid_entity = app
+            .world_mut()
+            .spawn((Node::default(), LastBeaconUiUniformGrid { column_count: 3 }))
+            .id();
+
+        app.update();
+
+        let uniform_grid_node = app.world().get::<Node>(uniform_grid_entity).unwrap();
+        assert_eq!(uniform_grid_node.display, Display::Grid);
+        assert_eq!(
+            uniform_grid_node.grid_template_columns,
+            RepeatedGridTrack::flex::<Vec<RepeatedGridTrack>>(3, 1.0)
+        );
+    }
+
+    #[test]
+    fn uniform_grid_column_count_of_zero_still_produces_a_single_column() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_uniform_grid);
+
+        let uniform_grid_entity = app
+            .world_mut()
+            .spawn((Node::default(), LastBeaconUiUniformGrid { column_count: 0 }))
+            .id();
+
+        app.update();
+
+        let uniform_grid_node = app.world().get::<Node>(uniform_grid_entity).unwrap();
+        assert_eq!(
+            uniform_grid_node.grid_template_columns,
+            RepeatedGridTrack::flex::<Vec<RepeatedGridTrack>>(1, 1.0),
+            "an authored column_count of 0 must still produce a usable single-column grid"
+        );
+    }
+
+    #[test]
+    fn grid_item_span_translates_into_native_grid_placement() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_grid_item_span);
+
+        let grid_item_entity = app
+            .world_mut()
+            .spawn((
+                Node::default(),
+                LastBeaconUiGridItem {
+                    column_span: 2,
+                    row_span: 3,
+                },
+            ))
+            .id();
+
+        app.update();
+
+        let grid_item_node = app.world().get::<Node>(grid_item_entity).unwrap();
+        assert_eq!(grid_item_node.grid_column, GridPlacement::span(2));
+        assert_eq!(grid_item_node.grid_row, GridPlacement::span(3));
+    }
+
+    #[test]
+    fn grid_item_span_of_zero_does_not_panic_and_yields_span_one() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_grid_item_span);
+
+        let grid_item_entity = app
+            .world_mut()
+            .spawn((
+                Node::default(),
+                LastBeaconUiGridItem {
+                    column_span: 0,
+                    row_span: 0,
+                },
+            ))
+            .id();
+
+        app.update();
+
+        let grid_item_node = app.world().get::<Node>(grid_item_entity).unwrap();
+        assert_eq!(grid_item_node.grid_column, GridPlacement::span(1));
+        assert_eq!(grid_item_node.grid_row, GridPlacement::span(1));
+    }
+
+    fn spawn_aspect_ratio_test_widget(
+        app: &mut App,
+        parent_size: Vec2,
+        aspect_ratio_bounds: LastBeaconUiAspectRatioBounds,
+    ) -> Entity {
+        let parent_entity = app
+            .world_mut()
+            .spawn(ComputedNode {
+                size: parent_size,
+                ..default()
+            })
+            .id();
+        app.world_mut()
+            .spawn((Node::default(), ChildOf(parent_entity), aspect_ratio_bounds))
+            .id()
+    }
+
+    #[test]
+    fn aspect_ratio_bounds_forces_a_fixed_square_ratio() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_aspect_ratio_bounds);
+
+        let widget_entity = spawn_aspect_ratio_test_widget(
+            &mut app,
+            Vec2::new(1600.0, 900.0),
+            LastBeaconUiAspectRatioBounds {
+                min_aspect_ratio: 1.0,
+                max_aspect_ratio: 1.0,
+            },
+        );
+
+        app.update();
+
+        let widget_node = app.world().get::<Node>(widget_entity).unwrap();
+        assert_eq!(widget_node.width, Val::Px(900.0));
+        assert_eq!(widget_node.height, Val::Px(900.0));
+    }
+
+    #[test]
+    fn aspect_ratio_bounds_passes_through_a_ratio_already_inside_the_band() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_aspect_ratio_bounds);
+
+        let widget_entity = spawn_aspect_ratio_test_widget(
+            &mut app,
+            Vec2::new(1600.0, 900.0),
+            LastBeaconUiAspectRatioBounds {
+                min_aspect_ratio: 0.5,
+                max_aspect_ratio: 5.0,
+            },
+        );
+
+        app.update();
+
+        let widget_node = app.world().get::<Node>(widget_entity).unwrap();
+        assert_eq!(widget_node.width, Val::Px(1600.0));
+        assert_eq!(widget_node.height, Val::Px(900.0));
+    }
+
+    #[test]
+    fn aspect_ratio_bounds_clamps_a_narrow_parent_up_to_the_minimum() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_aspect_ratio_bounds);
+
+        // A 400x900 parent has a ratio of ~0.44, below the configured minimum.
+        let widget_entity = spawn_aspect_ratio_test_widget(
+            &mut app,
+            Vec2::new(400.0, 900.0),
+            LastBeaconUiAspectRatioBounds {
+                min_aspect_ratio: 1.0,
+                max_aspect_ratio: 2.0,
+            },
+        );
+
+        app.update();
+
+        let widget_node = app.world().get::<Node>(widget_entity).unwrap();
+        assert_eq!(widget_node.width, Val::Px(400.0));
+        assert_eq!(widget_node.height, Val::Px(400.0));
+    }
+
+    #[test]
+    fn aspect_ratio_bounds_swaps_a_backwards_min_and_max() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_aspect_ratio_bounds);
+
+        // A 1600x900 parent has a ratio of ~1.778, which falls inside the
+        // *correctly-ordered* [1.0, 2.0] band. Authoring the fields backwards
+        // (`min: 2.0, max: 1.0`) must still swap to that same band internally
+        // -- `f32::clamp` always panics if `min > max` is passed
+        // through unswapped, so this also guards against that panic.
+        let widget_entity = spawn_aspect_ratio_test_widget(
+            &mut app,
+            Vec2::new(1600.0, 900.0),
+            LastBeaconUiAspectRatioBounds {
+                min_aspect_ratio: 2.0,
+                max_aspect_ratio: 1.0,
+            },
+        );
+
+        app.update();
+
+        let widget_node = app.world().get::<Node>(widget_entity).unwrap();
+        assert_eq!(
+            widget_node.width,
+            Val::Px(1600.0),
+            "the parent's ratio is already inside the (correctly-ordered) band, so it must pass through unchanged"
+        );
+        assert_eq!(widget_node.height, Val::Px(900.0));
+    }
+
+    #[test]
+    fn aspect_ratio_bounds_default_is_inert() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_aspect_ratio_bounds);
+
+        let widget_entity = spawn_aspect_ratio_test_widget(
+            &mut app,
+            Vec2::new(1600.0, 900.0),
+            LastBeaconUiAspectRatioBounds::default(),
+        );
+
+        app.update();
+
+        let widget_node = app.world().get::<Node>(widget_entity).unwrap();
+        assert_eq!(
+            widget_node.width,
+            Val::Px(1600.0),
+            "an unconfigured (Default) aspect-ratio widget must not constrain anything"
+        );
+        assert_eq!(widget_node.height, Val::Px(900.0));
     }
 }
