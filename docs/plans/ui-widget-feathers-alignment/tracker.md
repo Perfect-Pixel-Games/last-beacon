@@ -13,7 +13,7 @@
 - Planning model: `gpt-5.5` (role fulfilled by Claude Sonnet 5)
 - Preferred implementation model: `gpt-5.4` (role fulfilled by Claude Sonnet 5)
 - Optional final review model: `gpt-5.5` (role fulfilled by Claude Sonnet 5)
-- Current handoff state: `Ready for implementation pending user approval to proceed`
+- Current handoff state: `Implementation in progress (Claude Sonnet 5 fulfilling gpt-5.4)`
 - Created: `2026-08-24`
 - Last updated: `2026-08-24`
 
@@ -22,37 +22,37 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Pending` (no commits made yet — plan/tracker creation itself is the first commit due)
+- Root commit/push state: `Plan/tracker commit fb6cace pushed to origin/feature/ui-widget-feathers-alignment`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 
 ## Phase 1: Efficiency and correctness fix for style enforcement
-**Status:** Planned
+**Status:** Complete
 **Goal:** `enforce_last_beacon_button_styles` only recomputes/writes color components for entities whose relevant state actually changed, with tests proving both the "no-op frame" and "cross-entity tab selection change" cases.
 
 ### Tasks
-- [ ] Add `Changed<Interaction>` to `LastBeaconUiButtonStyleQuery`, `MainMenuPrimaryButtonStyleQuery`, `BeaconPrimaryButtonStyleQuery`, `BeaconTabButtonStyleQuery`
-  - Status: Planned
+- [x] Add `Changed<Interaction>` to `LastBeaconUiButtonStyleQuery`, `MainMenuPrimaryButtonStyleQuery`, `BeaconPrimaryButtonStyleQuery`, `BeaconTabButtonStyleQuery`
+  - Status: Complete
   - Repository: `root`
   - Notes: None
-- [ ] Change `LastBeaconUiTabStyleQuery`'s interaction field to `Ref<'static, Interaction>` and guard the tab loop body with `tab_interaction.is_changed() || tab_selections.is_changed()`
-  - Status: Planned
+- [x] Change `LastBeaconUiTabStyleQuery`'s interaction field to `Ref<'static, Interaction>` and guard the tab loop body with `tab_interaction.is_changed() || tab_selections.is_changed()`
+  - Status: Complete
   - Repository: `root`
   - Notes: None
-- [ ] Add the three Phase 1 tests (no-op frame preserves a sentinel color; button restyles on `Interaction` change; both tabs in a group restyle when only the shared resource changes)
-  - Status: Planned
+- [x] Add the three Phase 1 tests (no-op frame preserves a sentinel color; button restyles on `Interaction` change; both tabs in a group restyle when only the shared resource changes)
+  - Status: Complete
   - Repository: `root`
-  - Notes: None
-- [ ] Run Phase 1 validation and commit
-  - Status: Planned
+  - Notes: All 3 new tests pass alongside the pre-existing 8 tests in `ui_widgets::tests` (11 total).
+- [x] Run Phase 1 validation and commit
+  - Status: Complete
   - Repository: `root`
-  - Notes: None
+  - Notes: `cargo fmt --check` required one `cargo fmt` pass (long single-line let-bindings); clean after. Clippy clean with `-D warnings`. All tests pass. `cargo doc` succeeds.
 
 ### Validation
-- Game validation: `Pending`
+- Game validation: `cargo fmt --check` pass, `cargo clippy --all-targets --all-features -D warnings` pass, `cargo test --all-features` pass (11/11 in `ui_widgets::tests`), `cargo doc --all-features --no-deps` pass
 - Engine validation: `N/A`
-- Documentation generation: Pending
-- User confirmation: Not required yet
+- Documentation generation: Recorded (rustdoc generated successfully; new query type aliases and the guard branch carry "why" comments per rust-coding-standards)
+- User confirmation: Not required for this phase (user approved "implement in full" covering all phases up front)
 
 ## Phase 2: Keyboard/gamepad-ready focus support
 **Status:** Planned
@@ -137,3 +137,4 @@
 
 ## Progress Log
 - `2026-08-24`: Reviewed `game/src/ui_widgets.rs` and all 24 `.bsn` files under `game/assets/ui/widgets/common/` in full. Read the vendored `bevy_feathers` 0.19.0, `bevy_input_focus` 0.19.0, and `bevy_ui` 0.19.0 crate sources directly from the local Cargo registry cache to ground the comparison in the real Feathers architecture rather than assumptions. Used `AskUserQuestion` to scope "reinforce and solidify" down to two tiers (efficiency/correctness fix, plus keyboard/gamepad-ready focus support); user selected that scope over a report-only option and over full architectural adoption. Created `feature/ui-widget-feathers-alignment` from `dev` per the user's git-workflow reminder. Wrote `plan.md` and this tracker per `.pi/skills/feature-plan-docs/SKILL.md`. Stopping here for user review per that skill's mandatory planning checkpoint.
+- `2026-08-24`: User replied "implement in full", approving all phases. Committed and pushed the plan/tracker docs (`fb6cace`). Completed Phase 1: gated `enforce_last_beacon_button_styles`'s queries, added 3 tests, ran full Phase 1 validation (fmt/clippy/test/doc), all passing. Proceeding to Phase 2.

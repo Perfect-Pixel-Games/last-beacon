@@ -410,6 +410,12 @@ type LastBeaconUiTabInteractionQuery<'w, 's> = Query<
 type LastBeaconUiTabPanelQuery<'w, 's> =
     Query<'w, 's, (&'static LastBeaconUiTabPanel, &'static mut Node)>;
 
+// These style queries are filtered by `Changed<Interaction>` so
+// `enforce_last_beacon_button_styles` only recomputes and rewrites colors for
+// widgets whose interaction state actually changed since this system last ran,
+// instead of rewriting every widget's colors on every single frame. Component
+// insertion counts as a change, so a freshly spawned widget still gets styled
+// on its first frame.
 type LastBeaconUiButtonStyleQuery<'w, 's> = Query<
     'w,
     's,
@@ -420,15 +426,21 @@ type LastBeaconUiButtonStyleQuery<'w, 's> = Query<
         &'static mut BorderColor,
         Option<&'static Children>,
     ),
-    (With<Button>, Without<LastBeaconUiTab>),
+    (With<Button>, Without<LastBeaconUiTab>, Changed<Interaction>),
 >;
 
+// Tabs cannot be filtered by `Changed<Interaction>` alone: a tab's displayed
+// style also depends on `LastBeaconUiTabSelections`, so a sibling tab being
+// selected must restyle this tab even though this tab's own `Interaction`
+// never changed. `Ref<Interaction>` lets the system body check
+// `is_changed()` per tab and combine it with the shared resource's own
+// change state.
 type LastBeaconUiTabStyleQuery<'w, 's> = Query<
     'w,
     's,
     (
         &'static LastBeaconUiTab,
-        &'static Interaction,
+        Ref<'static, Interaction>,
         &'static mut BackgroundColor,
         &'static mut BorderColor,
         Option<&'static Children>,
@@ -446,6 +458,7 @@ type MainMenuPrimaryButtonStyleQuery<'w, 's> = Query<
         Without<LastBeaconBeaconTabButton>,
         Without<LastBeaconUiButton>,
         Without<LastBeaconUiTab>,
+        Changed<Interaction>,
     ),
 >;
 
@@ -459,6 +472,7 @@ type BeaconPrimaryButtonStyleQuery<'w, 's> = Query<
         Without<LastBeaconBeaconTabButton>,
         Without<LastBeaconUiButton>,
         Without<LastBeaconUiTab>,
+        Changed<Interaction>,
     ),
 >;
 
@@ -472,6 +486,7 @@ type BeaconTabButtonStyleQuery<'w, 's> = Query<
         Without<LastBeaconBeaconPrimaryButton>,
         Without<LastBeaconUiButton>,
         Without<LastBeaconUiTab>,
+        Changed<Interaction>,
     ),
 >;
 
@@ -1509,6 +1524,14 @@ pub fn enforce_last_beacon_button_styles(
     }
 
     for (tab, tab_interaction, mut tab_background, mut tab_border, tab_children) in &mut ui_tabs {
+        // A tab's style depends on both its own interaction and the shared
+        // selection resource, so this loop cannot be filtered by
+        // `Changed<Interaction>` alone at the query level; skip tabs where
+        // neither actually changed to avoid rewriting every tab's colors on
+        // every frame.
+        if !(tab_interaction.is_changed() || tab_selections.is_changed()) {
+            continue;
+        }
         let selected_tab = tab_selections.selected_tabs.get(&tab.group);
         let is_selected = selected_tab
             .map(|selected_tab| selected_tab == &tab.tab)
@@ -2326,5 +2349,160 @@ mod tests {
             .world()
             .get::<LastBeaconBsnWidgetFailed>(widget_slot_entity)
             .is_some());
+    }
+
+    #[test]
+    fn button_style_is_not_rewritten_on_a_frame_where_interaction_did_not_change() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<LastBeaconUiTabSelections>();
+        app.add_systems(Update, enforce_last_beacon_button_styles);
+
+        let button_entity = app
+            .world_mut()
+            .spawn((
+                Button,
+                Interaction::None,
+                BackgroundColor(Color::NONE),
+                BorderColor::all(Color::NONE),
+                LastBeaconUiButton {
+                    variant: "secondary".to_string(),
+                },
+            ))
+            .id();
+
+        app.update();
+
+        // Simulate a value that a real frame would never naturally produce,
+        // so a later unwanted overwrite by the style system is unmistakable.
+        let sentinel_background_color = Color::srgb(1.0, 0.0, 1.0);
+        app.world_mut()
+            .get_mut::<BackgroundColor>(button_entity)
+            .unwrap()
+            .0 = sentinel_background_color;
+
+        app.update();
+
+        assert_eq!(
+            app.world()
+                .get::<BackgroundColor>(button_entity)
+                .unwrap()
+                .0,
+            sentinel_background_color,
+            "the style system must not rewrite a button's color on a frame where its Interaction did not change"
+        );
+    }
+
+    #[test]
+    fn button_style_updates_when_interaction_changes() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<LastBeaconUiTabSelections>();
+        app.add_systems(Update, enforce_last_beacon_button_styles);
+
+        let button_entity = app
+            .world_mut()
+            .spawn((
+                Button,
+                Interaction::None,
+                BackgroundColor(Color::NONE),
+                BorderColor::all(Color::NONE),
+                LastBeaconUiButton {
+                    variant: "primary".to_string(),
+                },
+            ))
+            .id();
+
+        app.update();
+        let resting_background_color = app.world().get::<BackgroundColor>(button_entity).unwrap().0;
+
+        *app.world_mut()
+            .get_mut::<Interaction>(button_entity)
+            .unwrap() = Interaction::Hovered;
+        app.update();
+
+        let hovered_background_color = app.world().get::<BackgroundColor>(button_entity).unwrap().0;
+        assert_ne!(
+            hovered_background_color, resting_background_color,
+            "the style system must restyle a button on the frame its Interaction changes"
+        );
+    }
+
+    #[test]
+    fn both_tabs_in_a_group_restyle_when_only_the_shared_selection_changes() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<LastBeaconUiTabSelections>();
+        app.add_systems(Update, enforce_last_beacon_button_styles);
+
+        let selected_tab_entity = app
+            .world_mut()
+            .spawn((
+                Button,
+                Interaction::None,
+                BackgroundColor(Color::NONE),
+                BorderColor::all(Color::NONE),
+                LastBeaconUiTab {
+                    group: "group".to_string(),
+                    tab: "a".to_string(),
+                    selected: true,
+                },
+            ))
+            .id();
+        let unselected_tab_entity = app
+            .world_mut()
+            .spawn((
+                Button,
+                Interaction::None,
+                BackgroundColor(Color::NONE),
+                BorderColor::all(Color::NONE),
+                LastBeaconUiTab {
+                    group: "group".to_string(),
+                    tab: "b".to_string(),
+                    selected: false,
+                },
+            ))
+            .id();
+
+        app.update();
+        let tab_a_selected_background_color = app
+            .world()
+            .get::<BackgroundColor>(selected_tab_entity)
+            .unwrap()
+            .0;
+        let tab_b_unselected_background_color = app
+            .world()
+            .get::<BackgroundColor>(unselected_tab_entity)
+            .unwrap()
+            .0;
+
+        // Select tab B through the shared resource without touching either
+        // tab's own `Interaction`, mirroring what a real tab click does to a
+        // sibling tab it did not click.
+        app.world_mut()
+            .resource_mut::<LastBeaconUiTabSelections>()
+            .selected_tabs
+            .insert("group".to_string(), "b".to_string());
+        app.update();
+
+        let tab_a_background_color_after_selection_change = app
+            .world()
+            .get::<BackgroundColor>(selected_tab_entity)
+            .unwrap()
+            .0;
+        let tab_b_background_color_after_selection_change = app
+            .world()
+            .get::<BackgroundColor>(unselected_tab_entity)
+            .unwrap()
+            .0;
+
+        assert_ne!(
+            tab_a_background_color_after_selection_change, tab_a_selected_background_color,
+            "tab A must restyle to its unselected look once tab B becomes selected"
+        );
+        assert_ne!(
+            tab_b_background_color_after_selection_change, tab_b_unselected_background_color,
+            "tab B must restyle to its selected look even though its own Interaction never changed"
+        );
     }
 }
