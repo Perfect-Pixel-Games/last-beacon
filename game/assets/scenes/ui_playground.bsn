@@ -21,7 +21,10 @@ bevy_ecs::hierarchy::Children [
         flex_direction: bevy_ui::ui_node::FlexDirection::Column,
         align_items: bevy_ui::ui_node::AlignItems::Stretch,
         justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+        border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(3.0), right: bevy_ui::geometry::Val::Px(3.0), top: bevy_ui::geometry::Val::Px(3.0), bottom: bevy_ui::geometry::Val::Px(3.0), },
     }
+    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.015, green: 0.023, blue: 0.042, alpha: 1.0 }))
+    bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), }
     last_beacon::ui_widgets::LastBeaconUiAspectRatioBounds { min_aspect_ratio: 1.7777778, max_aspect_ratio: 1.7777778 }
     bevy_ecs::hierarchy::Children [
     #UiPlaygroundHeader
@@ -424,7 +427,7 @@ bevy_ecs::hierarchy::Children [
             left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }),
         }
         bevy_ecs::hierarchy::Children [
-            bevy_ui::widget::text::Text("GRID")
+            bevy_ui::widget::text::Text("UNIFORM GRID")
             bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
             bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
                 red: 0.58,
@@ -435,6 +438,58 @@ bevy_ecs::hierarchy::Children [
 
             #UniformGridSample
             last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/uniform_grid.bsn" }
+        ],
+
+        #SpanGridWidgetGallery
+        bevy_ui::ui_node::Node {
+            width: bevy_ui::geometry::Val::Px(420.0),
+            flex_direction: bevy_ui::ui_node::FlexDirection::Column,
+            align_items: bevy_ui::ui_node::AlignItems::Stretch,
+            justify_content: bevy_ui::ui_node::JustifyContent::FlexStart,
+            row_gap: bevy_ui::geometry::Val::Px(14.0),
+            padding: bevy_ui::geometry::UiRect {
+                left: bevy_ui::geometry::Val::Px(16.0),
+                right: bevy_ui::geometry::Val::Px(16.0),
+                top: bevy_ui::geometry::Val::Px(16.0),
+                bottom: bevy_ui::geometry::Val::Px(16.0),
+            },
+            border: bevy_ui::geometry::UiRect {
+                left: bevy_ui::geometry::Val::Px(2.0),
+                right: bevy_ui::geometry::Val::Px(2.0),
+                top: bevy_ui::geometry::Val::Px(2.0),
+                bottom: bevy_ui::geometry::Val::Px(2.0),
+            },
+            border_radius: bevy_ui::ui_node::BorderRadius {
+                top_left: bevy_ui::geometry::Val::Px(2.0),
+                top_right: bevy_ui::geometry::Val::Px(2.0),
+                bottom_right: bevy_ui::geometry::Val::Px(2.0),
+                bottom_left: bevy_ui::geometry::Val::Px(2.0),
+            },
+        }
+        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+            red: 0.059,
+            green: 0.09,
+            blue: 0.165,
+            alpha: 0.9,
+        }))
+        bevy_ui::ui_node::BorderColor {
+            top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }),
+            right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }),
+            bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }),
+            left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }),
+        }
+        bevy_ecs::hierarchy::Children [
+            bevy_ui::widget::text::Text("SPAN GRID")
+            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
+            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
+                red: 0.58,
+                green: 0.639,
+                blue: 0.722,
+                alpha: 1.0,
+            })),
+
+            #GridItemSpanSample
+            last_beacon::ui_widgets::LastBeaconBsnWidget { asset_path: "ui/widgets/common/grid_item_span.bsn" }
         ]
     ]
     ]

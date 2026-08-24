@@ -335,7 +335,9 @@ Runtime behavior:
 
 ## Span Grid
 
-`LastBeaconUiGridItem` is not its own asset; it is a component authored on a child of a grid container (such as Uniform Grid) to make that child span more than one cell.
+Asset: `game/assets/ui/widgets/common/grid_item_span.bsn`
+
+`LastBeaconUiGridItem` is authored on a child of a grid container (such as Uniform Grid) to make that child span more than one cell. `grid_item_span.bsn` is a dedicated example: a 3-column uniform grid whose middle cell carries `LastBeaconUiGridItem { column_span: 2 }`, kept separate from the plain `uniform_grid.bsn` example so the two concepts are easy to compare side by side in the UI Playground.
 
 Author-updated properties:
 
@@ -366,4 +368,4 @@ Do not:
 - Size the immediate parent from this widget's own size (for example, do not give the parent an automatic/content-based height while this widget is its only child) — pin the parent to a stable area (the window, or a fixed-size panel) instead, or the two sizes can feed back into each other.
 - Forget to center this widget in its parent (`align_items: Center, justify_content: Center`); the widget does not center itself.
 
-`game/assets/scenes/ui_playground.bsn` demonstrates the real intended usage directly: the whole scene's content (header + every widget gallery) is wrapped in a `#UiPlaygroundAspectRatioFrame` carrying `LastBeaconUiAspectRatioBounds { min_aspect_ratio: 1.7777778, max_aspect_ratio: 1.7777778 }` (a fixed 16:9), so the entire playground stays letterboxed to 16:9 instead of stretching edge-to-edge on an ultrawide window. `aspect_ratio_container.bsn` remains available separately as a smaller, self-contained example for reuse in other scenes.
+`game/assets/scenes/ui_playground.bsn` demonstrates the real intended usage directly: the whole scene's content (header + every widget gallery) is wrapped in a `#UiPlaygroundAspectRatioFrame` carrying `LastBeaconUiAspectRatioBounds { min_aspect_ratio: 1.7777778, max_aspect_ratio: 1.7777778 }` (a fixed 16:9), so the entire playground stays letterboxed to 16:9 instead of stretching edge-to-edge on an ultrawide window. The frame itself is given a visible border and a slightly lighter background than the window behind it, so the 16:9 boundary reads clearly instead of blending into the rest of the scene. `aspect_ratio_container.bsn` remains available separately as a smaller, self-contained example for reuse in other scenes.

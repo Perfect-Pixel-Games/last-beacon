@@ -72,6 +72,7 @@ fn converted_bsn_scene_assets_load_as_scene_patches() {
         "ui/widgets/common/slider.bsn",
         "ui/widgets/common/property_container.bsn",
         "ui/widgets/common/uniform_grid.bsn",
+        "ui/widgets/common/grid_item_span.bsn",
         "ui/widgets/common/aspect_ratio_container.bsn",
         "ui/widgets/main_menu/brand.bsn",
         "ui/widgets/main_menu/continue_button.bsn",
