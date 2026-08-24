@@ -365,3 +365,5 @@ Do not:
 
 - Size the immediate parent from this widget's own size (for example, do not give the parent an automatic/content-based height while this widget is its only child) — pin the parent to a stable area (the window, or a fixed-size panel) instead, or the two sizes can feed back into each other.
 - Forget to center this widget in its parent (`align_items: Center, justify_content: Center`); the widget does not center itself.
+
+`game/assets/scenes/ui_playground.bsn` demonstrates the real intended usage directly: the whole scene's content (header + every widget gallery) is wrapped in a `#UiPlaygroundAspectRatioFrame` carrying `LastBeaconUiAspectRatioBounds { min_aspect_ratio: 1.7777778, max_aspect_ratio: 1.7777778 }` (a fixed 16:9), so the entire playground stays letterboxed to 16:9 instead of stretching edge-to-edge on an ultrawide window. `aspect_ratio_container.bsn` remains available separately as a smaller, self-contained example for reuse in other scenes.
