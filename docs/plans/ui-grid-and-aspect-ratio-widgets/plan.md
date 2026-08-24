@@ -7,7 +7,7 @@
 - Root branch: `feature/ui-grid-and-aspect-ratio-widgets`
 - Engine branch: `N/A`
 - Engine submodule pointer: `N/A` (no engine changes planned)
-- Status: `Planned`
+- Status: `Implemented`
 - Planning model: `gpt-5.5` (role fulfilled by Claude Sonnet 5, per the user's standing instruction that Claude/subagents replace GPT in this workflow)
 - Implementation model: `gpt-5.4` (role fulfilled by Claude Sonnet 5)
 - Review model: `gpt-5.5` (role fulfilled by Claude Sonnet 5)
@@ -46,26 +46,65 @@ Adds three reusable layout primitives to `game/src/ui_widgets.rs` and `docs/ui-w
 - `bevy_ui-0.19.0/src/ui_node.rs:26-33,401-405` (`ComputedNode`): `pub size: Vec2` is a public field, and `ComputedNode` derives `Default` — meaning it can be constructed directly in tests (`ComputedNode { size: Vec2::new(1600.0, 900.0), ..default() }`) without needing to run Bevy's real Taffy layout pass, the same way this file's existing scrollbar-layout math is unit-tested.
 - `ui_widgets.rs`'s existing `refresh_last_beacon_ui_text_box_scrollbars` (registered `.after(bevy::ui::UiSystems::PostLayout)` in `game/src/lib.rs`) is the established precedent for "read `ComputedNode` after layout, compute a derived value, write it back to `Node`" — the aspect-ratio system follows the identical shape.
 - Bevy's own `Node.aspect_ratio: Option<f32>` field (native single-ratio support, resolved by Taffy similarly to CSS `aspect-ratio`) was considered and rejected as the implementation mechanism for this widget: it only expresses one fixed ratio, not a `[min, max]` band, and the user was explicit that this must be **one** widget configured with both a min and a max (equal values degenerating to "fixed"), not two code paths. A single custom system handles both cases uniformly.
-- `game/assets/ui/widgets/common/divider.bsn` and `typography_panel.bsn` (confirmed via `docs/ui-widgets.md`) are the existing precedent for a "pure layout/style preset, documented, no backing Rust component" widget — this is the pattern Uniform Grid follows.
 - Confirmed via `gh pr view 16` that the prior feature (`feature/ui-widget-feathers-alignment`, style-enforcement fix + keyboard focus support) is still open/unmerged; this feature branches from current `origin/dev` (`018b317`) per gitflow-workflow rather than stacking on that unmerged branch, since these three widgets have no functional dependency on it.
 - `game/assets/scenes/ui_playground.bsn`: read in full. It's a flex-wrap row (`#UiPlaygroundBody`) of bordered "gallery" cards (`#ButtonWidgetGallery`, `#NavigationWidgetGallery`, `#PanelWidgetGallery`, `#TypographyWidgetGallery`, `#InputWidgetGallery`), each a fixed-width `Node` with a section-label `Text` followed by one or more `LastBeaconBsnWidget { asset_path: "ui/widgets/common/....bsn" }` references. New gallery cards for these three widgets follow this exact existing pattern. Notably, every existing gallery card already has an explicit fixed pixel width (not sized by its children) — exactly the "parent must not size itself from this widget" precondition the Aspect Ratio container's design assumes, so no special-case container is needed to demo it safely.
+- **Correction found during implementation (see Progress Log):** `engine/crates/foundation-runtime-library/src/dynamic_bsn_grammar.lalrpop` and `dynamic_bsn.rs` show that Last Beacon's `.bsn` files are **not** parsed by Bevy's `bsn!` Rust macro; they're parsed at runtime by this project's own reflection-based grammar. Its `NamedTuple` expression (`Symbol(args...)`) resolves purely via `TypeRegistry` reflection into either a tuple struct's fields or an enum's tuple-variant fields (`dynamic_bsn.rs:635-691`) — there is no mechanism to invoke an arbitrary associated function. This means `RepeatedGridTrack::flex(3, 1.0)` (an associated function on a plain struct, not an enum variant) **cannot** be authored directly in `.bsn` text the way the original plan assumed; the same applies to any other `GridTrack`/`RepeatedGridTrack`/`GridPlacement` constructor function. (Everything that already works in existing `.bsn` files — `Val::Px(1.0)`, `Color::Srgba(Srgba { .. })`, `FlexDirection::Column` — is enum-variant or plain-public-struct construction, never a function call.) Consequence: Uniform Grid needs a small Rust component + reactive system after all (translating a plain `column_count: u16` field into the real `RepeatedGridTrack::flex(...)` call in compiled Rust, not in `.bsn` text) — the same shape as every other widget in this file, and, on reflection, a *more* consistent reading of "as much BSN as possible, the same as the other components" than the original "zero Rust" framing, since no existing widget hand-authors complex nested Bevy types directly in `.bsn` text either.
 
 ## External Research
 No web search/fetch was performed or needed. The relevant `bevy_ui` 0.19.0 grid, grid-placement, and computed-node APIs were read directly from the local Cargo registry cache (`C:\Users\jonla\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bevy_ui-0.19.0\src\ui_node.rs`), the exact version pinned in this workspace's `Cargo.lock`.
 
 ## Affected Files And Systems
-- `game/src/ui_widgets.rs`: add `LastBeaconUiGridItem` component + `apply_last_beacon_ui_grid_item_span` system; add `LastBeaconUiAspectRatioBounds` component + `apply_last_beacon_ui_aspect_ratio_bounds` system; add `LastBeaconUiLayoutWidgetsPlugin` bundling both.
+- `game/src/ui_widgets.rs`: add `LastBeaconUiUniformGrid` component + `apply_last_beacon_ui_uniform_grid` system; add `LastBeaconUiGridItem` component + `apply_last_beacon_ui_grid_item_span` system; add `LastBeaconUiAspectRatioBounds` component + `apply_last_beacon_ui_aspect_ratio_bounds` system; add `LastBeaconUiLayoutWidgetsPlugin` bundling all three.
 - `game/src/lib.rs`: `LastBeaconPlugin::build` adds `LastBeaconUiLayoutWidgetsPlugin` via `.add_plugins(...)` (no per-type/per-system inline registration needed, since the new plugin owns that).
-- `game/assets/ui/widgets/common/uniform_grid.bsn`: new preset asset (Uniform Grid needs no Rust, just a documented starting `.bsn`).
+- `game/assets/ui/widgets/common/uniform_grid.bsn`: new preset asset authoring `LastBeaconUiUniformGrid { column_count: 3 }`.
 - `game/assets/scenes/ui_playground.bsn`: two new gallery cards demonstrating Uniform Grid + Span Grid together, and Aspect Ratio Container.
 - `docs/ui-widgets.md`: three new sections (Uniform Grid, Span Grid, Aspect Ratio Container).
 - No `engine/` changes. No changes to any existing widget `.bsn` asset under `common/`.
 
 ## Proposed Implementation Approach
 
-### 1. Uniform Grid (documentation + preset asset only)
-1. Add `game/assets/ui/widgets/common/uniform_grid.bsn`: a `Node` with `display: Display::Grid`, `grid_auto_flow: GridAutoFlow::Row`, and `grid_template_columns: RepeatedGridTrack::flex(3, 1.0)` (three equal-width columns as a starting default, matching `stat_rows_panel.bsn`'s "duplicate/remove rows as needed" precedent for "change the column count for your use case"), plus a documented empty `Children [...]` slot for cells.
-2. Add a "Uniform Grid" section to `docs/ui-widgets.md` documenting: `grid_template_columns`/`grid_template_rows` are the author-updated properties (change the repetition count and/or swap `flex` for `px`/`percent`/`auto` per column as needed); children are placed left-to-right, wrapping automatically via `grid_auto_flow`.
+### 1. Uniform Grid
+1. Add a new component:
+   ```rust
+   /// Turns this entity into a uniform-column CSS grid container: `column_count`
+   /// equal-width columns, children placed left-to-right and wrapping onto new
+   /// rows automatically.
+   ///
+   /// A plain field like this is authored directly in `.bsn`; the equal-width
+   /// column tracks themselves (`RepeatedGridTrack::flex`) are constructed here
+   /// in Rust because Last Beacon's `.bsn` grammar only resolves expressions
+   /// into registered tuple-struct/enum-variant fields via reflection, not
+   /// arbitrary associated functions -- see the Codebase Research correction.
+   #[derive(Clone, Copy, Debug, Component, Reflect)]
+   #[reflect(Component, Default)]
+   pub struct LastBeaconUiUniformGrid {
+       /// Number of equal-width columns. Values below `1` are treated as `1`.
+       pub column_count: u16,
+   }
+
+   impl Default for LastBeaconUiUniformGrid {
+       fn default() -> Self {
+           Self { column_count: 1 }
+       }
+   }
+   ```
+2. Add a reactive system:
+   ```rust
+   /// Configures a newly authored uniform grid container's `Node` for CSS Grid
+   /// layout with `column_count` equal-width columns.
+   pub fn apply_last_beacon_ui_uniform_grid(
+       mut uniform_grids: Query<(&LastBeaconUiUniformGrid, &mut Node), Added<LastBeaconUiUniformGrid>>,
+   ) {
+       for (uniform_grid, mut node) in &mut uniform_grids {
+           node.display = Display::Grid;
+           node.grid_auto_flow = GridAutoFlow::Row;
+           node.grid_template_columns =
+               RepeatedGridTrack::flex(uniform_grid.column_count.max(1), 1.0);
+       }
+   }
+   ```
+3. Add `game/assets/ui/widgets/common/uniform_grid.bsn`: a `Node` (`width: Percent(100)`, matching the "reusable widgets default to full width" convention) plus `LastBeaconUiUniformGrid { column_count: 3 }` and a documented empty `Children [...]` slot for cells.
+4. Add a "Uniform Grid" section to `docs/ui-widgets.md` documenting: `LastBeaconUiUniformGrid { column_count }` is the author-updated property (matching `stat_rows_panel.bsn`'s "duplicate/remove rows as needed" precedent for "change the count for your use case"); children are placed left-to-right, wrapping automatically onto new rows.
 
 ### 2. Span Grid
 1. Add a new component:
@@ -172,9 +211,16 @@ No web search/fetch was performed or needed. The relevant `bevy_ui` 0.19.0 grid,
 
    impl Plugin for LastBeaconUiLayoutWidgetsPlugin {
        fn build(&self, app: &mut App) {
-           app.register_type::<LastBeaconUiGridItem>()
+           app.register_type::<LastBeaconUiUniformGrid>()
+               .register_type::<LastBeaconUiGridItem>()
                .register_type::<LastBeaconUiAspectRatioBounds>()
-               .add_systems(Update, apply_last_beacon_ui_grid_item_span)
+               .add_systems(
+                   Update,
+                   (
+                       apply_last_beacon_ui_uniform_grid,
+                       apply_last_beacon_ui_grid_item_span,
+                   ),
+               )
                .add_systems(
                    PostUpdate,
                    apply_last_beacon_ui_aspect_ratio_bounds
@@ -183,9 +229,10 @@ No web search/fetch was performed or needed. The relevant `bevy_ui` 0.19.0 grid,
        }
    }
    ```
-2. In `game/src/lib.rs`, add `.add_plugins(ui_widgets::LastBeaconUiLayoutWidgetsPlugin)` to `LastBeaconPlugin::build`'s existing chain, instead of inline `.register_type()`/`.add_systems()` calls for these two components. This does not change how any existing widget is registered.
+2. In `game/src/lib.rs`, add `.add_plugins(ui_widgets::LastBeaconUiLayoutWidgetsPlugin)` to `LastBeaconPlugin::build`'s existing chain, instead of inline `.register_type()`/`.add_systems()` calls for these three components. This does not change how any existing widget is registered.
 
 ### 5. Tests (per component, added to `ui_widgets.rs`'s existing `#[cfg(test)] mod tests`)
+- Uniform Grid: an entity spawned with `LastBeaconUiUniformGrid { column_count: 3 }` ends up with `Node.display == Display::Grid` and `Node.grid_template_columns` equal to `RepeatedGridTrack::flex(3, 1.0)`; an entity spawned with `column_count: 0` still gets a 1-column grid (proving the defensive clamp) instead of a degenerate zero-column grid.
 - Span Grid: an entity spawned with `LastBeaconUiGridItem { column_span: 2, row_span: 3 }` ends up with a `Node.grid_column`/`Node.grid_row` matching `GridPlacement::span(2)`/`GridPlacement::span(3)`; an entity spawned with `column_span: 0` still gets `GridPlacement::span(1)` (proving the panic-avoiding clamp actually runs) rather than panicking.
 - Aspect Ratio Container: a parent with a manually constructed `ComputedNode { size: Vec2::new(1600.0, 900.0), ..default() }` (a 16:9 available area) and a child with `min_aspect_ratio: 1.0, max_aspect_ratio: 1.0` (forcing square) ends up sized to `900x900` (the largest square that fits); the same parent with `min_aspect_ratio: 0.5, max_aspect_ratio: 5.0` (a band the 16:9 parent already falls inside) ends up sized to the full `1600x900` (no clamping needed); a narrow parent (`ComputedNode { size: Vec2::new(400.0, 900.0), .. }`, i.e. a tall/narrow ratio around 0.44) with `min_aspect_ratio: 1.0, max_aspect_ratio: 2.0` ends up clamped to the `1.0` minimum, sized to `400x400`; a test proving the min/max swap when authored backwards (`min_aspect_ratio: 2.0, max_aspect_ratio: 1.0`) still produces the same result as the correctly-ordered case; a test proving the `Default` impl is inert (an entity left at `LastBeaconUiAspectRatioBounds::default()` inside any parent size passes that size through unchanged).
 
@@ -211,7 +258,7 @@ No web search/fetch was performed or needed. The relevant `bevy_ui` 0.19.0 grid,
 - `GridPlacement::span(0)` panics; `LastBeaconUiGridItem` must clamp both span fields to a minimum of `1` before calling it. Covered by a dedicated test.
 - The Aspect Ratio container's parent must not size itself based on this widget's own size (must be pinned to a stable size, e.g. the window/viewport), or the system's write-back could feed into a layout oscillation. This is documented as an authoring requirement, not something the system can enforce generically, since it does not own its parent.
 - This branch was created from current `origin/dev` (`018b317`), not from the still-open `feature/ui-widget-feathers-alignment` (PR #16) branch, per gitflow-workflow's "branches come from dev" rule. The three widgets in this plan have no functional dependency on PR #16's changes, so this is safe, but the two PRs will both need to merge into `dev` independently (normal parallel-feature-branch behavior, not a blocker).
-- Uniform Grid intentionally ships with zero new Rust code; if that turns out to be too limited in practice (e.g. authors want a shared marker component for tooling/reflection purposes), a thin `LastBeaconUiUniformGrid` marker component could be added later without breaking the `.bsn` convention.
+- Last Beacon's `.bsn` grammar only resolves reflection-based tuple-struct/enum-variant construction, never arbitrary associated-function calls (see Codebase Research) — any future widget idea that seems to need a raw Bevy constructor function authored directly in `.bsn` text should assume it needs the same "plain-field component + Rust system" treatment as these three, not attempt the function call directly.
 
 ## Open Questions
 None blocking. The one open question from the prior revision (whether "designed in a similar way" to Feathers meant more than the per-widget-`Plugin` structure + docs + inert defaults) is resolved: the user confirmed these widgets should be authored via `.bsn` "as much as possible, the same as the other components," i.e. no Rust-side `Props`/builder spawn-function API. This matches the plan as written -- Uniform Grid is a pure `.bsn` preset, and Span Grid / Aspect Ratio Container are authored in `.bsn` via `LastBeaconUiGridItem`/`LastBeaconUiAspectRatioBounds` components read by reactive systems, exactly like every other existing widget (`LastBeaconUiSlider`, `LastBeaconUiTab`, etc.).
@@ -236,7 +283,7 @@ None blocking. The one open question from the prior revision (whether "designed 
 - Confirm the `LastBeaconUiLayoutWidgetsPlugin` split reads as a natural first step toward more modular registration, not as an inconsistent one-off next to the monolithic `LastBeaconPlugin`.
 
 ## Success Criteria
-- A grid container built from the Uniform Grid preset lays out children in evenly sized columns with no custom Rust code.
+- A grid container authored with `LastBeaconUiUniformGrid { column_count }` lays out children in evenly sized columns.
 - A child marked `LastBeaconUiGridItem { column_span: 2, row_span: 1 }` inside such a grid visibly spans two columns.
 - A widget marked `LastBeaconUiAspectRatioBounds { min_aspect_ratio, max_aspect_ratio }` stays within that ratio band and is centered, regardless of the window's actual aspect ratio.
 - Both new gallery cards appear in the UI Playground scene alongside the existing ones.
