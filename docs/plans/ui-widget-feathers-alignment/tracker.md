@@ -22,7 +22,7 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Plan/tracker commit fb6cace pushed to origin/feature/ui-widget-feathers-alignment`
+- Root commit/push state: `Phase 1 commit 0f5e8b3 pushed to origin/feature/ui-widget-feathers-alignment; Phase 2 commit pending`
 - Engine commit/push state: `N/A`
 - Root submodule pointer update: `N/A`
 
@@ -55,52 +55,52 @@
 - User confirmation: Not required for this phase (user approved "implement in full" covering all phases up front)
 
 ## Phase 2: Keyboard/gamepad-ready focus support
-**Status:** Planned
+**Status:** Complete
 **Goal:** Every interactive Last Beacon widget (buttons, tabs, radio options, sliders, dropdown toggles) is reachable via Tab/Shift+Tab, shows a visible focus outline, and Enter/Space activates the focused discrete-action widget — without touching `bevy_ui`'s owned `Interaction` component.
 
 ### Tasks
-- [ ] Register `TabNavigationPlugin` in `game/src/lib.rs`, guarded with `is_plugin_added` against the `dev-tools` console's own `FeathersPlugins` add
-  - Status: Planned
+- [x] Register `TabNavigationPlugin` in `game/src/lib.rs`, guarded with `is_plugin_added` against the `dev-tools` console's own `FeathersPlugins` add
+  - Status: Complete
   - Repository: `root`
   - Notes: None
-- [ ] Add `apply_last_beacon_ui_tab_groups_to_scene_roots` (+ tests: scene root gets `TabGroup`; nested scene-owned entity does not)
-  - Status: Planned
+- [x] Add `apply_last_beacon_ui_tab_groups_to_scene_roots` (+ tests: scene root gets `TabGroup`; nested scene-owned entity does not)
+  - Status: Complete
   - Repository: `root`
   - Notes: None
-- [ ] Add `LastBeaconUiFocusIndicator` component and `apply_last_beacon_ui_focusability` reactive system (+ tests per marker type)
-  - Status: Planned
+- [x] Add `LastBeaconUiFocusIndicator` component and `apply_last_beacon_ui_focusability` reactive system (+ tests per marker type)
+  - Status: Complete
+  - Repository: `root`
+  - Notes: One test covers all 5 marker types (button/tab/value-button/dropdown-toggle/slider) rather than 5 near-duplicate tests.
+- [x] Add `apply_last_beacon_ui_focus_outline` mutating `Outline.color` from `InputFocus`/`InputFocusVisible` (+ tests: outline follows focus; clears when focus moves)
+  - Status: Complete
   - Repository: `root`
   - Notes: None
-- [ ] Add `apply_last_beacon_ui_focus_outline` mutating `Outline.color` from `InputFocus`/`InputFocusVisible` (+ tests: outline follows focus; clears when focus moves)
-  - Status: Planned
+- [x] Extract `apply_value_button_activation`, `apply_dropdown_toggle_activation`, `apply_tab_selection_activation` helpers from the existing mouse-driven systems
+  - Status: Complete
   - Repository: `root`
   - Notes: None
-- [ ] Extract `apply_value_button_activation`, `apply_dropdown_toggle_activation`, `apply_tab_selection_activation` helpers from the existing mouse-driven systems
-  - Status: Planned
+- [x] Add `activate_last_beacon_ui_focused_widget_on_keyboard_input` (+ tests: Enter/Space on a focused value-button/dropdown-toggle/tab produces the same state change as a mouse `Pressed`)
+  - Status: Complete
+  - Repository: `root`
+  - Notes: Required `#[allow(clippy::too_many_arguments)]` (8 system params), matching the existing convention already used elsewhere in this file for similarly large systems.
+- [x] Register all new systems/types in `game/src/lib.rs`
+  - Status: Complete
+  - Repository: `root`
+  - Notes: New systems registered as their own `Update` tuple rather than appended to the existing 15-element tuple, to avoid any risk of exceeding Bevy's `IntoScheduleConfigs` tuple-arity impl.
+- [x] Add "Keyboard & Focus" section to `docs/ui-widgets.md`
+  - Status: Complete
   - Repository: `root`
   - Notes: None
-- [ ] Add `activate_last_beacon_ui_focused_widget_on_keyboard_input` (+ tests: Enter/Space on a focused value-button/dropdown-toggle/tab produces the same state change as a mouse `Pressed`)
-  - Status: Planned
+- [x] Run Phase 2 validation and commit
+  - Status: Complete
   - Repository: `root`
-  - Notes: None
-- [ ] Register all new systems/types in `game/src/lib.rs`
-  - Status: Planned
-  - Repository: `root`
-  - Notes: None
-- [ ] Add "Keyboard & Focus" section to `docs/ui-widgets.md`
-  - Status: Planned
-  - Repository: `root`
-  - Notes: None
-- [ ] Run Phase 2 validation and commit
-  - Status: Planned
-  - Repository: `root`
-  - Notes: None
+  - Notes: `cargo fmt` required one pass (long single-line arg lists); clean after. Clippy required `#[allow(clippy::too_many_arguments)]` noted above; clean after. All 34 tests pass (30 unit + 4 integration). `cargo doc` succeeds.
 
 ### Validation
-- Game validation: `Pending`
+- Game validation: `cargo fmt --check` pass, `cargo clippy --all-targets --all-features -D warnings` pass, `cargo test --all-features` pass (34/34), `cargo doc --all-features --no-deps` pass
 - Engine validation: `N/A`
-- Documentation generation: Pending
-- User confirmation: Not required yet
+- Documentation generation: Recorded (rustdoc generated successfully; `docs/ui-widgets.md` updated with a "Keyboard & Focus" section)
+- User confirmation: Not required for this phase (user approved "implement in full" covering all phases up front)
 
 ## Phase 3: Validation and PR readiness
 **Status:** Planned
@@ -138,3 +138,4 @@
 ## Progress Log
 - `2026-08-24`: Reviewed `game/src/ui_widgets.rs` and all 24 `.bsn` files under `game/assets/ui/widgets/common/` in full. Read the vendored `bevy_feathers` 0.19.0, `bevy_input_focus` 0.19.0, and `bevy_ui` 0.19.0 crate sources directly from the local Cargo registry cache to ground the comparison in the real Feathers architecture rather than assumptions. Used `AskUserQuestion` to scope "reinforce and solidify" down to two tiers (efficiency/correctness fix, plus keyboard/gamepad-ready focus support); user selected that scope over a report-only option and over full architectural adoption. Created `feature/ui-widget-feathers-alignment` from `dev` per the user's git-workflow reminder. Wrote `plan.md` and this tracker per `.pi/skills/feature-plan-docs/SKILL.md`. Stopping here for user review per that skill's mandatory planning checkpoint.
 - `2026-08-24`: User replied "implement in full", approving all phases. Committed and pushed the plan/tracker docs (`fb6cace`). Completed Phase 1: gated `enforce_last_beacon_button_styles`'s queries, added 3 tests, ran full Phase 1 validation (fmt/clippy/test/doc), all passing. Proceeding to Phase 2.
+- `2026-08-24`: Completed Phase 2: registered a guarded `TabNavigationPlugin`, added scene-root `TabGroup` tagging, `LastBeaconUiFocusIndicator` + reactive `TabIndex`/`Outline` insertion, focus-outline mutation driven by `InputFocus`/`InputFocusVisible`, extracted activation helpers, and keyboard Enter/Space activation. Added 7 new tests (18 total in `ui_widgets::tests`). Ran full Phase 2 validation (fmt/clippy/test/doc), all passing. Updated `docs/ui-widgets.md` with a "Keyboard & Focus" section. Proceeding to Phase 3.

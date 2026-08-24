@@ -15,7 +15,10 @@ use bevy::{
         keyboard::{Key, KeyboardInput},
         mouse::{MouseScrollUnit, MouseWheel},
     },
-    input_focus::{FocusCause, InputFocus},
+    input_focus::{
+        tab_navigation::{TabGroup, TabIndex},
+        FocusCause, InputFocus, InputFocusVisible,
+    },
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
     text::{
@@ -23,7 +26,8 @@ use bevy::{
         TextEdit, TextLayout, TextLayoutInfo,
     },
     ui::{
-        widget::TextScroll, ComputedUiRenderTargetInfo, RelativeCursorPosition, UiGlobalTransform,
+        widget::TextScroll, ComputedUiRenderTargetInfo, Outline, RelativeCursorPosition,
+        UiGlobalTransform,
     },
     window::PrimaryWindow,
 };
@@ -146,6 +150,18 @@ pub struct LastBeaconUiTextHorizontalScrollThumb;
 #[derive(Clone, Copy, Debug, Default, Component, Reflect)]
 #[reflect(Component, Default)]
 pub struct LastBeaconUiSymbolIcon;
+
+/// Marks a keyboard/gamepad-focusable Last Beacon widget that should display a
+/// visible focus outline while it holds input focus.
+///
+/// `apply_last_beacon_ui_focusability` inserts this alongside `TabIndex` and an
+/// `Outline` on every interactive widget marker; `apply_last_beacon_ui_focus_outline`
+/// then mutates that `Outline`'s color in place as focus moves, rather than
+/// inserting/removing the component (which `bevy_ui::Outline`'s own docs warn
+/// causes archetype table moves).
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiFocusIndicator;
 
 /// Updates a radio icon from reusable tab selection state.
 #[derive(Clone, Debug, Component, Reflect)]
@@ -349,6 +365,13 @@ const TEXT_BOX_SCROLLBAR_THICKNESS_RATIO: f32 = 0.065;
 const TEXT_BOX_SCROLLBAR_MIN_THICKNESS: f32 = 4.0;
 const TEXT_BOX_SCROLLBAR_MAX_THICKNESS: f32 = 8.0;
 const TEXT_BOX_SCROLLBAR_MIN_THUMB_RATIO: f32 = 0.25;
+
+// Reuses the same amber accent already used for selected tabs and slider
+// fills elsewhere in this file, so the focus outline reads as part of the
+// same visual language rather than an unrelated new color.
+const LAST_BEACON_FOCUS_OUTLINE_COLOR: Color = Color::srgb(0.984, 0.749, 0.141);
+const LAST_BEACON_FOCUS_OUTLINE_WIDTH: f32 = 2.0;
+const LAST_BEACON_FOCUS_OUTLINE_OFFSET: f32 = 2.0;
 
 type LastBeaconUiTextInputFocusQuery<'w, 's> = Query<
     'w,
@@ -835,6 +858,40 @@ pub fn update_last_beacon_ui_number_inputs(
     }
 }
 
+/// Applies a single reusable value-button press to shared widget state.
+///
+/// Factored out of `update_last_beacon_ui_value_buttons` so
+/// `activate_last_beacon_ui_focused_widget_on_keyboard_input` can trigger the
+/// exact same effect from Enter/Space on a focused widget, without touching
+/// the `Interaction` component itself (see that system's doc comment for why).
+fn apply_value_button_activation(
+    button: &LastBeaconUiValueButton,
+    input_values: &mut LastBeaconUiInputValues,
+    dropdown_states: &mut LastBeaconUiDropdownStates,
+) {
+    if button.target.is_empty() {
+        return;
+    }
+
+    if !button.set_value.is_empty() {
+        input_values
+            .values
+            .insert(button.target.clone(), button.set_value.clone());
+        dropdown_states
+            .open_dropdowns
+            .insert(button.target.clone(), false);
+        return;
+    }
+
+    let current_value = input_values
+        .values
+        .get(&button.target)
+        .and_then(|value| value.parse::<f32>().ok())
+        .unwrap_or(0.0);
+    let next_value = (current_value + button.delta).clamp(button.min, button.max);
+    insert_input_value_if_changed(input_values, &button.target, format_value(next_value));
+}
+
 /// Applies simple value changes for authored reusable input examples.
 pub fn update_last_beacon_ui_value_buttons(
     mut input_values: ResMut<LastBeaconUiInputValues>,
@@ -842,28 +899,34 @@ pub fn update_last_beacon_ui_value_buttons(
     buttons: LastBeaconUiValueButtonInteractionQuery,
 ) {
     for (button, interaction) in &buttons {
-        if *interaction != Interaction::Pressed || button.target.is_empty() {
+        if *interaction != Interaction::Pressed {
             continue;
         }
-
-        if !button.set_value.is_empty() {
-            input_values
-                .values
-                .insert(button.target.clone(), button.set_value.clone());
-            dropdown_states
-                .open_dropdowns
-                .insert(button.target.clone(), false);
-            continue;
-        }
-
-        let current_value = input_values
-            .values
-            .get(&button.target)
-            .and_then(|value| value.parse::<f32>().ok())
-            .unwrap_or(0.0);
-        let next_value = (current_value + button.delta).clamp(button.min, button.max);
-        insert_input_value_if_changed(&mut input_values, &button.target, format_value(next_value));
+        apply_value_button_activation(button, &mut input_values, &mut dropdown_states);
     }
+}
+
+/// Applies a single reusable dropdown-toggle press to shared widget state.
+///
+/// Factored out of `toggle_last_beacon_ui_dropdowns` so
+/// `activate_last_beacon_ui_focused_widget_on_keyboard_input` can trigger the
+/// exact same effect from Enter/Space on a focused widget.
+fn apply_dropdown_toggle_activation(
+    toggle: &LastBeaconUiDropdownToggle,
+    dropdown_states: &mut LastBeaconUiDropdownStates,
+) {
+    if toggle.target.is_empty() {
+        return;
+    }
+
+    let next_open_state = !dropdown_states
+        .open_dropdowns
+        .get(&toggle.target)
+        .copied()
+        .unwrap_or(false);
+    dropdown_states
+        .open_dropdowns
+        .insert(toggle.target.clone(), next_open_state);
 }
 
 /// Opens or closes authored reusable dropdown panels.
@@ -872,18 +935,10 @@ pub fn toggle_last_beacon_ui_dropdowns(
     toggles: LastBeaconUiDropdownToggleQuery,
 ) {
     for (toggle, interaction) in &toggles {
-        if *interaction != Interaction::Pressed || toggle.target.is_empty() {
+        if *interaction != Interaction::Pressed {
             continue;
         }
-
-        let next_open_state = !dropdown_states
-            .open_dropdowns
-            .get(&toggle.target)
-            .copied()
-            .unwrap_or(false);
-        dropdown_states
-            .open_dropdowns
-            .insert(toggle.target.clone(), next_open_state);
+        apply_dropdown_toggle_activation(toggle, &mut dropdown_states);
     }
 }
 
@@ -983,6 +1038,90 @@ pub fn initialize_last_beacon_ui_sliders(
         commands
             .entity(slider_entity)
             .insert(RelativeCursorPosition::default());
+    }
+}
+
+/// Marks every newly loaded Last Beacon scene root as its own modal
+/// tab-navigation group, so `Tab`/`Shift+Tab` cycles within that scene (or
+/// overlay) instead of leaking focus into whatever scene is underneath it.
+///
+/// `TabIndex` only participates in tab cycling when an ancestor carries
+/// `TabGroup`; a top-level scene root (an entity with `SceneOwner` and no
+/// parent) is the natural place to attach one. Using `TabGroup::modal()`
+/// keeps a pause overlay's tab cycle from including the paused scene beneath
+/// it.
+pub fn apply_last_beacon_ui_tab_groups_to_scene_roots(
+    mut commands: Commands,
+    scene_root_entities: Query<Entity, (Added<SceneOwner>, Without<ChildOf>)>,
+) {
+    for scene_root_entity in &scene_root_entities {
+        commands.entity(scene_root_entity).insert(TabGroup::modal());
+    }
+}
+
+/// Makes every newly spawned interactive Last Beacon widget reachable by
+/// keyboard/gamepad tab navigation and ready to show a focus outline.
+///
+/// The `Outline` is inserted once with a transparent color rather than being
+/// inserted/removed as focus moves, because `bevy_ui::Outline`'s own
+/// documentation warns that repeated insertion and removal causes archetype
+/// table moves; `apply_last_beacon_ui_focus_outline` only ever mutates its
+/// `color` field afterward.
+pub fn apply_last_beacon_ui_focusability(
+    mut commands: Commands,
+    buttons: Query<Entity, Added<LastBeaconUiButton>>,
+    tabs: Query<Entity, Added<LastBeaconUiTab>>,
+    value_buttons: Query<Entity, Added<LastBeaconUiValueButton>>,
+    dropdown_toggles: Query<Entity, Added<LastBeaconUiDropdownToggle>>,
+    sliders: Query<Entity, Added<LastBeaconUiSlider>>,
+) {
+    let newly_focusable_entities = buttons
+        .iter()
+        .chain(tabs.iter())
+        .chain(value_buttons.iter())
+        .chain(dropdown_toggles.iter())
+        .chain(sliders.iter());
+
+    for focusable_entity in newly_focusable_entities {
+        commands.entity(focusable_entity).insert((
+            TabIndex(0),
+            LastBeaconUiFocusIndicator,
+            Outline::new(
+                Val::Px(LAST_BEACON_FOCUS_OUTLINE_WIDTH),
+                Val::Px(LAST_BEACON_FOCUS_OUTLINE_OFFSET),
+                Color::NONE,
+            ),
+        ));
+    }
+}
+
+/// Mirrors keyboard/gamepad focus state into the visible focus outline.
+///
+/// Only writes `Outline.color` when it actually needs to change, both to
+/// avoid unnecessary change-detection churn and because repeatedly inserting
+/// a fresh `Outline` instead would cause the archetype table moves that
+/// `bevy_ui::Outline`'s documentation warns against.
+pub fn apply_last_beacon_ui_focus_outline(
+    input_focus: Res<InputFocus>,
+    input_focus_visible: Res<InputFocusVisible>,
+    mut focus_indicators: Query<(Entity, &mut Outline), With<LastBeaconUiFocusIndicator>>,
+) {
+    if !input_focus.is_changed() && !input_focus_visible.is_changed() {
+        return;
+    }
+
+    let visibly_focused_entity = input_focus.get().filter(|_| input_focus_visible.0);
+
+    for (focus_indicator_entity, mut outline) in &mut focus_indicators {
+        let target_outline_color = if Some(focus_indicator_entity) == visibly_focused_entity {
+            LAST_BEACON_FOCUS_OUTLINE_COLOR
+        } else {
+            Color::NONE
+        };
+
+        if outline.color != target_outline_color {
+            outline.color = target_outline_color;
+        }
     }
 }
 
@@ -1468,6 +1607,20 @@ pub fn refresh_last_beacon_ui_value_text(
     }
 }
 
+/// Selects a single reusable tab within its shared selection group.
+///
+/// Factored out of `update_last_beacon_ui_tab_selection` so
+/// `activate_last_beacon_ui_focused_widget_on_keyboard_input` can trigger the
+/// exact same effect from Enter/Space on a focused tab.
+fn apply_tab_selection_activation(
+    tab: &LastBeaconUiTab,
+    tab_selections: &mut LastBeaconUiTabSelections,
+) {
+    tab_selections
+        .selected_tabs
+        .insert(tab.group.clone(), tab.tab.clone());
+}
+
 /// Updates remembered tab selection when a reusable tab is clicked.
 pub fn update_last_beacon_ui_tab_selection(
     mut tab_selections: ResMut<LastBeaconUiTabSelections>,
@@ -1475,10 +1628,53 @@ pub fn update_last_beacon_ui_tab_selection(
 ) {
     for (tab, tab_interaction) in &tabs {
         if *tab_interaction == Interaction::Pressed {
-            tab_selections
-                .selected_tabs
-                .insert(tab.group.clone(), tab.tab.clone());
+            apply_tab_selection_activation(tab, &mut tab_selections);
         }
+    }
+}
+
+/// Activates the currently focused widget when Enter or Space is pressed.
+///
+/// This deliberately never touches the `Interaction` component to simulate a
+/// mouse press: `bevy_ui::focus::ui_focus_system` only ever resets a
+/// non-hovered node's `Interaction` from `Hovered` back to `None`, never from
+/// `Pressed`, so a keyboard-forced `Pressed` on a widget the cursor is not
+/// over would get stuck indefinitely. Instead this calls the same small
+/// activation helper the matching mouse-driven system already calls.
+#[allow(clippy::too_many_arguments)]
+pub fn activate_last_beacon_ui_focused_widget_on_keyboard_input(
+    mut keyboard_input_messages: MessageReader<KeyboardInput>,
+    input_focus: Res<InputFocus>,
+    value_buttons: Query<&LastBeaconUiValueButton>,
+    dropdown_toggles: Query<&LastBeaconUiDropdownToggle>,
+    tabs: Query<&LastBeaconUiTab>,
+    mut input_values: ResMut<LastBeaconUiInputValues>,
+    mut dropdown_states: ResMut<LastBeaconUiDropdownStates>,
+    mut tab_selections: ResMut<LastBeaconUiTabSelections>,
+) {
+    let Some(focused_entity) = input_focus.get() else {
+        keyboard_input_messages.read().for_each(drop);
+        return;
+    };
+
+    let activation_key_was_pressed = keyboard_input_messages
+        .read()
+        .any(|keyboard_input_message| {
+            keyboard_input_message.state.is_pressed()
+                && matches!(keyboard_input_message.logical_key, Key::Enter | Key::Space)
+        });
+    if !activation_key_was_pressed {
+        return;
+    }
+
+    if let Ok(value_button) = value_buttons.get(focused_entity) {
+        apply_value_button_activation(value_button, &mut input_values, &mut dropdown_states);
+    }
+    if let Ok(dropdown_toggle) = dropdown_toggles.get(focused_entity) {
+        apply_dropdown_toggle_activation(dropdown_toggle, &mut dropdown_states);
+    }
+    if let Ok(tab) = tabs.get(focused_entity) {
+        apply_tab_selection_activation(tab, &mut tab_selections);
     }
 }
 
@@ -2503,6 +2699,311 @@ mod tests {
         assert_ne!(
             tab_b_background_color_after_selection_change, tab_b_unselected_background_color,
             "tab B must restyle to its selected look even though its own Interaction never changed"
+        );
+    }
+
+    #[test]
+    fn scene_root_gains_a_modal_tab_group() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_tab_groups_to_scene_roots);
+
+        let scene_root_entity = app
+            .world_mut()
+            .spawn(SceneOwner {
+                scene_id: SceneId(1),
+            })
+            .id();
+
+        app.update();
+
+        assert!(
+            app.world().get::<TabGroup>(scene_root_entity).is_some(),
+            "a top-level scene root must become its own tab group so Tab navigation works inside it"
+        );
+    }
+
+    #[test]
+    fn nested_scene_owned_entity_does_not_get_its_own_tab_group() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_tab_groups_to_scene_roots);
+
+        let scene_root_entity = app.world_mut().spawn_empty().id();
+        let nested_scene_owned_entity = app
+            .world_mut()
+            .spawn((
+                SceneOwner {
+                    scene_id: SceneId(1),
+                },
+                ChildOf(scene_root_entity),
+            ))
+            .id();
+
+        app.update();
+
+        assert!(
+            app.world()
+                .get::<TabGroup>(nested_scene_owned_entity)
+                .is_none(),
+            "a nested scene-owned entity is not a scene root and must not get its own tab group"
+        );
+    }
+
+    #[test]
+    fn focusable_widget_markers_gain_tab_index_and_a_hidden_focus_outline() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_focusability);
+
+        let button_entity = app.world_mut().spawn(LastBeaconUiButton::default()).id();
+        let tab_entity = app.world_mut().spawn(LastBeaconUiTab::default()).id();
+        let value_button_entity = app
+            .world_mut()
+            .spawn(LastBeaconUiValueButton::default())
+            .id();
+        let dropdown_toggle_entity = app
+            .world_mut()
+            .spawn(LastBeaconUiDropdownToggle::default())
+            .id();
+        let slider_entity = app.world_mut().spawn(LastBeaconUiSlider::default()).id();
+
+        app.update();
+
+        for focusable_entity in [
+            button_entity,
+            tab_entity,
+            value_button_entity,
+            dropdown_toggle_entity,
+            slider_entity,
+        ] {
+            assert_eq!(
+                app.world().get::<TabIndex>(focusable_entity),
+                Some(&TabIndex(0)),
+                "every interactive widget marker must become keyboard-focusable"
+            );
+            assert!(
+                app.world()
+                    .get::<LastBeaconUiFocusIndicator>(focusable_entity)
+                    .is_some(),
+                "every interactive widget marker must be able to show a focus outline"
+            );
+            let outline = app
+                .world()
+                .get::<Outline>(focusable_entity)
+                .expect("focusable widgets must have an Outline component to mutate later");
+            assert_eq!(
+                outline.color,
+                Color::NONE,
+                "the outline must start hidden until this widget actually gains focus"
+            );
+        }
+    }
+
+    #[test]
+    fn focus_outline_color_follows_input_focus_and_visibility() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<InputFocus>();
+        app.init_resource::<InputFocusVisible>();
+        app.add_systems(Update, apply_last_beacon_ui_focus_outline);
+
+        let focus_indicator_entity = app
+            .world_mut()
+            .spawn((
+                LastBeaconUiFocusIndicator,
+                Outline::new(Val::Px(2.0), Val::Px(2.0), Color::NONE),
+            ))
+            .id();
+
+        app.update();
+        assert_eq!(
+            app.world()
+                .get::<Outline>(focus_indicator_entity)
+                .unwrap()
+                .color,
+            Color::NONE,
+            "the outline must stay hidden while nothing is focused"
+        );
+
+        app.world_mut()
+            .resource_mut::<InputFocus>()
+            .set(focus_indicator_entity, FocusCause::Pressed);
+        app.world_mut().resource_mut::<InputFocusVisible>().0 = true;
+        app.update();
+
+        assert_eq!(
+            app.world()
+                .get::<Outline>(focus_indicator_entity)
+                .unwrap()
+                .color,
+            LAST_BEACON_FOCUS_OUTLINE_COLOR,
+            "the outline must become visible once this entity is focused and focus is visible"
+        );
+
+        app.world_mut().resource_mut::<InputFocus>().clear();
+        app.update();
+
+        assert_eq!(
+            app.world()
+                .get::<Outline>(focus_indicator_entity)
+                .unwrap()
+                .color,
+            Color::NONE,
+            "the outline must clear once focus moves away from this entity"
+        );
+    }
+
+    fn spawn_test_keyboard_activation_message(
+        app: &mut App,
+        logical_key: Key,
+        key_code: bevy::input::keyboard::KeyCode,
+    ) {
+        app.world_mut().write_message(KeyboardInput {
+            key_code,
+            logical_key,
+            state: bevy::input::ButtonState::Pressed,
+            text: None,
+            repeat: false,
+            window: Entity::PLACEHOLDER,
+        });
+    }
+
+    #[test]
+    fn keyboard_enter_activates_focused_value_button() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_message::<KeyboardInput>();
+        app.init_resource::<InputFocus>();
+        app.init_resource::<LastBeaconUiInputValues>();
+        app.init_resource::<LastBeaconUiDropdownStates>();
+        app.init_resource::<LastBeaconUiTabSelections>();
+        app.add_systems(
+            Update,
+            activate_last_beacon_ui_focused_widget_on_keyboard_input,
+        );
+
+        let value_button_entity = app
+            .world_mut()
+            .spawn(LastBeaconUiValueButton {
+                target: "brightness".to_string(),
+                set_value: String::new(),
+                delta: 5.0,
+                min: 0.0,
+                max: 100.0,
+            })
+            .id();
+        app.world_mut()
+            .resource_mut::<InputFocus>()
+            .set(value_button_entity, FocusCause::Pressed);
+
+        spawn_test_keyboard_activation_message(
+            &mut app,
+            Key::Enter,
+            bevy::input::keyboard::KeyCode::Enter,
+        );
+        app.update();
+
+        let stored_brightness_value = app
+            .world()
+            .resource::<LastBeaconUiInputValues>()
+            .values
+            .get("brightness")
+            .cloned();
+        assert_eq!(
+            stored_brightness_value,
+            Some("5".to_string()),
+            "Enter on a focused value button must apply its delta the same way a mouse press does"
+        );
+    }
+
+    #[test]
+    fn keyboard_space_activates_focused_dropdown_toggle() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_message::<KeyboardInput>();
+        app.init_resource::<InputFocus>();
+        app.init_resource::<LastBeaconUiInputValues>();
+        app.init_resource::<LastBeaconUiDropdownStates>();
+        app.init_resource::<LastBeaconUiTabSelections>();
+        app.add_systems(
+            Update,
+            activate_last_beacon_ui_focused_widget_on_keyboard_input,
+        );
+
+        let dropdown_toggle_entity = app
+            .world_mut()
+            .spawn(LastBeaconUiDropdownToggle {
+                target: "combo-mode".to_string(),
+            })
+            .id();
+        app.world_mut()
+            .resource_mut::<InputFocus>()
+            .set(dropdown_toggle_entity, FocusCause::Pressed);
+
+        spawn_test_keyboard_activation_message(
+            &mut app,
+            Key::Space,
+            bevy::input::keyboard::KeyCode::Space,
+        );
+        app.update();
+
+        let dropdown_is_open = app
+            .world()
+            .resource::<LastBeaconUiDropdownStates>()
+            .open_dropdowns
+            .get("combo-mode")
+            .copied();
+        assert_eq!(
+            dropdown_is_open,
+            Some(true),
+            "Space on a focused dropdown toggle must open it the same way a mouse press does"
+        );
+    }
+
+    #[test]
+    fn keyboard_enter_activates_focused_tab() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_message::<KeyboardInput>();
+        app.init_resource::<InputFocus>();
+        app.init_resource::<LastBeaconUiInputValues>();
+        app.init_resource::<LastBeaconUiDropdownStates>();
+        app.init_resource::<LastBeaconUiTabSelections>();
+        app.add_systems(
+            Update,
+            activate_last_beacon_ui_focused_widget_on_keyboard_input,
+        );
+
+        let tab_entity = app
+            .world_mut()
+            .spawn(LastBeaconUiTab {
+                group: "radio-power".to_string(),
+                tab: "standby".to_string(),
+                selected: false,
+            })
+            .id();
+        app.world_mut()
+            .resource_mut::<InputFocus>()
+            .set(tab_entity, FocusCause::Pressed);
+
+        spawn_test_keyboard_activation_message(
+            &mut app,
+            Key::Enter,
+            bevy::input::keyboard::KeyCode::Enter,
+        );
+        app.update();
+
+        let selected_tab = app
+            .world()
+            .resource::<LastBeaconUiTabSelections>()
+            .selected_tabs
+            .get("radio-power")
+            .cloned();
+        assert_eq!(
+            selected_tab,
+            Some("standby".to_string()),
+            "Enter on a focused tab must select it the same way a mouse press does"
         );
     }
 }
