@@ -9,11 +9,11 @@
 - Root branch base verification: `Verified` (created from `dev` via `git checkout -b feature/ui-widget-feathers-alignment` while `dev` was clean and up to date at the start of this session)
 - Engine branch base verification: `N/A`
 - Engine submodule pointer: `N/A`
-- Overall status: `Planned`
+- Overall status: `Implemented, PR opened, awaiting user/reviewer confirmation`
 - Planning model: `gpt-5.5` (role fulfilled by Claude Sonnet 5)
 - Preferred implementation model: `gpt-5.4` (role fulfilled by Claude Sonnet 5)
 - Optional final review model: `gpt-5.5` (role fulfilled by Claude Sonnet 5)
-- Current handoff state: `Implementation in progress (Claude Sonnet 5 fulfilling gpt-5.4)`
+- Current handoff state: `Ready for gpt-5.5 sanity review (fulfilled by Claude Sonnet 5) or direct user review; all 3 phases implemented and pushed`
 - Created: `2026-08-24`
 - Last updated: `2026-08-24`
 
@@ -103,28 +103,28 @@
 - User confirmation: Not required for this phase (user approved "implement in full" covering all phases up front)
 
 ## Phase 3: Validation and PR readiness
-**Status:** Planned
+**Status:** Complete (manual QA scope limited — see notes)
 **Goal:** Full validation suite passes; manual keyboard-navigation QA recorded; branch pushed and ready for a pull request into `dev`.
 
 ### Tasks
-- [ ] Run full validation (`scripts\validate.cmd` plus the focused `cargo fmt`/`clippy`/`test`/`doc` commands)
-  - Status: Planned
+- [x] Run full validation (`scripts\validate.cmd` plus the focused `cargo fmt`/`clippy`/`test`/`doc` commands)
+  - Status: Complete
   - Repository: `root`
-  - Notes: None
-- [ ] Manual QA: tab through Main Menu and UI Playground scenes; confirm outline, Enter/Space activation, and pause-overlay focus trapping
-  - Status: Planned
+  - Notes: `scripts\validate.cmd` (fmt --check, clippy -D warnings, test --all-features, build --all-features, doc --no-deps) passed end to end with exit code 0.
+- [x] Manual QA: tab through Main Menu and UI Playground scenes; confirm outline, Enter/Space activation, and pause-overlay focus trapping
+  - Status: Complete with a recorded limitation
   - Repository: `root`
-  - Notes: None
-- [ ] Push branch to `origin` and prepare pull request into `dev` (no local merge)
-  - Status: Planned
+  - Notes: This environment has no GUI automation/screenshot-capture tool for a native Win32/wgpu window, so the visual/interactive checklist (seeing the amber outline, actually pressing Tab/Enter/Space against the running window, confirming the pause overlay traps focus) could not be driven or observed directly. What WAS verified: launched `cargo run --manifest-path game/Cargo.toml --all-features` (default features, i.e. `dev-tools` + `editor` both on) in the background; the process started, opened its window, and stayed running/responsive for several seconds with no panic or crash -- confirming the guarded `TabNavigationPlugin` registration does not double-add against the debug console's own `FeathersPlugins`, and that `apply_last_beacon_ui_tab_groups_to_scene_roots`/`apply_last_beacon_ui_focusability`/`apply_last_beacon_ui_focus_outline`/`activate_last_beacon_ui_focused_widget_on_keyboard_input` do not crash against the real Main Menu scene on their first ticks. Process was then terminated (`taskkill`). The user should manually tab/enter/space through the Main Menu, UI Playground, and pause overlay before merging to confirm the visual/interactive behavior, since that could not be observed from this session.
+- [x] Push branch to `origin` and prepare pull request into `dev` (no local merge)
+  - Status: Complete
   - Repository: `root`
-  - Notes: `origin` is configured (`https://github.com/Perfect-Pixel-Games/last-beacon.git`), so push/PR is not `N/A`.
+  - Notes: `origin` is configured (`https://github.com/Perfect-Pixel-Games/last-beacon.git`); every commit in this feature was pushed immediately after being made. Pull request prepared via `gh pr create` targeting `dev`; not merged.
 
 ### Validation
-- Game validation: `Pending`
+- Game validation: `scripts\validate.cmd` passed (exit code 0)
 - Engine validation: `N/A`
-- Documentation generation: Pending
-- User confirmation: Pending
+- Documentation generation: Recorded (rustdoc generated successfully across all phases)
+- User confirmation: Pending -- user should confirm the manual QA limitation above is acceptable, or perform that pass themselves, before merging
 
 ## Implementation / Review Handoff Notes
 - None yet — implementation has not started. Awaiting user confirmation to proceed past the planning checkpoint.
@@ -139,3 +139,4 @@
 - `2026-08-24`: Reviewed `game/src/ui_widgets.rs` and all 24 `.bsn` files under `game/assets/ui/widgets/common/` in full. Read the vendored `bevy_feathers` 0.19.0, `bevy_input_focus` 0.19.0, and `bevy_ui` 0.19.0 crate sources directly from the local Cargo registry cache to ground the comparison in the real Feathers architecture rather than assumptions. Used `AskUserQuestion` to scope "reinforce and solidify" down to two tiers (efficiency/correctness fix, plus keyboard/gamepad-ready focus support); user selected that scope over a report-only option and over full architectural adoption. Created `feature/ui-widget-feathers-alignment` from `dev` per the user's git-workflow reminder. Wrote `plan.md` and this tracker per `.pi/skills/feature-plan-docs/SKILL.md`. Stopping here for user review per that skill's mandatory planning checkpoint.
 - `2026-08-24`: User replied "implement in full", approving all phases. Committed and pushed the plan/tracker docs (`fb6cace`). Completed Phase 1: gated `enforce_last_beacon_button_styles`'s queries, added 3 tests, ran full Phase 1 validation (fmt/clippy/test/doc), all passing. Proceeding to Phase 2.
 - `2026-08-24`: Completed Phase 2: registered a guarded `TabNavigationPlugin`, added scene-root `TabGroup` tagging, `LastBeaconUiFocusIndicator` + reactive `TabIndex`/`Outline` insertion, focus-outline mutation driven by `InputFocus`/`InputFocusVisible`, extracted activation helpers, and keyboard Enter/Space activation. Added 7 new tests (18 total in `ui_widgets::tests`). Ran full Phase 2 validation (fmt/clippy/test/doc), all passing. Updated `docs/ui-widgets.md` with a "Keyboard & Focus" section. Proceeding to Phase 3.
+- `2026-08-24`: Completed Phase 3. `scripts\validate.cmd` passed end to end. Launched the game binary (`cargo run --all-features`, default `dev-tools`+`editor` features) as a background smoke test: it started and stayed running for several seconds with no panic, confirming the guarded `TabNavigationPlugin` add and the new reactive systems don't crash against the real Main Menu scene -- then terminated the process. Recorded, without overstating it, that full visual/interactive keyboard-navigation QA (seeing the outline, driving Tab/Enter/Space against the window, confirming pause-overlay focus trapping) could not be performed in this environment (no GUI automation/screenshot tool for a native Win32/wgpu window) and should be done by the user before merging. Opened a pull request into `dev` via `gh pr create` (not merged). All 3 phases are implemented, tested, and pushed.
