@@ -313,3 +313,55 @@ Notes:
 
 - This container is intentionally layout-only: no background, no border, no headers.
 - It is useful for UI Playground/documentation scenes, not necessarily for final game screens.
+
+## Uniform Grid
+
+Asset: `game/assets/ui/widgets/common/uniform_grid.bsn`
+
+Use for laying out children in evenly sized columns, wrapping onto new rows automatically.
+
+Author-updated properties:
+
+- `LastBeaconUiUniformGrid { column_count }`: number of equal-width columns. Values below `1` are treated as `1`.
+- Cell contents: duplicate/remove/edit the sample cells to show the desired content.
+- Root `Node { width }`: defaults to `Percent(100)`; parent slots decide the grid width by default.
+- `Node { row_gap, column_gap }`: spacing between cells.
+
+Runtime behavior:
+
+- `LastBeaconUiUniformGrid` configures the entity for CSS Grid layout (`column_count` equal-width columns) the first time it is spawned.
+- Children are placed left-to-right and wrap onto new rows automatically.
+- Combine with `LastBeaconUiGridItem` (below) to let a cell span more than one column or row.
+
+## Span Grid
+
+`LastBeaconUiGridItem` is not its own asset; it is a component authored on a child of a grid container (such as Uniform Grid) to make that child span more than one cell.
+
+Author-updated properties:
+
+- `LastBeaconUiGridItem { column_span, row_span }`: number of columns/rows this cell should span. Values below `1` are treated as `1`.
+
+Keep:
+
+- Only use this inside an actual grid container (`display: Display::Grid`, such as Uniform Grid) — it has no effect otherwise.
+
+## Aspect Ratio Container
+
+Asset: `game/assets/ui/widgets/common/aspect_ratio_container.bsn`
+
+Use to keep a widget's size within a clamped aspect-ratio band regardless of the window's actual aspect ratio — for example, keeping a HUD from stretching edge-to-edge on an ultrawide monitor or squashing below a legible minimum on a narrow one.
+
+Author-updated properties:
+
+- `LastBeaconUiAspectRatioBounds { min_aspect_ratio, max_aspect_ratio }`: allowed width-over-height ratio band. Set both to the same value for a single fixed ratio (for example `1.7778` for 16:9).
+- Inner child contents: replace the sample text/fill with the desired content.
+
+Runtime behavior:
+
+- The bounded widget's own `Node.width`/`Node.height` are recalculated from its parent's available content space every time that space changes, clamped into `[min_aspect_ratio, max_aspect_ratio]`, and fit to the largest size at that ratio that still fits.
+- A widget left at `LastBeaconUiAspectRatioBounds`'s default is inert (constrains nothing).
+
+Do not:
+
+- Size the immediate parent from this widget's own size (for example, do not give the parent an automatic/content-based height while this widget is its only child) — pin the parent to a stable area (the window, or a fixed-size panel) instead, or the two sizes can feed back into each other.
+- Forget to center this widget in its parent (`align_items: Center, justify_content: Center`); the widget does not center itself.
