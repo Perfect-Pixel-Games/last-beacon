@@ -118,6 +118,15 @@ pub struct LastBeaconPlugin;
 
 impl Plugin for LastBeaconPlugin {
     fn build(&self, app: &mut App) {
+        // The `dev-tools` feature's debug console (on by default) may already
+        // have added `bevy_feathers::FeathersPlugins`, which itself adds
+        // `TabNavigationPlugin` -- adding a plugin twice is an error in Bevy,
+        // so guard this the same way `foundation-runtime-library`'s console
+        // module guards its own `FeathersCorePlugin` add.
+        if !app.is_plugin_added::<bevy::input_focus::tab_navigation::TabNavigationPlugin>() {
+            app.add_plugins(bevy::input_focus::tab_navigation::TabNavigationPlugin);
+        }
+
         // Credits JSON lives under this game's asset directory; the reusable
         // credits systems only search roots that games register here.
         app.insert_resource(FoundationCreditsAssetRoots {
@@ -156,6 +165,7 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<ui_widgets::LastBeaconUiDropdownPanel>()
         .register_type::<ui_widgets::LastBeaconUiSlider>()
         .register_type::<ui_widgets::LastBeaconUiSliderFill>()
+        .register_type::<ui_widgets::LastBeaconUiFocusIndicator>()
         .add_systems(
             Startup,
             (
@@ -201,6 +211,15 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::refresh_last_beacon_ui_tab_panels,
                 exit_game_on_foundation_exit_request,
                 spin_cube.run_if(foundation_is_not_paused),
+            ),
+        )
+        .add_systems(
+            Update,
+            (
+                ui_widgets::apply_last_beacon_ui_tab_groups_to_scene_roots,
+                ui_widgets::apply_last_beacon_ui_focusability,
+                ui_widgets::apply_last_beacon_ui_focus_outline,
+                ui_widgets::activate_last_beacon_ui_focused_widget_on_keyboard_input,
             ),
         )
         .add_systems(

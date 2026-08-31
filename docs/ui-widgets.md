@@ -4,6 +4,16 @@ This document lists the reusable common UI widgets under `game/assets/ui/widgets
 
 Most reusable widgets are demonstrated in `game/assets/scenes/ui_playground.bsn`. Main Menu-specific compositions are intentionally not covered here.
 
+## Keyboard & Focus
+
+Buttons, tabs/radio options, sliders, and dropdown toggles are all keyboard/gamepad-focusable:
+
+- `Tab`/`Shift+Tab` cycles focus among these widgets within the current scene or overlay. A pause overlay traps Tab focus inside itself rather than leaking into the paused scene beneath it.
+- A focused widget shows a visible amber outline (the same accent color already used for selected tabs and slider fills).
+- `Enter`/`Space` activates the focused widget the same way a mouse click does: it presses a value button, opens/closes a dropdown, or selects a tab/radio option.
+- Sliders are focusable and show the outline, but are not yet keyboard-adjustable (no arrow-key stepping). This is a known follow-up, not a bug.
+- Authors do not need to add anything to `.bsn` files for this: `TabIndex`, the focus outline, and keyboard activation are all applied automatically to `LastBeaconUiButton`, `LastBeaconUiTab`, `LastBeaconUiValueButton`, `LastBeaconUiDropdownToggle`, and `LastBeaconUiSlider` entities as they spawn.
+
 ## General Authoring Notes
 
 - Keep reusable widget assets under `game/assets/ui/widgets/common/`.
