@@ -29,12 +29,7 @@ bevy_ecs::hierarchy::Children [
     bevy_ecs::hierarchy::Children [
         bevy_ui::widget::text::Text("Paused")
         bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(30.0) }
-        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-            red: 0.92,
-            green: 0.96,
-            blue: 1.0,
-            alpha: 1.0,
-        })),
+        foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextBright),
 
         #ResumeButton
         bevy_ui::widget::button::Button
@@ -48,8 +43,8 @@ bevy_ecs::hierarchy::Children [
             border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
             border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
         }
-        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
-        bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), }
+        foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::Accent)
+        foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::Accent)
         last_beacon::ui_widgets::LastBeaconUiButton { variant: "primary" }
         foundation_runtime_library::menu::FoundationMenuButton {
             action: "resume",
@@ -58,13 +53,8 @@ bevy_ecs::hierarchy::Children [
         }
         bevy_ecs::hierarchy::Children [
             bevy_ui::widget::text::Text("Resume")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.92,
-                green: 0.96,
-                blue: 1.0,
-                alpha: 1.0,
-            }))
+            foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Xxl)
+            foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextBright)
         ],
 
         #AbandonRunButton
@@ -79,8 +69,8 @@ bevy_ecs::hierarchy::Children [
             border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
             border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
         }
-        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }))
-        bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), }
+        foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::Surface)
+        foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::Border)
         last_beacon::ui_widgets::LastBeaconUiButton { variant: "secondary" }
         foundation_runtime_library::menu::FoundationMenuButton {
             action: "clear_and_open_scene",
@@ -89,13 +79,8 @@ bevy_ecs::hierarchy::Children [
         }
         bevy_ecs::hierarchy::Children [
             bevy_ui::widget::text::Text("Abandon Run")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.92,
-                green: 0.96,
-                blue: 1.0,
-                alpha: 1.0,
-            }))
+            foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Xxl)
+            foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextBright)
         ],
 
         #SettingsButton
@@ -110,8 +95,8 @@ bevy_ecs::hierarchy::Children [
             border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
             border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
         }
-        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }))
-        bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), }
+        foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::Surface)
+        foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::Border)
         last_beacon::ui_widgets::LastBeaconUiButton { variant: "secondary" }
         foundation_runtime_library::menu::FoundationMenuButton {
             action: "open_overlay_scene",
@@ -120,13 +105,8 @@ bevy_ecs::hierarchy::Children [
         }
         bevy_ecs::hierarchy::Children [
             bevy_ui::widget::text::Text("Settings")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.92,
-                green: 0.96,
-                blue: 1.0,
-                alpha: 1.0,
-            }))
+            foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Xxl)
+            foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextBright)
         ],
 
         #SaveandQuittoMenuButton
@@ -141,8 +121,8 @@ bevy_ecs::hierarchy::Children [
             border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
             border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
         }
-        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.118, green: 0.161, blue: 0.231, alpha: 1.0 }))
-        bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), }
+        foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::Surface)
+        foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::Border)
         last_beacon::ui_widgets::LastBeaconUiButton { variant: "secondary" }
         foundation_runtime_library::menu::FoundationMenuButton {
             action: "clear_and_open_scene",
@@ -151,13 +131,8 @@ bevy_ecs::hierarchy::Children [
         }
         bevy_ecs::hierarchy::Children [
             bevy_ui::widget::text::Text("Save and Quit to Menu")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.92,
-                green: 0.96,
-                blue: 1.0,
-                alpha: 1.0,
-            }))
+            foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Xxl)
+            foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextBright)
         ],
 
         #SaveandQuitGameButton
@@ -172,8 +147,8 @@ bevy_ecs::hierarchy::Children [
             border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(1.0), right: bevy_ui::geometry::Val::Px(1.0), top: bevy_ui::geometry::Val::Px(1.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
             border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
         }
-        bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0 }))
-        bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.278, green: 0.333, blue: 0.412, alpha: 1.0 }), }
+        foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::Transparent)
+        foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::Border)
         last_beacon::ui_widgets::LastBeaconUiButton { variant: "tertiary" }
         foundation_runtime_library::menu::FoundationMenuButton {
             action: "exit",
@@ -182,13 +157,8 @@ bevy_ecs::hierarchy::Children [
         }
         bevy_ecs::hierarchy::Children [
             bevy_ui::widget::text::Text("Save and Quit Game")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.92,
-                green: 0.96,
-                blue: 1.0,
-                alpha: 1.0,
-            }))
+            foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Xxl)
+            foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextBright)
         ],
 
         #CurrentExpeditionPanel
@@ -207,13 +177,8 @@ bevy_ecs::hierarchy::Children [
         }))
         bevy_ecs::hierarchy::Children [
             bevy_ui::widget::text::Text("Current Expedition")
-            bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(18.0) }
-            bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                red: 0.984,
-                green: 0.749,
-                blue: 0.141,
-                alpha: 1.0,
-            })),
+            foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Xxl)
+            foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::Accent),
 
             #LocationStat
             bevy_ui::ui_node::Node {
@@ -225,22 +190,12 @@ bevy_ecs::hierarchy::Children [
             }
             bevy_ecs::hierarchy::Children [
                 bevy_ui::widget::text::Text("Location")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.5,
-                    green: 0.58,
-                    blue: 0.68,
-                    alpha: 1.0,
-                })),
+                foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+                foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextSubtle),
 
                 bevy_ui::widget::text::Text("Rusting Factory")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.92,
-                    green: 0.96,
-                    blue: 1.0,
-                    alpha: 1.0,
-                }))
+                foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+                foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextBright)
             ],
 
             #ElapsedTimeStat
@@ -253,22 +208,12 @@ bevy_ecs::hierarchy::Children [
             }
             bevy_ecs::hierarchy::Children [
                 bevy_ui::widget::text::Text("Elapsed Time")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.5,
-                    green: 0.58,
-                    blue: 0.68,
-                    alpha: 1.0,
-                })),
+                foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+                foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextSubtle),
 
                 bevy_ui::widget::text::Text("8m 42s")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.92,
-                    green: 0.96,
-                    blue: 1.0,
-                    alpha: 1.0,
-                }))
+                foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+                foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextBright)
             ],
 
             #RobotHealthStat
@@ -281,22 +226,12 @@ bevy_ecs::hierarchy::Children [
             }
             bevy_ecs::hierarchy::Children [
                 bevy_ui::widget::text::Text("Robot Health")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.5,
-                    green: 0.58,
-                    blue: 0.68,
-                    alpha: 1.0,
-                })),
+                foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+                foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextSubtle),
 
                 bevy_ui::widget::text::Text("72%")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.984,
-                    green: 0.749,
-                    blue: 0.141,
-                    alpha: 1.0,
-                }))
+                foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+                foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::Accent)
             ],
 
             #CargoStat
@@ -309,32 +244,17 @@ bevy_ecs::hierarchy::Children [
             }
             bevy_ecs::hierarchy::Children [
                 bevy_ui::widget::text::Text("Cargo")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.5,
-                    green: 0.58,
-                    blue: 0.68,
-                    alpha: 1.0,
-                })),
+                foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+                foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextSubtle),
 
                 bevy_ui::widget::text::Text("11 / 18 slots")
-                bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-                bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-                    red: 0.92,
-                    green: 0.96,
-                    blue: 1.0,
-                    alpha: 1.0,
-                }))
+                foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+                foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextBright)
             ]
         ],
 
         bevy_ui::widget::text::Text("prototype build 0.0.1")
-        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(11.0) }
-        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-            red: 0.5,
-            green: 0.58,
-            blue: 0.68,
-            alpha: 1.0,
-        }))
+        foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Xs)
+        foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextSubtle)
     ]
 ]

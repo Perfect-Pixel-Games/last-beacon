@@ -10,14 +10,14 @@ bevy_ecs::hierarchy::Children [
     bevy_ui::ui_node::Node {
         align_items: bevy_ui::ui_node::AlignItems::Center,
         justify_content: bevy_ui::ui_node::JustifyContent::Center,
-        border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
     }
-    bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 1.0 }))
-    bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }), }
+    foundation_runtime_library::ui_theme::FoundationUiThemedBorderWidth(foundation_runtime_library::ui_theme::FoundationUiBorderWidthToken::Thick)
+    foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::SurfaceRaisedOpaque)
+    foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::Accent)
     last_beacon::ui_widgets::LastBeaconUiAspectRatioBounds { min_aspect_ratio: 1.0, max_aspect_ratio: 1.6 }
     bevy_ecs::hierarchy::Children [
         bevy_ui::widget::text::Text("1:1 - 1.6:1")
-        bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
-        bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
+        foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Sm)
+        foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::Accent)
     ]
 ]

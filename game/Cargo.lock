@@ -3441,6 +3441,8 @@ dependencies = [
  "foundation-editor-library",
  "foundation-runtime-library",
  "linkme",
+ "serde",
+ "toml",
 ]
 
 [[package]]

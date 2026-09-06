@@ -19,6 +19,7 @@ use foundation_editor_library::prelude::*;
 use foundation_runtime_library::prelude::*;
 
 pub mod scenes;
+pub mod ui_theme;
 pub mod ui_widgets;
 
 /// Foundation game name used by the engine `--game` argument.
@@ -167,6 +168,9 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<ui_widgets::LastBeaconUiSliderFill>()
         .register_type::<ui_widgets::LastBeaconUiFocusIndicator>()
         .add_plugins(ui_widgets::LastBeaconUiLayoutWidgetsPlugin)
+        // Overrides the loud placeholder theme `FoundationPlugin` installs by
+        // default with Last Beacon's real palette/spacing/type scale.
+        .insert_resource(ui_theme::load_last_beacon_ui_theme())
         .add_systems(
             Startup,
             (
@@ -208,6 +212,7 @@ impl Plugin for LastBeaconPlugin {
                 ui_widgets::update_last_beacon_ui_sliders,
                 ui_widgets::refresh_last_beacon_ui_slider_fills,
                 ui_widgets::refresh_last_beacon_ui_value_text,
+                ui_widgets::heal_last_beacon_ui_value_text_stuck_glyphs,
                 ui_widgets::update_last_beacon_ui_tab_selection,
                 ui_widgets::refresh_last_beacon_ui_tab_panels,
                 exit_game_on_foundation_exit_request,
