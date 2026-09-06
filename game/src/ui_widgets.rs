@@ -1016,7 +1016,11 @@ pub fn update_last_beacon_ui_number_inputs(
         };
         let clamped_value = value.clamp(number_input.min, number_input.max);
         let clamped_value_string = format_value(clamped_value);
-        insert_input_value_if_changed(&mut input_values, &number_input.target, clamped_value_string);
+        insert_input_value_if_changed(
+            &mut input_values,
+            &number_input.target,
+            clamped_value_string,
+        );
     }
 }
 
@@ -1873,6 +1877,7 @@ pub fn refresh_last_beacon_ui_value_text(
 /// currently the only widget shape that pairs `EditableText` with
 /// `LastBeaconUiValueText`; other value-text widgets (sliders, combo boxes)
 /// use plain, non-editable `Text` and never hit this stuck state.
+#[allow(clippy::type_complexity)]
 pub fn heal_last_beacon_ui_value_text_stuck_glyphs(
     mut commands: Commands,
     value_texts: Query<
@@ -2047,6 +2052,7 @@ pub fn refresh_last_beacon_ui_tab_panels(
 }
 
 /// Restores prototype-authored button colors after generic Foundation interaction styling.
+#[allow(clippy::too_many_arguments)]
 pub fn enforce_last_beacon_button_styles(
     theme: Res<FoundationUiTheme>,
     mut ui_buttons: LastBeaconUiButtonStyleQuery,
@@ -3054,10 +3060,7 @@ mod tests {
         app.update();
 
         assert_eq!(
-            app.world()
-                .get::<BackgroundColor>(button_entity)
-                .unwrap()
-                .0,
+            app.world().get::<BackgroundColor>(button_entity).unwrap().0,
             correct_background_color,
             "the style system must correct a stray color overwrite on the very next frame, \
              even though its own Interaction never changed"
@@ -3077,35 +3080,139 @@ mod tests {
         let theme = crate::ui_theme::load_last_beacon_ui_theme();
 
         let cases = [
-            ("primary", Interaction::Pressed, Color::srgb(0.854, 0.55, 0.08), Color::srgb(0.854, 0.55, 0.08), Color::srgb(0.008, 0.024, 0.09)),
-            ("primary", Interaction::Hovered, Color::srgb(1.0, 0.827, 0.32), Color::srgb(1.0, 0.827, 0.32), Color::srgb(0.008, 0.024, 0.09)),
-            ("primary", Interaction::None, Color::srgb(0.984, 0.749, 0.141), Color::srgb(0.984, 0.749, 0.141), Color::srgb(0.008, 0.024, 0.09)),
-            ("tertiary", Interaction::Pressed, Color::srgba(0.984, 0.749, 0.141, 0.18), Color::srgb(0.984, 0.749, 0.141), Color::srgb(0.984, 0.749, 0.141)),
-            ("tertiary", Interaction::Hovered, Color::srgba(0.984, 0.749, 0.141, 0.1), Color::srgb(0.984, 0.749, 0.141), Color::srgb(1.0, 0.827, 0.32)),
-            ("tertiary", Interaction::None, Color::srgba(0.0, 0.0, 0.0, 0.0), Color::srgb(0.278, 0.333, 0.412), Color::srgb(0.58, 0.639, 0.722)),
-            ("secondary", Interaction::Pressed, Color::srgb(0.2, 0.255, 0.333), Color::srgb(0.58, 0.639, 0.722), Color::srgb(0.945, 0.961, 0.976)),
-            ("secondary", Interaction::Hovered, Color::srgb(0.2, 0.255, 0.333), Color::srgb(0.796, 0.835, 0.882), Color::srgb(0.945, 0.961, 0.976)),
-            ("secondary", Interaction::None, Color::srgb(0.118, 0.161, 0.231), Color::srgb(0.278, 0.333, 0.412), Color::srgb(0.945, 0.961, 0.976)),
+            (
+                "primary",
+                Interaction::Pressed,
+                Color::srgb(0.854, 0.55, 0.08),
+                Color::srgb(0.854, 0.55, 0.08),
+                Color::srgb(0.008, 0.024, 0.09),
+            ),
+            (
+                "primary",
+                Interaction::Hovered,
+                Color::srgb(1.0, 0.827, 0.32),
+                Color::srgb(1.0, 0.827, 0.32),
+                Color::srgb(0.008, 0.024, 0.09),
+            ),
+            (
+                "primary",
+                Interaction::None,
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.008, 0.024, 0.09),
+            ),
+            (
+                "tertiary",
+                Interaction::Pressed,
+                Color::srgba(0.984, 0.749, 0.141, 0.18),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.984, 0.749, 0.141),
+            ),
+            (
+                "tertiary",
+                Interaction::Hovered,
+                Color::srgba(0.984, 0.749, 0.141, 0.1),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(1.0, 0.827, 0.32),
+            ),
+            (
+                "tertiary",
+                Interaction::None,
+                Color::srgba(0.0, 0.0, 0.0, 0.0),
+                Color::srgb(0.278, 0.333, 0.412),
+                Color::srgb(0.58, 0.639, 0.722),
+            ),
+            (
+                "secondary",
+                Interaction::Pressed,
+                Color::srgb(0.2, 0.255, 0.333),
+                Color::srgb(0.58, 0.639, 0.722),
+                Color::srgb(0.945, 0.961, 0.976),
+            ),
+            (
+                "secondary",
+                Interaction::Hovered,
+                Color::srgb(0.2, 0.255, 0.333),
+                Color::srgb(0.796, 0.835, 0.882),
+                Color::srgb(0.945, 0.961, 0.976),
+            ),
+            (
+                "secondary",
+                Interaction::None,
+                Color::srgb(0.118, 0.161, 0.231),
+                Color::srgb(0.278, 0.333, 0.412),
+                Color::srgb(0.945, 0.961, 0.976),
+            ),
         ];
         for (variant, interaction, expected_background, expected_border, expected_text) in cases {
             let style = reusable_button_style(&theme, variant, interaction);
-            assert_eq!(style.background_color, expected_background, "{variant} {interaction:?} background");
-            assert_eq!(style.border_color, expected_border, "{variant} {interaction:?} border");
-            assert_eq!(style.text_color, expected_text, "{variant} {interaction:?} text");
+            assert_eq!(
+                style.background_color, expected_background,
+                "{variant} {interaction:?} background"
+            );
+            assert_eq!(
+                style.border_color, expected_border,
+                "{variant} {interaction:?} border"
+            );
+            assert_eq!(
+                style.text_color, expected_text,
+                "{variant} {interaction:?} text"
+            );
         }
 
         let tab_cases = [
-            (true, Interaction::Pressed, Color::srgba(0.984, 0.749, 0.141, 0.22), Color::srgb(0.984, 0.749, 0.141), Color::srgb(0.984, 0.749, 0.141)),
-            (true, Interaction::None, Color::srgba(0.984, 0.749, 0.141, 0.12), Color::srgb(0.984, 0.749, 0.141), Color::srgb(0.984, 0.749, 0.141)),
-            (false, Interaction::Pressed, Color::srgba(0.984, 0.749, 0.141, 0.16), Color::srgb(0.984, 0.749, 0.141), Color::srgb(0.984, 0.749, 0.141)),
-            (false, Interaction::Hovered, Color::srgba(0.984, 0.749, 0.141, 0.08), Color::srgb(0.278, 0.333, 0.412), Color::srgb(0.945, 0.961, 0.976)),
-            (false, Interaction::None, Color::srgba(0.0, 0.0, 0.0, 0.0), Color::srgba(0.0, 0.0, 0.0, 0.0), Color::srgb(0.58, 0.639, 0.722)),
+            (
+                true,
+                Interaction::Pressed,
+                Color::srgba(0.984, 0.749, 0.141, 0.22),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.984, 0.749, 0.141),
+            ),
+            (
+                true,
+                Interaction::None,
+                Color::srgba(0.984, 0.749, 0.141, 0.12),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.984, 0.749, 0.141),
+            ),
+            (
+                false,
+                Interaction::Pressed,
+                Color::srgba(0.984, 0.749, 0.141, 0.16),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.984, 0.749, 0.141),
+            ),
+            (
+                false,
+                Interaction::Hovered,
+                Color::srgba(0.984, 0.749, 0.141, 0.08),
+                Color::srgb(0.278, 0.333, 0.412),
+                Color::srgb(0.945, 0.961, 0.976),
+            ),
+            (
+                false,
+                Interaction::None,
+                Color::srgba(0.0, 0.0, 0.0, 0.0),
+                Color::srgba(0.0, 0.0, 0.0, 0.0),
+                Color::srgb(0.58, 0.639, 0.722),
+            ),
         ];
-        for (is_selected, interaction, expected_background, expected_border, expected_text) in tab_cases {
+        for (is_selected, interaction, expected_background, expected_border, expected_text) in
+            tab_cases
+        {
             let style = reusable_tab_style(&theme, is_selected, interaction);
-            assert_eq!(style.background_color, expected_background, "selected={is_selected} {interaction:?} background");
-            assert_eq!(style.border_color, expected_border, "selected={is_selected} {interaction:?} border");
-            assert_eq!(style.text_color, expected_text, "selected={is_selected} {interaction:?} text");
+            assert_eq!(
+                style.background_color, expected_background,
+                "selected={is_selected} {interaction:?} background"
+            );
+            assert_eq!(
+                style.border_color, expected_border,
+                "selected={is_selected} {interaction:?} border"
+            );
+            assert_eq!(
+                style.text_color, expected_text,
+                "selected={is_selected} {interaction:?} text"
+            );
         }
     }
 
@@ -3851,13 +3958,13 @@ mod tests {
             ..default()
         });
         app.add_plugins(bevy::text::TextPlugin);
-        app.add_plugins(bevy::input::InputPlugin::default());
+        app.add_plugins(bevy::input::InputPlugin);
         app.add_plugins(bevy::a11y::AccessibilityPlugin);
         app.add_plugins(bevy::window::WindowPlugin::default());
         app.add_plugins(bevy::image::ImagePlugin::default());
         app.add_plugins(bevy::picking::DefaultPickingPlugins);
         app.init_asset::<bevy::image::TextureAtlasLayout>();
-        app.add_plugins(bevy::ui::UiPlugin::default());
+        app.add_plugins(bevy::ui::UiPlugin);
         app.add_systems(Update, initialize_last_beacon_ui_text_inputs);
 
         // Mirror the Number Field's authored structure: a container that
@@ -3884,7 +3991,11 @@ mod tests {
                 Node::default(),
             ))
             .id();
-        let container_entity = app.world_mut().spawn(Node::default()).add_child(text_entity).id();
+        let container_entity = app
+            .world_mut()
+            .spawn(Node::default())
+            .add_child(text_entity)
+            .id();
 
         for _ in 0..frames_before_text_input_is_added {
             app.update();
@@ -3939,7 +4050,9 @@ mod tests {
             .iter(app.world())
             .find(|(_, value_text)| value_text.target == target)
             .map(|(entity, _)| entity)
-            .unwrap_or_else(|| panic!("no LastBeaconUiValueText entity found for target {target:?}"))
+            .unwrap_or_else(|| {
+                panic!("no LastBeaconUiValueText entity found for target {target:?}")
+            })
     }
 
     #[test]
@@ -3951,13 +4064,13 @@ mod tests {
             ..default()
         });
         app.add_plugins(bevy::text::TextPlugin);
-        app.add_plugins(bevy::input::InputPlugin::default());
+        app.add_plugins(bevy::input::InputPlugin);
         app.add_plugins(bevy::a11y::AccessibilityPlugin);
         app.add_plugins(bevy::window::WindowPlugin::default());
         app.add_plugins(bevy::image::ImagePlugin::default());
         app.add_plugins(bevy::picking::DefaultPickingPlugins);
         app.init_asset::<bevy::image::TextureAtlasLayout>();
-        app.add_plugins(bevy::ui::UiPlugin::default());
+        app.add_plugins(bevy::ui::UiPlugin);
         app.add_systems(
             Update,
             (
@@ -4189,9 +4302,12 @@ mod tests {
         }
         assert!(
             matches!(
-                app.world()
-                    .resource::<AssetServer>()
-                    .get_load_state(app.world().resource::<LastBeaconUiFontHandles>().ui_font.id()),
+                app.world().resource::<AssetServer>().get_load_state(
+                    app.world()
+                        .resource::<LastBeaconUiFontHandles>()
+                        .ui_font
+                        .id()
+                ),
                 Some(bevy::asset::LoadState::Loaded)
             ),
             "test setup: the shared UI font never finished loading"
@@ -4224,7 +4340,9 @@ mod tests {
              update_editable_text_styles) get a genuine retry once the font is loaded"
         );
         assert!(
-            app.world().get::<SceneContentLoading>(text_entity).is_none(),
+            app.world()
+                .get::<SceneContentLoading>(text_entity)
+                .is_none(),
             "the loading marker must still clear once the shared fonts finish loading"
         );
     }
