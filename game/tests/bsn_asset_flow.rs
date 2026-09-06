@@ -9,13 +9,14 @@ use last_beacon::{
         apply_last_beacon_ui_font, apply_pending_last_beacon_bsn_widgets,
         queue_last_beacon_bsn_widgets, reveal_last_beacon_text_once_fonts_load,
         LastBeaconBeaconPrimaryButton, LastBeaconBeaconTabButton, LastBeaconBsnWidget,
-        LastBeaconMainMenuPrimaryButton, LastBeaconUiButton, LastBeaconUiDropdownIcon,
-        LastBeaconUiDropdownPanel, LastBeaconUiDropdownToggle, LastBeaconUiFontHandles,
-        LastBeaconUiNumberInput, LastBeaconUiRadioIcon, LastBeaconUiSlider, LastBeaconUiSliderFill,
-        LastBeaconUiSymbolIcon, LastBeaconUiTab, LastBeaconUiTabPanel,
-        LastBeaconUiTextHorizontalScrollThumb, LastBeaconUiTextHorizontalScrollTrack,
-        LastBeaconUiTextInput, LastBeaconUiTextScrollThumb, LastBeaconUiTextScrollTrack,
-        LastBeaconUiValueButton, LastBeaconUiValueText,
+        LastBeaconMainMenuPrimaryButton, LastBeaconUiAspectRatioBounds, LastBeaconUiButton,
+        LastBeaconUiDropdownIcon, LastBeaconUiDropdownPanel, LastBeaconUiDropdownToggle,
+        LastBeaconUiFontHandles, LastBeaconUiGridItem, LastBeaconUiNumberInput,
+        LastBeaconUiRadioIcon, LastBeaconUiSlider, LastBeaconUiSliderFill, LastBeaconUiSymbolIcon,
+        LastBeaconUiTab, LastBeaconUiTabPanel, LastBeaconUiTextHorizontalScrollThumb,
+        LastBeaconUiTextHorizontalScrollTrack, LastBeaconUiTextInput, LastBeaconUiTextScrollThumb,
+        LastBeaconUiTextScrollTrack, LastBeaconUiUniformGrid, LastBeaconUiValueButton,
+        LastBeaconUiValueText,
     },
     LastBeaconHideWhenSettingsOpen, LastBeaconPlaceholderCubeScene,
 };
@@ -70,6 +71,9 @@ fn converted_bsn_scene_assets_load_as_scene_patches() {
         "ui/widgets/common/number_field.bsn",
         "ui/widgets/common/slider.bsn",
         "ui/widgets/common/property_container.bsn",
+        "ui/widgets/common/uniform_grid.bsn",
+        "ui/widgets/common/grid_item_span.bsn",
+        "ui/widgets/common/aspect_ratio_container.bsn",
         "ui/widgets/main_menu/brand.bsn",
         "ui/widgets/main_menu/continue_button.bsn",
         "ui/widgets/main_menu/quick_run_button.bsn",
@@ -352,5 +356,8 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<LastBeaconUiDropdownToggle>()
         .register_type::<LastBeaconUiDropdownPanel>()
         .register_type::<LastBeaconUiSlider>()
-        .register_type::<LastBeaconUiSliderFill>();
+        .register_type::<LastBeaconUiSliderFill>()
+        .register_type::<LastBeaconUiUniformGrid>()
+        .register_type::<LastBeaconUiGridItem>()
+        .register_type::<LastBeaconUiAspectRatioBounds>();
 }

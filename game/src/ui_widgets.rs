@@ -22,16 +22,17 @@ use bevy::{
     prelude::*,
     scene::{ResolvedSceneRoot, ScenePatch},
     text::{
-        EditableText, EditableTextFilter, FontSource, LineBreak, LineHeight, TextCursorStyle,
-        TextEdit, TextLayout, TextLayoutInfo,
+        EditableText, EditableTextFilter, EditableTextGeneration, FontCx, FontSource, LayoutCx,
+        LineBreak, LineHeight, TextCursorStyle, TextEdit, TextLayout, TextLayoutInfo,
     },
     ui::{
-        widget::TextScroll, ComputedUiRenderTargetInfo, Outline, RelativeCursorPosition,
-        UiGlobalTransform,
+        widget::TextScroll, ComputedUiRenderTargetInfo, GridAutoFlow, GridPlacement, Outline,
+        RelativeCursorPosition, RepeatedGridTrack, UiGlobalTransform,
     },
     window::PrimaryWindow,
 };
 use foundation_runtime_library::scene_stack::{SceneContentLoading, SceneOwner};
+use foundation_runtime_library::ui_theme::{FoundationUiColorToken, FoundationUiTheme};
 
 /// Requests that a reusable Last Beacon BSN widget asset be applied to this entity.
 #[derive(Clone, Debug, Default, Component, Reflect)]
@@ -315,6 +316,82 @@ impl Default for LastBeaconUiSliderFill {
     }
 }
 
+/// Turns this entity into a uniform-column CSS grid container: `column_count`
+/// equal-width columns, with children placed left-to-right and wrapping onto
+/// new rows automatically.
+///
+/// A plain field like this is authored directly in `.bsn`; the equal-width
+/// column tracks themselves (`RepeatedGridTrack::flex`) are constructed in
+/// Rust by `apply_last_beacon_ui_uniform_grid`, because Last Beacon's `.bsn`
+/// grammar only resolves expressions into registered tuple-struct/enum-variant
+/// fields via reflection, not arbitrary associated functions.
+#[derive(Clone, Copy, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiUniformGrid {
+    /// Number of equal-width columns. Values below `1` are treated as `1`.
+    pub column_count: u16,
+}
+
+impl Default for LastBeaconUiUniformGrid {
+    fn default() -> Self {
+        Self { column_count: 1 }
+    }
+}
+
+/// Marks a grid cell that should span more than one column and/or row of its
+/// parent grid container (for example a `LastBeaconUiUniformGrid`).
+#[derive(Clone, Copy, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiGridItem {
+    /// Number of grid columns this item should span. Values below `1` are
+    /// treated as `1` (`GridPlacement::span` panics on `0`).
+    pub column_span: u16,
+    /// Number of grid rows this item should span. Values below `1` are
+    /// treated as `1`.
+    pub row_span: u16,
+}
+
+impl Default for LastBeaconUiGridItem {
+    fn default() -> Self {
+        Self {
+            column_span: 1,
+            row_span: 1,
+        }
+    }
+}
+
+/// Constrains this widget's own size to a clamped aspect ratio band based on
+/// its parent's available content space, so authored UI (for example a HUD
+/// sized around a particular ratio) neither stretches edge-to-edge on an
+/// ultrawide monitor nor squashes below a legible minimum on a narrow one.
+///
+/// Setting `min_aspect_ratio == max_aspect_ratio` locks to a single fixed
+/// ratio; this is the same widget in both cases, not a separate variant.
+/// The immediate parent must center this widget (`align_items: Center,
+/// justify_content: Center`) and must not size itself from this widget's own
+/// size (pin the parent to a stable area, such as the window), or the
+/// system's write-back could feed into a layout oscillation.
+#[derive(Clone, Copy, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconUiAspectRatioBounds {
+    /// Minimum allowed width-over-height ratio.
+    pub min_aspect_ratio: f32,
+    /// Maximum allowed width-over-height ratio.
+    pub max_aspect_ratio: f32,
+}
+
+impl Default for LastBeaconUiAspectRatioBounds {
+    fn default() -> Self {
+        // Inert by default -- a widget left unconfigured constrains nothing.
+        // `0.0..=INFINITY` can never actually clamp a real (positive, finite)
+        // aspect ratio.
+        Self {
+            min_aspect_ratio: 0.0,
+            max_aspect_ratio: f32::INFINITY,
+        }
+    }
+}
+
 /// Remembers selected tabs for authored reusable tab groups.
 #[derive(Clone, Debug, Default, Resource)]
 pub struct LastBeaconUiTabSelections {
@@ -433,12 +510,26 @@ type LastBeaconUiTabInteractionQuery<'w, 's> = Query<
 type LastBeaconUiTabPanelQuery<'w, 's> =
     Query<'w, 's, (&'static LastBeaconUiTabPanel, &'static mut Node)>;
 
-// These style queries are filtered by `Changed<Interaction>` so
-// `enforce_last_beacon_button_styles` only recomputes and rewrites colors for
-// widgets whose interaction state actually changed since this system last ran,
-// instead of rewriting every widget's colors on every single frame. Component
-// insertion counts as a change, so a freshly spawned widget still gets styled
-// on its first frame.
+// These style queries deliberately run unconditionally every frame, NOT
+// gated by `Changed<Interaction>`. `enforce_last_beacon_button_styles` runs
+// in `PostUpdate`, after Foundation's own generic
+// `update_foundation_menu_button_interactions` (which every one of these
+// buttons also matches, since they all carry `FoundationMenuButton`) has
+// already run in `Update` for this frame -- but only for entities that
+// system's own last-run tick considers changed. BSN scenes spawn widgets
+// through deferred commands, so a freshly created button can become visible
+// to Foundation's `Update`-scheduled system one or more frames later than it
+// becomes visible to this `PostUpdate`-scheduled one. When that happens,
+// Foundation's system sees `Changed<Interaction>` as true on a LATER frame
+// than we do, and overwrites our authoritative color with its own generic
+// default well after we already applied ours -- a frame we can no longer
+// detect via `Changed<Interaction>` ourselves, since it didn't change again.
+// The result is a stray color that never gets corrected, exactly the kind of
+// permanent-desync bug documented on `initialize_last_beacon_ui_text_inputs`.
+// Running every frame regardless of `Changed<Interaction>` guarantees this
+// system always has the last word, since `PostUpdate` always runs after
+// `Update` within the same frame no matter how the two systems' change-tick
+// histories have drifted.
 type LastBeaconUiButtonStyleQuery<'w, 's> = Query<
     'w,
     's,
@@ -449,21 +540,15 @@ type LastBeaconUiButtonStyleQuery<'w, 's> = Query<
         &'static mut BorderColor,
         Option<&'static Children>,
     ),
-    (With<Button>, Without<LastBeaconUiTab>, Changed<Interaction>),
+    (With<Button>, Without<LastBeaconUiTab>),
 >;
 
-// Tabs cannot be filtered by `Changed<Interaction>` alone: a tab's displayed
-// style also depends on `LastBeaconUiTabSelections`, so a sibling tab being
-// selected must restyle this tab even though this tab's own `Interaction`
-// never changed. `Ref<Interaction>` lets the system body check
-// `is_changed()` per tab and combine it with the shared resource's own
-// change state.
 type LastBeaconUiTabStyleQuery<'w, 's> = Query<
     'w,
     's,
     (
         &'static LastBeaconUiTab,
-        Ref<'static, Interaction>,
+        &'static Interaction,
         &'static mut BackgroundColor,
         &'static mut BorderColor,
         Option<&'static Children>,
@@ -481,7 +566,6 @@ type MainMenuPrimaryButtonStyleQuery<'w, 's> = Query<
         Without<LastBeaconBeaconTabButton>,
         Without<LastBeaconUiButton>,
         Without<LastBeaconUiTab>,
-        Changed<Interaction>,
     ),
 >;
 
@@ -495,7 +579,6 @@ type BeaconPrimaryButtonStyleQuery<'w, 's> = Query<
         Without<LastBeaconBeaconTabButton>,
         Without<LastBeaconUiButton>,
         Without<LastBeaconUiTab>,
-        Changed<Interaction>,
     ),
 >;
 
@@ -509,7 +592,6 @@ type BeaconTabButtonStyleQuery<'w, 's> = Query<
         Without<LastBeaconBeaconPrimaryButton>,
         Without<LastBeaconUiButton>,
         Without<LastBeaconUiTab>,
-        Changed<Interaction>,
     ),
 >;
 
@@ -643,11 +725,26 @@ pub fn apply_last_beacon_ui_font(
 /// The fonts load once, early in the session, and `LastBeaconUiFontHandles`
 /// keeps them resident afterward, so this only ever has work to do during
 /// the first moments of a session.
+///
+/// Also force-marks each such entity's `TextFont` as changed. `TextFont`
+/// already held the right `FontSource::Handle` from the moment
+/// `apply_last_beacon_ui_font` ran, but if the underlying font asset hadn't
+/// finished loading yet on that exact frame, `bevy_ui`'s
+/// `update_editable_text_styles` (gated on `Changed<TextFont>`) failed to
+/// resolve it and silently skipped applying `FontFamily`/weight/etc. to the
+/// entity's editor styles -- permanently, since nothing else ever touches
+/// `TextFont` again afterward. For an `EditableText` entity, that leaves its
+/// `PlainEditor` stuck building layouts with no font family: structurally
+/// valid (one line) but with zero glyphs/size, which stays invisible behind
+/// this entity's last-known-good `TextLayoutInfo` until the first edit
+/// forces a real recompute -- at which point it collapses to a permanently
+/// blank input with no visible cursor. Marking `TextFont` changed here,
+/// once the font is actually loaded, gives that resolution a genuine retry.
 pub fn reveal_last_beacon_text_once_fonts_load(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     font_handles: Res<LastBeaconUiFontHandles>,
-    loading_text: Query<Entity, (With<TextFont>, With<SceneContentLoading>)>,
+    mut loading_text: Query<(Entity, &mut TextFont), With<SceneContentLoading>>,
 ) {
     let fonts_are_loaded = matches!(
         asset_server.get_load_state(font_handles.ui_font.id()),
@@ -660,10 +757,17 @@ pub fn reveal_last_beacon_text_once_fonts_load(
         return;
     }
 
-    for text_entity in &loading_text {
+    for (text_entity, mut text_font) in &mut loading_text {
         commands.entity(text_entity).remove::<SceneContentLoading>();
+        text_font.set_changed();
     }
 }
+
+/// Fixed width for a Number Field's value text, in pixels. Comfortably fits
+/// this widget's authored range (0-250) without needing to grow past 3
+/// digits. Kept fixed rather than auto-sized -- see the comment where it's
+/// applied in `initialize_last_beacon_ui_text_inputs`.
+const NUMBER_INPUT_VALUE_TEXT_WIDTH_PX: f32 = 48.0;
 
 /// Turns authored text-input containers into focusable editable text widgets.
 pub fn initialize_last_beacon_ui_text_inputs(
@@ -675,6 +779,7 @@ pub fn initialize_last_beacon_ui_text_inputs(
     children_query: Query<&Children>,
     text_query: Query<(), With<Text>>,
     mut node_query: Query<&mut Node>,
+    mut text_font_query: Query<&mut TextFont>,
     number_input_query: Query<(), With<LastBeaconUiNumberInput>>,
 ) {
     for (input_entity, text_input, input_children) in &text_inputs {
@@ -740,12 +845,61 @@ pub fn initialize_last_beacon_ui_text_inputs(
             line_height,
         ));
 
+        // `bevy_ui`'s `update_editable_text_styles` only ever syncs a fresh
+        // `PlainEditor`'s font family/size/weight/etc. from `TextFont` on a
+        // frame where it reads `Changed<TextFont>` as true. Bevy's change
+        // detection is tracked per system against that system's own
+        // last-run tick, not per entity -- so if `TextFont` was authored and
+        // changed (by `apply_last_beacon_ui_font`) on an earlier frame than
+        // this one, and this is the first frame `update_editable_text_styles`
+        // sees this entity at all (because it only starts matching once
+        // `EditableText` exists, which this loop is inserting right now),
+        // that earlier change is invisible to it -- permanently, since
+        // nothing else ever touches `TextFont` again. The freshly-created
+        // `PlainEditor` above is then stuck with parley's bare defaults
+        // (no font family, 100px default size): a structurally valid but
+        // zero-glyph, zero-size layout that stays hidden behind whatever
+        // `TextLayoutInfo` this entity already had until the first edit
+        // forces a real recompute -- at which point it collapses to a
+        // permanently blank, cursor-less input. Marking `TextFont` changed
+        // again here, in the same frame `EditableText` is added, guarantees
+        // `update_editable_text_styles` gets a real chance to apply it.
+        //
+        // Confirmed live in the running game (Text Field, Text Box, and the
+        // Number Field's value box all recovered). Not hermetically
+        // reproducible in a headless unit test, the same as the Number
+        // Field's earlier stuck-glyph defect (see
+        // `heal_last_beacon_ui_value_text_stuck_glyphs`): a test built with
+        // `TextFont::default()` never shows the defect at all, because
+        // fontique silently falls back to a system-installed font when no
+        // specific family was ever requested, and a test that instead
+        // spawns a real `apply_last_beacon_ui_font`-routed `TextFont` inside
+        // a minimal single-`Update`-schedule `App` also fails to reproduce
+        // it, for reasons not fully understood -- most likely because the
+        // real game's fuller `PreUpdate`/`Update`/`PostUpdate` system
+        // ordering and archetype churn differ enough from this reduced
+        // setup to change how `Changed<TextFont>` is evaluated.
+        if let Ok(mut text_font) = text_font_query.get_mut(text_entity) {
+            text_font.set_changed();
+        }
+
         if let Ok(mut node) = node_query.get_mut(text_entity) {
             if text_input.multiline {
                 node.width = Val::Percent(100.0);
                 node.height = Val::Percent(100.0);
             }
             if number_input_query.contains(text_entity) {
+                // A fixed width instead of `Val::Auto` keeps this node from
+                // needing to be re-measured every time the digit text
+                // changes. Auto-sizing here made the number field's glyph
+                // layout intermittently race Bevy UI's layout pass: right
+                // after a value change, the auto-width node could briefly
+                // be measured at width 0 before converging on its real
+                // size, and `update_editable_text_layout` would compute a
+                // zero-glyph, zero-size text layout from that transient
+                // width -- visible as the value disappearing for a few
+                // frames until the next layout pass corrected it.
+                node.width = Val::Px(NUMBER_INPUT_VALUE_TEXT_WIDTH_PX);
                 node.align_items = AlignItems::Center;
                 node.justify_content = JustifyContent::Center;
             }
@@ -753,6 +907,13 @@ pub fn initialize_last_beacon_ui_text_inputs(
             commands.entity(text_entity).insert(Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
+                ..default()
+            });
+        } else if number_input_query.contains(text_entity) {
+            commands.entity(text_entity).insert(Node {
+                width: Val::Px(NUMBER_INPUT_VALUE_TEXT_WIDTH_PX),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
                 ..default()
             });
         } else {
@@ -840,20 +1001,25 @@ pub fn initialize_last_beacon_ui_value_text(
 /// Synchronizes edited numeric text into shared widget values.
 pub fn update_last_beacon_ui_number_inputs(
     mut input_values: ResMut<LastBeaconUiInputValues>,
-    number_inputs: Query<(&LastBeaconUiNumberInput, &EditableText), Changed<EditableText>>,
+    number_inputs: Query<
+        (&LastBeaconUiNumberInput, &EditableText),
+        Changed<EditableTextGeneration>,
+    >,
 ) {
     for (number_input, editable_text) in &number_inputs {
         if number_input.target.is_empty() {
             continue;
         }
-        let Ok(value) = editable_text.value().to_string().trim().parse::<f32>() else {
+        let raw_text = editable_text.value().to_string();
+        let Ok(value) = raw_text.trim().parse::<f32>() else {
             continue;
         };
         let clamped_value = value.clamp(number_input.min, number_input.max);
+        let clamped_value_string = format_value(clamped_value);
         insert_input_value_if_changed(
             &mut input_values,
             &number_input.target,
-            format_value(clamped_value),
+            clamped_value_string,
         );
     }
 }
@@ -889,7 +1055,8 @@ fn apply_value_button_activation(
         .and_then(|value| value.parse::<f32>().ok())
         .unwrap_or(0.0);
     let next_value = (current_value + button.delta).clamp(button.min, button.max);
-    insert_input_value_if_changed(input_values, &button.target, format_value(next_value));
+    let next_value_string = format_value(next_value);
+    insert_input_value_if_changed(input_values, &button.target, next_value_string);
 }
 
 /// Applies simple value changes for authored reusable input examples.
@@ -946,8 +1113,13 @@ pub fn toggle_last_beacon_ui_dropdowns(
 pub fn refresh_last_beacon_ui_radio_icons(
     tab_selections: Res<LastBeaconUiTabSelections>,
     mut radio_icons: Query<(&LastBeaconUiRadioIcon, &mut Text)>,
+    newly_spawned_radio_icons: Query<(), Added<LastBeaconUiRadioIcon>>,
 ) {
-    if !tab_selections.is_changed() {
+    // Newly-spawned icons (for example from a scene reopened after selection
+    // state was already set elsewhere) must still be synced even on a frame
+    // where nobody just changed the selection, or they keep showing their
+    // authored default until the next unrelated selection change.
+    if !tab_selections.is_changed() && newly_spawned_radio_icons.is_empty() {
         return;
     }
 
@@ -968,8 +1140,11 @@ pub fn refresh_last_beacon_ui_radio_icons(
 pub fn refresh_last_beacon_ui_dropdown_icons(
     dropdown_states: Res<LastBeaconUiDropdownStates>,
     mut dropdown_icons: Query<(&LastBeaconUiDropdownIcon, &mut Text)>,
+    newly_spawned_dropdown_icons: Query<(), Added<LastBeaconUiDropdownIcon>>,
 ) {
-    if !dropdown_states.is_changed() {
+    // See `refresh_last_beacon_ui_radio_icons` for why newly-spawned icons
+    // must also be synced when the resource itself didn't change this frame.
+    if !dropdown_states.is_changed() && newly_spawned_dropdown_icons.is_empty() {
         return;
     }
 
@@ -991,8 +1166,11 @@ pub fn refresh_last_beacon_ui_dropdown_icons(
 pub fn refresh_last_beacon_ui_dropdown_panels(
     dropdown_states: Res<LastBeaconUiDropdownStates>,
     mut panels: Query<(&LastBeaconUiDropdownPanel, &mut Node)>,
+    newly_spawned_panels: Query<(), Added<LastBeaconUiDropdownPanel>>,
 ) {
-    if !dropdown_states.is_changed() {
+    // See `refresh_last_beacon_ui_radio_icons` for why newly-spawned panels
+    // must also be synced when the resource itself didn't change this frame.
+    if !dropdown_states.is_changed() && newly_spawned_panels.is_empty() {
         return;
     }
 
@@ -1559,8 +1737,11 @@ pub fn update_last_beacon_ui_sliders(
 pub fn refresh_last_beacon_ui_slider_fills(
     input_values: Res<LastBeaconUiInputValues>,
     mut slider_fills: Query<(&LastBeaconUiSliderFill, &mut Node)>,
+    newly_spawned_slider_fills: Query<(), Added<LastBeaconUiSliderFill>>,
 ) {
-    if !input_values.is_changed() {
+    // See `refresh_last_beacon_ui_value_text` for why newly-spawned fills
+    // must also be synced when the resource itself didn't change this frame.
+    if !input_values.is_changed() && newly_spawned_slider_fills.is_empty() {
         return;
     }
 
@@ -1585,8 +1766,18 @@ pub fn refresh_last_beacon_ui_slider_fills(
 pub fn refresh_last_beacon_ui_value_text(
     input_values: Res<LastBeaconUiInputValues>,
     mut value_texts: Query<(&LastBeaconUiValueText, &mut Text, Option<&mut EditableText>)>,
+    newly_spawned_value_texts: Query<(), Added<LastBeaconUiValueText>>,
+    mut font_cx: ResMut<FontCx>,
+    mut layout_cx: ResMut<LayoutCx>,
 ) {
-    if !input_values.is_changed() {
+    // `input_values.is_changed()` only reflects mutations made *this frame*.
+    // A widget that spawns on a later frame (async BSN widget loading, or a
+    // scene reopened after the value was already set elsewhere) would never
+    // pick up the existing stored value and would keep showing its authored
+    // default until an unrelated value happened to change -- e.g. a Number
+    // Field showing its `.bsn`-authored placeholder until the +/- buttons
+    // were clicked. Also sync whenever a value text has just appeared.
+    if !input_values.is_changed() && newly_spawned_value_texts.is_empty() {
         return;
     }
 
@@ -1600,10 +1791,167 @@ pub fn refresh_last_beacon_ui_value_text(
         }
         if let Some(mut editable_text) = editable_text {
             if editable_text.value().to_string() != rendered_value {
+                // Move the cursor to the new text's end synchronously, in
+                // the same call as `set_text`, rather than queuing a
+                // `TextEnd` edit for `apply_text_edits` to process later.
+                // The queued approach left the cursor's stale byte offset
+                // (from the *old* text) unresolved until that system's next
+                // run; if the new text was shorter than the old one, that
+                // stale offset could momentarily point past the end of the
+                // buffer, producing an out-of-bounds scroll that blanked
+                // the rendered glyphs for a frame. `move_to_text_end`
+                // refreshes the layout for the text we just set and then
+                // clamps the selection to its true end, so there is no gap
+                // where the cursor is inconsistent with the buffer.
                 editable_text.editor_mut().set_text(&rendered_value);
-                editable_text.queue_edit(TextEdit::TextEnd(false));
+                editable_text
+                    .editor_mut()
+                    .driver(&mut font_cx, &mut layout_cx)
+                    .move_to_text_end();
             }
         }
+    }
+}
+
+/// Recovers a value-text `EditableText` whose computed glyph layout has
+/// become stuck empty despite holding non-empty content, by despawning and
+/// respawning the text entity from scratch.
+///
+/// This is a defensive recovery, not a root-cause fix. `TextLayoutInfo` can
+/// get stuck with zero glyphs and zero size after a Number Field's value
+/// changes, with no further edit ever triggering a successful retry -- this
+/// is the reported "Number Field value sometimes disappears" bug. The exact
+/// internal trigger inside Bevy's text stack is unconfirmed, but live
+/// repro logging (comparing `EditableTextGeneration` against the editor's
+/// own `generation()` on both healthy and stuck transitions) ruled out a
+/// stale-generation bookkeeping mismatch as the cause: the two stay
+/// perfectly in sync in *both* cases. Whatever is actually failing lives
+/// deeper in the layout-build step itself, and it does not self-correct:
+/// forcing repeated rebuilds via `set_text` on the same entity (an earlier
+/// version of this recovery) produced a rebuild-refuses-to-produce-glyphs
+/// loop that fired every frame indefinitely without ever recovering.
+///
+/// Two earlier, less drastic versions of this recovery were tried and
+/// rejected before this one:
+///
+/// - Queuing a select-all-then-insert edit against the existing (broken)
+///   `EditableText` made the bug *worse*: `TextEdit::TextEnd(true)` resolves
+///   to parley's `select_to_text_end`, which extends the selection by
+///   walking `self.editor.layout`'s lines (`Selection::move_lines` ->
+///   `move_to_line` -> `layout.get(line_index)`). When that cached layout
+///   genuinely has zero lines -- our exact stuck state -- `move_to_line`
+///   finds no line and returns the selection *unchanged* (a silent no-op),
+///   so "select all" doesn't select anything, and the follow-up `Insert`
+///   inserts at the stale cursor position instead of replacing the buffer --
+///   *prepending* the current value to itself every frame the bug
+///   persisted, observed in practice as the field settling on "250"
+///   (`number_input`'s `max`) once the prepended digits parsed as a number
+///   far outside the valid range and got clamped.
+/// - Replacing just the `EditableText` component with a freshly constructed
+///   one (to get a guaranteed-clean `PlainEditor`) did not recover anything:
+///   a fresh `EditableText::new` always nudges its internal generation
+///   through the same small, deterministic sequence (construct -> queue
+///   `TextEnd` -> apply -> nudge), landing on the exact same value the
+///   entity's separate, *not reset* `EditableTextGeneration` component was
+///   already sitting at. `layout_changed` then read false forever.
+/// - Forcing `layout_dirty` back to `true` on the existing editor via
+///   `set_text` (same value) does trigger a genuine rebuild and a genuine
+///   generation nudge every time -- confirmed live, `generation_matches_editor`
+///   stayed in sync exactly as designed -- but the rebuild itself kept
+///   producing zero glyphs anyway, every single frame, forever. Whatever is
+///   broken is upstream of the dirty/generation bookkeeping entirely.
+///
+/// Since neither editing the existing `EditableText` nor swapping it out in
+/// place recovers a stuck entity, this despawns the value-text entity
+/// outright and spawns a full replacement with a brand new entity ID,
+/// mirroring exactly what `initialize_last_beacon_ui_text_inputs` builds
+/// for a non-multiline Number Field value text (fixed-width, centered,
+/// digit-filtered `EditableText`). A new entity ID guarantees every piece
+/// of state tied to the old one -- `EditableTextGeneration`, the cached
+/// `TextLayoutInfo`, the `PlainEditor`'s internal layout cache, and
+/// whatever else is actually stuck -- is gone rather than merely reset in
+/// place, at the cost of a one-frame identity change (any input focus on
+/// this exact entity is not preserved).
+///
+/// Scoped to `LastBeaconUiNumberInput` entities specifically because that is
+/// currently the only widget shape that pairs `EditableText` with
+/// `LastBeaconUiValueText`; other value-text widgets (sliders, combo boxes)
+/// use plain, non-editable `Text` and never hit this stuck state.
+#[allow(clippy::type_complexity)]
+pub fn heal_last_beacon_ui_value_text_stuck_glyphs(
+    mut commands: Commands,
+    value_texts: Query<
+        (
+            Entity,
+            &ChildOf,
+            &EditableText,
+            &TextLayoutInfo,
+            &LastBeaconUiValueText,
+            &LastBeaconUiNumberInput,
+            &TextFont,
+            &TextColor,
+        ),
+        With<LastBeaconUiValueText>,
+    >,
+) {
+    for (
+        entity,
+        child_of,
+        editable_text,
+        layout_info,
+        value_text,
+        number_input,
+        text_font,
+        text_color,
+    ) in &value_texts
+    {
+        if !layout_info.glyphs.is_empty() {
+            continue;
+        }
+        let current_value = editable_text.value().to_string();
+        if current_value.is_empty() {
+            continue;
+        }
+
+        warn!(
+            "[heal] value-text target={:?} got stuck with an empty glyph layout while \
+             holding {current_value:?}; despawning and respawning it to recover",
+            value_text.target
+        );
+
+        let parent = child_of.parent();
+        let mut fresh_editable_text = EditableText::new(&current_value);
+        fresh_editable_text.visible_width = Some(24.0);
+        fresh_editable_text.visible_lines = Some(1.0);
+        fresh_editable_text.allow_newlines = false;
+
+        commands.entity(entity).despawn();
+
+        let replacement_entity = commands
+            .spawn((
+                value_text.clone(),
+                number_input.clone(),
+                Text::new(current_value),
+                text_font.clone(),
+                *text_color,
+                fresh_editable_text,
+                TextScroll::default(),
+                TextCursorStyle::default(),
+                TextLayout {
+                    justify: Justify::Center,
+                    ..default()
+                },
+                LineHeight::default(),
+                Node {
+                    width: Val::Px(NUMBER_INPUT_VALUE_TEXT_WIDTH_PX),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    ..default()
+                },
+                EditableTextFilter::new(number_input_allows_character),
+            ))
+            .id();
+        commands.entity(parent).add_child(replacement_entity);
     }
 }
 
@@ -1682,8 +2030,11 @@ pub fn activate_last_beacon_ui_focused_widget_on_keyboard_input(
 pub fn refresh_last_beacon_ui_tab_panels(
     tab_selections: Res<LastBeaconUiTabSelections>,
     mut tab_panels: LastBeaconUiTabPanelQuery,
+    newly_spawned_tab_panels: Query<(), Added<LastBeaconUiTabPanel>>,
 ) {
-    if !tab_selections.is_changed() {
+    // See `refresh_last_beacon_ui_value_text` for why newly-spawned panels
+    // must also be synced when the resource itself didn't change this frame.
+    if !tab_selections.is_changed() && newly_spawned_tab_panels.is_empty() {
         return;
     }
 
@@ -1701,7 +2052,9 @@ pub fn refresh_last_beacon_ui_tab_panels(
 }
 
 /// Restores prototype-authored button colors after generic Foundation interaction styling.
+#[allow(clippy::too_many_arguments)]
 pub fn enforce_last_beacon_button_styles(
+    theme: Res<FoundationUiTheme>,
     mut ui_buttons: LastBeaconUiButtonStyleQuery,
     mut ui_tabs: LastBeaconUiTabStyleQuery,
     tab_selections: Res<LastBeaconUiTabSelections>,
@@ -1713,44 +2066,33 @@ pub fn enforce_last_beacon_button_styles(
     for (button, button_interaction, mut button_background, mut button_border, button_children) in
         &mut ui_buttons
     {
-        let button_style = reusable_button_style(&button.variant, *button_interaction);
+        let button_style = reusable_button_style(&theme, &button.variant, *button_interaction);
         *button_background = BackgroundColor(button_style.background_color);
         *button_border = BorderColor::all(button_style.border_color);
         apply_text_color(button_children, button_style.text_color, &mut text_colors);
     }
 
     for (tab, tab_interaction, mut tab_background, mut tab_border, tab_children) in &mut ui_tabs {
-        // A tab's style depends on both its own interaction and the shared
-        // selection resource, so this loop cannot be filtered by
-        // `Changed<Interaction>` alone at the query level; skip tabs where
-        // neither actually changed to avoid rewriting every tab's colors on
-        // every frame.
-        if !(tab_interaction.is_changed() || tab_selections.is_changed()) {
-            continue;
-        }
         let selected_tab = tab_selections.selected_tabs.get(&tab.group);
         let is_selected = selected_tab
             .map(|selected_tab| selected_tab == &tab.tab)
             .unwrap_or(tab.selected);
-        let tab_style = reusable_tab_style(is_selected, *tab_interaction);
+        let tab_style = reusable_tab_style(&theme, is_selected, *tab_interaction);
         *tab_background = BackgroundColor(tab_style.background_color);
         *tab_border = BorderColor::all(tab_style.border_color);
         apply_text_color(tab_children, tab_style.text_color, &mut text_colors);
     }
 
-    let prototype_menu_accent = Color::srgb(0.984, 0.749, 0.141);
     for mut button_background in &mut main_menu_primary_buttons {
-        *button_background = BackgroundColor(prototype_menu_accent);
+        *button_background = BackgroundColor(theme.color(FoundationUiColorToken::Accent));
     }
 
-    let prototype_beacon_accent = Color::srgb(0.133, 0.827, 0.933);
     for mut button_background in &mut beacon_primary_buttons {
-        *button_background = BackgroundColor(prototype_beacon_accent);
+        *button_background = BackgroundColor(theme.color(FoundationUiColorToken::SecondaryAccent));
     }
 
-    let transparent_background = Color::srgba(0.0, 0.0, 0.0, 0.0);
     for mut button_background in &mut beacon_tab_buttons {
-        *button_background = BackgroundColor(transparent_background);
+        *button_background = BackgroundColor(theme.color(FoundationUiColorToken::Transparent));
     }
 }
 
@@ -1761,83 +2103,91 @@ struct LastBeaconWidgetStyle {
     text_color: Color,
 }
 
-fn reusable_button_style(variant: &str, interaction: Interaction) -> LastBeaconWidgetStyle {
+fn reusable_button_style(
+    theme: &FoundationUiTheme,
+    variant: &str,
+    interaction: Interaction,
+) -> LastBeaconWidgetStyle {
     let normalized_variant = variant.trim().to_ascii_lowercase();
     match (normalized_variant.as_str(), interaction) {
         ("primary", Interaction::Pressed) => LastBeaconWidgetStyle {
-            background_color: Color::srgb(0.854, 0.55, 0.08),
-            border_color: Color::srgb(0.854, 0.55, 0.08),
-            text_color: Color::srgb(0.008, 0.024, 0.09),
+            background_color: theme.color(FoundationUiColorToken::AccentPressed),
+            border_color: theme.color(FoundationUiColorToken::AccentPressed),
+            text_color: theme.color(FoundationUiColorToken::TextOnAccent),
         },
         ("primary", Interaction::Hovered) => LastBeaconWidgetStyle {
-            background_color: Color::srgb(1.0, 0.827, 0.32),
-            border_color: Color::srgb(1.0, 0.827, 0.32),
-            text_color: Color::srgb(0.008, 0.024, 0.09),
+            background_color: theme.color(FoundationUiColorToken::AccentHover),
+            border_color: theme.color(FoundationUiColorToken::AccentHover),
+            text_color: theme.color(FoundationUiColorToken::TextOnAccent),
         },
         ("primary", _) => LastBeaconWidgetStyle {
-            background_color: Color::srgb(0.984, 0.749, 0.141),
-            border_color: Color::srgb(0.984, 0.749, 0.141),
-            text_color: Color::srgb(0.008, 0.024, 0.09),
+            background_color: theme.color(FoundationUiColorToken::Accent),
+            border_color: theme.color(FoundationUiColorToken::Accent),
+            text_color: theme.color(FoundationUiColorToken::TextOnAccent),
         },
         ("tertiary", Interaction::Pressed) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.984, 0.749, 0.141, 0.18),
-            border_color: Color::srgb(0.984, 0.749, 0.141),
-            text_color: Color::srgb(0.984, 0.749, 0.141),
+            background_color: theme.color_alpha(FoundationUiColorToken::Accent, 0.18),
+            border_color: theme.color(FoundationUiColorToken::Accent),
+            text_color: theme.color(FoundationUiColorToken::Accent),
         },
         ("tertiary", Interaction::Hovered) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.984, 0.749, 0.141, 0.1),
-            border_color: Color::srgb(0.984, 0.749, 0.141),
-            text_color: Color::srgb(1.0, 0.827, 0.32),
+            background_color: theme.color_alpha(FoundationUiColorToken::Accent, 0.1),
+            border_color: theme.color(FoundationUiColorToken::Accent),
+            text_color: theme.color(FoundationUiColorToken::AccentHover),
         },
         ("tertiary", _) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.0, 0.0, 0.0, 0.0),
-            border_color: Color::srgb(0.278, 0.333, 0.412),
-            text_color: Color::srgb(0.58, 0.639, 0.722),
+            background_color: theme.color(FoundationUiColorToken::Transparent),
+            border_color: theme.color(FoundationUiColorToken::Border),
+            text_color: theme.color(FoundationUiColorToken::TextMuted),
         },
         (_, Interaction::Pressed) => LastBeaconWidgetStyle {
-            background_color: Color::srgb(0.2, 0.255, 0.333),
-            border_color: Color::srgb(0.58, 0.639, 0.722),
-            text_color: Color::srgb(0.945, 0.961, 0.976),
+            background_color: theme.color(FoundationUiColorToken::SurfaceStrong),
+            border_color: theme.color(FoundationUiColorToken::TextMuted),
+            text_color: theme.color(FoundationUiColorToken::TextPrimary),
         },
         (_, Interaction::Hovered) => LastBeaconWidgetStyle {
-            background_color: Color::srgb(0.2, 0.255, 0.333),
-            border_color: Color::srgb(0.796, 0.835, 0.882),
-            text_color: Color::srgb(0.945, 0.961, 0.976),
+            background_color: theme.color(FoundationUiColorToken::SurfaceStrong),
+            border_color: theme.color(FoundationUiColorToken::BorderHover),
+            text_color: theme.color(FoundationUiColorToken::TextPrimary),
         },
         (_, _) => LastBeaconWidgetStyle {
-            background_color: Color::srgb(0.118, 0.161, 0.231),
-            border_color: Color::srgb(0.278, 0.333, 0.412),
-            text_color: Color::srgb(0.945, 0.961, 0.976),
+            background_color: theme.color(FoundationUiColorToken::Surface),
+            border_color: theme.color(FoundationUiColorToken::Border),
+            text_color: theme.color(FoundationUiColorToken::TextPrimary),
         },
     }
 }
 
-fn reusable_tab_style(is_selected: bool, interaction: Interaction) -> LastBeaconWidgetStyle {
+fn reusable_tab_style(
+    theme: &FoundationUiTheme,
+    is_selected: bool,
+    interaction: Interaction,
+) -> LastBeaconWidgetStyle {
     match (is_selected, interaction) {
         (true, Interaction::Pressed) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.984, 0.749, 0.141, 0.22),
-            border_color: Color::srgb(0.984, 0.749, 0.141),
-            text_color: Color::srgb(0.984, 0.749, 0.141),
+            background_color: theme.color_alpha(FoundationUiColorToken::Accent, 0.22),
+            border_color: theme.color(FoundationUiColorToken::Accent),
+            text_color: theme.color(FoundationUiColorToken::Accent),
         },
         (true, _) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.984, 0.749, 0.141, 0.12),
-            border_color: Color::srgb(0.984, 0.749, 0.141),
-            text_color: Color::srgb(0.984, 0.749, 0.141),
+            background_color: theme.color(FoundationUiColorToken::AccentSoft),
+            border_color: theme.color(FoundationUiColorToken::Accent),
+            text_color: theme.color(FoundationUiColorToken::Accent),
         },
         (false, Interaction::Pressed) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.984, 0.749, 0.141, 0.16),
-            border_color: Color::srgb(0.984, 0.749, 0.141),
-            text_color: Color::srgb(0.984, 0.749, 0.141),
+            background_color: theme.color_alpha(FoundationUiColorToken::Accent, 0.16),
+            border_color: theme.color(FoundationUiColorToken::Accent),
+            text_color: theme.color(FoundationUiColorToken::Accent),
         },
         (false, Interaction::Hovered) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.984, 0.749, 0.141, 0.08),
-            border_color: Color::srgb(0.278, 0.333, 0.412),
-            text_color: Color::srgb(0.945, 0.961, 0.976),
+            background_color: theme.color_alpha(FoundationUiColorToken::Accent, 0.08),
+            border_color: theme.color(FoundationUiColorToken::Border),
+            text_color: theme.color(FoundationUiColorToken::TextPrimary),
         },
         (false, _) => LastBeaconWidgetStyle {
-            background_color: Color::srgba(0.0, 0.0, 0.0, 0.0),
-            border_color: Color::srgba(0.0, 0.0, 0.0, 0.0),
-            text_color: Color::srgb(0.58, 0.639, 0.722),
+            background_color: theme.color(FoundationUiColorToken::Transparent),
+            border_color: theme.color(FoundationUiColorToken::Transparent),
+            text_color: theme.color(FoundationUiColorToken::TextMuted),
         },
     }
 }
@@ -2247,6 +2597,120 @@ fn mark_widget_failed(world: &mut World, widget_slot_entity: Entity, failure_rea
     }
 }
 
+/// Configures a newly authored uniform grid container's `Node` for CSS Grid
+/// layout with `column_count` equal-width columns.
+pub fn apply_last_beacon_ui_uniform_grid(
+    mut uniform_grids: Query<(&LastBeaconUiUniformGrid, &mut Node), Added<LastBeaconUiUniformGrid>>,
+) {
+    for (uniform_grid, mut node) in &mut uniform_grids {
+        node.display = Display::Grid;
+        node.grid_auto_flow = GridAutoFlow::Row;
+        node.grid_template_columns = RepeatedGridTrack::flex(uniform_grid.column_count.max(1), 1.0);
+    }
+}
+
+/// Translates an authored span into Bevy's native grid placement.
+///
+/// `GridPlacement::span` panics on a span of `0`, so a `.bsn`-authored `0`
+/// (or default-initialized value) is clamped up to `1` -- Bevy's own default
+/// placement already behaves as "span 1," so this never changes behavior for
+/// an unset value.
+pub fn apply_last_beacon_ui_grid_item_span(
+    mut grid_items: Query<(&LastBeaconUiGridItem, &mut Node), Added<LastBeaconUiGridItem>>,
+) {
+    for (grid_item, mut node) in &mut grid_items {
+        node.grid_column = GridPlacement::span(grid_item.column_span.max(1));
+        node.grid_row = GridPlacement::span(grid_item.row_span.max(1));
+    }
+}
+
+/// Keeps a `LastBeaconUiAspectRatioBounds` widget's own size within its
+/// configured aspect-ratio band, derived from its parent's available content
+/// space.
+///
+/// Runs after layout (`bevy::ui::UiSystems::PostLayout`) so the parent's
+/// `ComputedNode` reflects this frame's actual size, matching the same
+/// "read `ComputedNode`, write a derived `Node` value" shape already used by
+/// `refresh_last_beacon_ui_text_box_scrollbars`.
+pub fn apply_last_beacon_ui_aspect_ratio_bounds(
+    mut aspect_ratio_widgets: Query<(&LastBeaconUiAspectRatioBounds, &ChildOf, &mut Node)>,
+    parent_computed_nodes: Query<&ComputedNode>,
+) {
+    for (aspect_ratio_bounds, child_of, mut node) in &mut aspect_ratio_widgets {
+        let Ok(parent_computed_node) = parent_computed_nodes.get(child_of.parent()) else {
+            continue;
+        };
+        let available_size = parent_computed_node.content_box().size();
+        if available_size.x <= 0.0 || available_size.y <= 0.0 {
+            continue;
+        }
+
+        // A typo'd `min > max` degrades gracefully to the correctly-ordered
+        // clamp instead of producing an inverted (always-empty) range.
+        let (min_aspect_ratio, max_aspect_ratio) =
+            if aspect_ratio_bounds.min_aspect_ratio <= aspect_ratio_bounds.max_aspect_ratio {
+                (
+                    aspect_ratio_bounds.min_aspect_ratio,
+                    aspect_ratio_bounds.max_aspect_ratio,
+                )
+            } else {
+                (
+                    aspect_ratio_bounds.max_aspect_ratio,
+                    aspect_ratio_bounds.min_aspect_ratio,
+                )
+            };
+
+        let available_ratio = available_size.x / available_size.y;
+        let clamped_ratio = available_ratio.clamp(min_aspect_ratio, max_aspect_ratio);
+
+        // "Contain fit": the largest size at `clamped_ratio` that still fits
+        // inside the parent's available content space.
+        let width_at_available_height = available_size.y * clamped_ratio;
+        let target_size = if width_at_available_height <= available_size.x {
+            Vec2::new(width_at_available_height, available_size.y)
+        } else {
+            Vec2::new(available_size.x, available_size.x / clamped_ratio)
+        };
+
+        let target_width = Val::Px(target_size.x);
+        let target_height = Val::Px(target_size.y);
+        if node.width != target_width {
+            node.width = target_width;
+        }
+        if node.height != target_height {
+            node.height = target_height;
+        }
+    }
+}
+
+/// Plugin which registers Last Beacon's grid-span and aspect-ratio layout
+/// widgets.
+///
+/// Grouped into its own plugin, rather than appended directly to
+/// `LastBeaconPlugin`'s builder chain, to mirror how `bevy_feathers` composes
+/// its own controls: one plugin per widget family, added together by a
+/// parent plugin (`ControlsPlugin` there, `LastBeaconPlugin` here).
+pub struct LastBeaconUiLayoutWidgetsPlugin;
+
+impl Plugin for LastBeaconUiLayoutWidgetsPlugin {
+    fn build(&self, app: &mut App) {
+        app.register_type::<LastBeaconUiUniformGrid>()
+            .register_type::<LastBeaconUiGridItem>()
+            .register_type::<LastBeaconUiAspectRatioBounds>()
+            .add_systems(
+                Update,
+                (
+                    apply_last_beacon_ui_uniform_grid,
+                    apply_last_beacon_ui_grid_item_span,
+                ),
+            )
+            .add_systems(
+                PostUpdate,
+                apply_last_beacon_ui_aspect_ratio_bounds.after(bevy::ui::UiSystems::PostLayout),
+            );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2548,10 +3012,25 @@ mod tests {
     }
 
     #[test]
-    fn button_style_is_not_rewritten_on_a_frame_where_interaction_did_not_change() {
+    fn button_style_corrects_a_stray_overwrite_even_when_interaction_did_not_change() {
+        // Regression test for a real bug: Foundation's generic
+        // `update_foundation_menu_button_interactions` (Update) matches every
+        // Last Beacon button too (they all carry `FoundationMenuButton`), and
+        // can overwrite this system's authoritative color on a frame where,
+        // from THIS system's own change-tick perspective, `Interaction`
+        // never changed -- e.g. because Foundation's system only caught up to
+        // a BSN-deferred-spawned entity a frame or more after this one did.
+        // The Primary button in the UI Playground showed exactly this: it
+        // rendered with Foundation's generic dark navy resting color instead
+        // of its intended gold, leaving its dark text unreadable. Since
+        // `enforce_last_beacon_button_styles` runs in `PostUpdate` -- always
+        // after `Update` in the same frame -- it must win by simply running
+        // unconditionally every frame, not by trying to detect the stray
+        // write via change detection.
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
         app.init_resource::<LastBeaconUiTabSelections>();
+        app.insert_resource(crate::ui_theme::load_last_beacon_ui_theme());
         app.add_systems(Update, enforce_last_beacon_button_styles);
 
         let button_entity = app
@@ -2568,25 +3047,173 @@ mod tests {
             .id();
 
         app.update();
+        let correct_background_color = app.world().get::<BackgroundColor>(button_entity).unwrap().0;
 
-        // Simulate a value that a real frame would never naturally produce,
-        // so a later unwanted overwrite by the style system is unmistakable.
-        let sentinel_background_color = Color::srgb(1.0, 0.0, 1.0);
+        // Simulate a foreign system (like Foundation's) clobbering the color
+        // on a later frame without touching `Interaction` at all.
+        let stray_background_color = Color::srgb(1.0, 0.0, 1.0);
         app.world_mut()
             .get_mut::<BackgroundColor>(button_entity)
             .unwrap()
-            .0 = sentinel_background_color;
+            .0 = stray_background_color;
 
         app.update();
 
         assert_eq!(
-            app.world()
-                .get::<BackgroundColor>(button_entity)
-                .unwrap()
-                .0,
-            sentinel_background_color,
-            "the style system must not rewrite a button's color on a frame where its Interaction did not change"
+            app.world().get::<BackgroundColor>(button_entity).unwrap().0,
+            correct_background_color,
+            "the style system must correct a stray color overwrite on the very next frame, \
+             even though its own Interaction never changed"
         );
+    }
+
+    #[test]
+    fn reusable_button_and_tab_styles_resolve_to_last_beacons_exact_shipped_colors() {
+        // Snapshot regression test for the theme migration: these are the
+        // exact literal `Color::srgb(...)`/`Color::srgba(...)` values
+        // `reusable_button_style`/`reusable_tab_style` hardcoded before they
+        // were rewritten to read `FoundationUiTheme` token lookups. Asserting
+        // against the real shipped `theme.toml` (not a synthetic test theme)
+        // proves both that every token mapping in the rewrite is correct AND
+        // that the shipped theme file actually contains the values the
+        // rewrite depends on.
+        let theme = crate::ui_theme::load_last_beacon_ui_theme();
+
+        let cases = [
+            (
+                "primary",
+                Interaction::Pressed,
+                Color::srgb(0.854, 0.55, 0.08),
+                Color::srgb(0.854, 0.55, 0.08),
+                Color::srgb(0.008, 0.024, 0.09),
+            ),
+            (
+                "primary",
+                Interaction::Hovered,
+                Color::srgb(1.0, 0.827, 0.32),
+                Color::srgb(1.0, 0.827, 0.32),
+                Color::srgb(0.008, 0.024, 0.09),
+            ),
+            (
+                "primary",
+                Interaction::None,
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.008, 0.024, 0.09),
+            ),
+            (
+                "tertiary",
+                Interaction::Pressed,
+                Color::srgba(0.984, 0.749, 0.141, 0.18),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.984, 0.749, 0.141),
+            ),
+            (
+                "tertiary",
+                Interaction::Hovered,
+                Color::srgba(0.984, 0.749, 0.141, 0.1),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(1.0, 0.827, 0.32),
+            ),
+            (
+                "tertiary",
+                Interaction::None,
+                Color::srgba(0.0, 0.0, 0.0, 0.0),
+                Color::srgb(0.278, 0.333, 0.412),
+                Color::srgb(0.58, 0.639, 0.722),
+            ),
+            (
+                "secondary",
+                Interaction::Pressed,
+                Color::srgb(0.2, 0.255, 0.333),
+                Color::srgb(0.58, 0.639, 0.722),
+                Color::srgb(0.945, 0.961, 0.976),
+            ),
+            (
+                "secondary",
+                Interaction::Hovered,
+                Color::srgb(0.2, 0.255, 0.333),
+                Color::srgb(0.796, 0.835, 0.882),
+                Color::srgb(0.945, 0.961, 0.976),
+            ),
+            (
+                "secondary",
+                Interaction::None,
+                Color::srgb(0.118, 0.161, 0.231),
+                Color::srgb(0.278, 0.333, 0.412),
+                Color::srgb(0.945, 0.961, 0.976),
+            ),
+        ];
+        for (variant, interaction, expected_background, expected_border, expected_text) in cases {
+            let style = reusable_button_style(&theme, variant, interaction);
+            assert_eq!(
+                style.background_color, expected_background,
+                "{variant} {interaction:?} background"
+            );
+            assert_eq!(
+                style.border_color, expected_border,
+                "{variant} {interaction:?} border"
+            );
+            assert_eq!(
+                style.text_color, expected_text,
+                "{variant} {interaction:?} text"
+            );
+        }
+
+        let tab_cases = [
+            (
+                true,
+                Interaction::Pressed,
+                Color::srgba(0.984, 0.749, 0.141, 0.22),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.984, 0.749, 0.141),
+            ),
+            (
+                true,
+                Interaction::None,
+                Color::srgba(0.984, 0.749, 0.141, 0.12),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.984, 0.749, 0.141),
+            ),
+            (
+                false,
+                Interaction::Pressed,
+                Color::srgba(0.984, 0.749, 0.141, 0.16),
+                Color::srgb(0.984, 0.749, 0.141),
+                Color::srgb(0.984, 0.749, 0.141),
+            ),
+            (
+                false,
+                Interaction::Hovered,
+                Color::srgba(0.984, 0.749, 0.141, 0.08),
+                Color::srgb(0.278, 0.333, 0.412),
+                Color::srgb(0.945, 0.961, 0.976),
+            ),
+            (
+                false,
+                Interaction::None,
+                Color::srgba(0.0, 0.0, 0.0, 0.0),
+                Color::srgba(0.0, 0.0, 0.0, 0.0),
+                Color::srgb(0.58, 0.639, 0.722),
+            ),
+        ];
+        for (is_selected, interaction, expected_background, expected_border, expected_text) in
+            tab_cases
+        {
+            let style = reusable_tab_style(&theme, is_selected, interaction);
+            assert_eq!(
+                style.background_color, expected_background,
+                "selected={is_selected} {interaction:?} background"
+            );
+            assert_eq!(
+                style.border_color, expected_border,
+                "selected={is_selected} {interaction:?} border"
+            );
+            assert_eq!(
+                style.text_color, expected_text,
+                "selected={is_selected} {interaction:?} text"
+            );
+        }
     }
 
     #[test]
@@ -2594,6 +3221,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
         app.init_resource::<LastBeaconUiTabSelections>();
+        app.insert_resource(crate::ui_theme::load_last_beacon_ui_theme());
         app.add_systems(Update, enforce_last_beacon_button_styles);
 
         let button_entity = app
@@ -2629,6 +3257,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugins(MinimalPlugins);
         app.init_resource::<LastBeaconUiTabSelections>();
+        app.insert_resource(crate::ui_theme::load_last_beacon_ui_theme());
         app.add_systems(Update, enforce_last_beacon_button_styles);
 
         let selected_tab_entity = app
@@ -3004,6 +3633,717 @@ mod tests {
             selected_tab,
             Some("standby".to_string()),
             "Enter on a focused tab must select it the same way a mouse press does"
+        );
+    }
+
+    #[test]
+    fn uniform_grid_configures_the_requested_column_count() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_uniform_grid);
+
+        let uniform_grid_entity = app
+            .world_mut()
+            .spawn((Node::default(), LastBeaconUiUniformGrid { column_count: 3 }))
+            .id();
+
+        app.update();
+
+        let uniform_grid_node = app.world().get::<Node>(uniform_grid_entity).unwrap();
+        assert_eq!(uniform_grid_node.display, Display::Grid);
+        assert_eq!(
+            uniform_grid_node.grid_template_columns,
+            RepeatedGridTrack::flex::<Vec<RepeatedGridTrack>>(3, 1.0)
+        );
+    }
+
+    #[test]
+    fn uniform_grid_column_count_of_zero_still_produces_a_single_column() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_uniform_grid);
+
+        let uniform_grid_entity = app
+            .world_mut()
+            .spawn((Node::default(), LastBeaconUiUniformGrid { column_count: 0 }))
+            .id();
+
+        app.update();
+
+        let uniform_grid_node = app.world().get::<Node>(uniform_grid_entity).unwrap();
+        assert_eq!(
+            uniform_grid_node.grid_template_columns,
+            RepeatedGridTrack::flex::<Vec<RepeatedGridTrack>>(1, 1.0),
+            "an authored column_count of 0 must still produce a usable single-column grid"
+        );
+    }
+
+    #[test]
+    fn grid_item_span_translates_into_native_grid_placement() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_grid_item_span);
+
+        let grid_item_entity = app
+            .world_mut()
+            .spawn((
+                Node::default(),
+                LastBeaconUiGridItem {
+                    column_span: 2,
+                    row_span: 3,
+                },
+            ))
+            .id();
+
+        app.update();
+
+        let grid_item_node = app.world().get::<Node>(grid_item_entity).unwrap();
+        assert_eq!(grid_item_node.grid_column, GridPlacement::span(2));
+        assert_eq!(grid_item_node.grid_row, GridPlacement::span(3));
+    }
+
+    #[test]
+    fn grid_item_span_of_zero_does_not_panic_and_yields_span_one() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_grid_item_span);
+
+        let grid_item_entity = app
+            .world_mut()
+            .spawn((
+                Node::default(),
+                LastBeaconUiGridItem {
+                    column_span: 0,
+                    row_span: 0,
+                },
+            ))
+            .id();
+
+        app.update();
+
+        let grid_item_node = app.world().get::<Node>(grid_item_entity).unwrap();
+        assert_eq!(grid_item_node.grid_column, GridPlacement::span(1));
+        assert_eq!(grid_item_node.grid_row, GridPlacement::span(1));
+    }
+
+    fn spawn_aspect_ratio_test_widget(
+        app: &mut App,
+        parent_size: Vec2,
+        aspect_ratio_bounds: LastBeaconUiAspectRatioBounds,
+    ) -> Entity {
+        let parent_entity = app
+            .world_mut()
+            .spawn(ComputedNode {
+                size: parent_size,
+                ..default()
+            })
+            .id();
+        app.world_mut()
+            .spawn((Node::default(), ChildOf(parent_entity), aspect_ratio_bounds))
+            .id()
+    }
+
+    #[test]
+    fn aspect_ratio_bounds_forces_a_fixed_square_ratio() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_aspect_ratio_bounds);
+
+        let widget_entity = spawn_aspect_ratio_test_widget(
+            &mut app,
+            Vec2::new(1600.0, 900.0),
+            LastBeaconUiAspectRatioBounds {
+                min_aspect_ratio: 1.0,
+                max_aspect_ratio: 1.0,
+            },
+        );
+
+        app.update();
+
+        let widget_node = app.world().get::<Node>(widget_entity).unwrap();
+        assert_eq!(widget_node.width, Val::Px(900.0));
+        assert_eq!(widget_node.height, Val::Px(900.0));
+    }
+
+    #[test]
+    fn aspect_ratio_bounds_passes_through_a_ratio_already_inside_the_band() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_aspect_ratio_bounds);
+
+        let widget_entity = spawn_aspect_ratio_test_widget(
+            &mut app,
+            Vec2::new(1600.0, 900.0),
+            LastBeaconUiAspectRatioBounds {
+                min_aspect_ratio: 0.5,
+                max_aspect_ratio: 5.0,
+            },
+        );
+
+        app.update();
+
+        let widget_node = app.world().get::<Node>(widget_entity).unwrap();
+        assert_eq!(widget_node.width, Val::Px(1600.0));
+        assert_eq!(widget_node.height, Val::Px(900.0));
+    }
+
+    #[test]
+    fn aspect_ratio_bounds_clamps_a_narrow_parent_up_to_the_minimum() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_aspect_ratio_bounds);
+
+        // A 400x900 parent has a ratio of ~0.44, below the configured minimum.
+        let widget_entity = spawn_aspect_ratio_test_widget(
+            &mut app,
+            Vec2::new(400.0, 900.0),
+            LastBeaconUiAspectRatioBounds {
+                min_aspect_ratio: 1.0,
+                max_aspect_ratio: 2.0,
+            },
+        );
+
+        app.update();
+
+        let widget_node = app.world().get::<Node>(widget_entity).unwrap();
+        assert_eq!(widget_node.width, Val::Px(400.0));
+        assert_eq!(widget_node.height, Val::Px(400.0));
+    }
+
+    #[test]
+    fn aspect_ratio_bounds_swaps_a_backwards_min_and_max() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_aspect_ratio_bounds);
+
+        // A 1600x900 parent has a ratio of ~1.778, which falls inside the
+        // *correctly-ordered* [1.0, 2.0] band. Authoring the fields backwards
+        // (`min: 2.0, max: 1.0`) must still swap to that same band internally
+        // -- `f32::clamp` always panics if `min > max` is passed
+        // through unswapped, so this also guards against that panic.
+        let widget_entity = spawn_aspect_ratio_test_widget(
+            &mut app,
+            Vec2::new(1600.0, 900.0),
+            LastBeaconUiAspectRatioBounds {
+                min_aspect_ratio: 2.0,
+                max_aspect_ratio: 1.0,
+            },
+        );
+
+        app.update();
+
+        let widget_node = app.world().get::<Node>(widget_entity).unwrap();
+        assert_eq!(
+            widget_node.width,
+            Val::Px(1600.0),
+            "the parent's ratio is already inside the (correctly-ordered) band, so it must pass through unchanged"
+        );
+        assert_eq!(widget_node.height, Val::Px(900.0));
+    }
+
+    #[test]
+    fn aspect_ratio_bounds_default_is_inert() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, apply_last_beacon_ui_aspect_ratio_bounds);
+
+        let widget_entity = spawn_aspect_ratio_test_widget(
+            &mut app,
+            Vec2::new(1600.0, 900.0),
+            LastBeaconUiAspectRatioBounds::default(),
+        );
+
+        app.update();
+
+        let widget_node = app.world().get::<Node>(widget_entity).unwrap();
+        assert_eq!(
+            widget_node.width,
+            Val::Px(1600.0),
+            "an unconfigured (Default) aspect-ratio widget must not constrain anything"
+        );
+        assert_eq!(widget_node.height, Val::Px(900.0));
+    }
+
+    #[test]
+    fn value_text_spawned_after_the_stored_value_already_exists_still_shows_it() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<LastBeaconUiInputValues>();
+        app.init_resource::<FontCx>();
+        app.init_resource::<LayoutCx>();
+        app.add_systems(Update, refresh_last_beacon_ui_value_text);
+
+        app.world_mut()
+            .resource_mut::<LastBeaconUiInputValues>()
+            .values
+            .insert("number-field".to_string(), "99".to_string());
+        // Let the resource's change tick age out with an update that has
+        // nothing new to sync, exactly like a widget asset that finishes
+        // streaming in on a later frame after the value was already set
+        // elsewhere in the session (e.g. a scene reopened, or a nested BSN
+        // widget that loads asynchronously).
+        app.update();
+
+        let value_text_entity = app
+            .world_mut()
+            .spawn((
+                LastBeaconUiValueText {
+                    target: "number-field".to_string(),
+                    prefix: String::new(),
+                    suffix: String::new(),
+                },
+                Text::new("42"),
+            ))
+            .id();
+
+        app.update();
+
+        assert_eq!(
+            app.world().get::<Text>(value_text_entity).unwrap().0,
+            "99",
+            "a value text spawned after its stored value already exists must show that value immediately, not its authored placeholder"
+        );
+    }
+
+    #[test]
+    fn slider_fill_spawned_after_the_stored_value_already_exists_still_shows_it() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<LastBeaconUiInputValues>();
+        app.add_systems(Update, refresh_last_beacon_ui_slider_fills);
+
+        app.world_mut()
+            .resource_mut::<LastBeaconUiInputValues>()
+            .values
+            .insert("slider-volume".to_string(), "75".to_string());
+        app.update();
+
+        let slider_fill_entity = app
+            .world_mut()
+            .spawn((
+                LastBeaconUiSliderFill {
+                    target: "slider-volume".to_string(),
+                    min: 0.0,
+                    max: 100.0,
+                },
+                Node::default(),
+            ))
+            .id();
+
+        app.update();
+
+        assert_eq!(
+            app.world().get::<Node>(slider_fill_entity).unwrap().width,
+            Val::Percent(75.0),
+            "a slider fill spawned after its stored value already exists must show that value immediately, not its authored default width"
+        );
+    }
+
+    /// Builds a headless app with the real bevy_text/bevy_ui plugins wired
+    /// up (not mocked), spawns a Number Field's exact entity shape, lets the
+    /// container's `Added<LastBeaconUiTextInput>` go unnoticed for
+    /// `frames_before_text_input_is_added` frames (mirroring the delay
+    /// between a `.bsn` scene's initial spawn and
+    /// `initialize_last_beacon_ui_text_inputs` actually observing it, which
+    /// in the real game depends on scene-loading/command-flush timing), then
+    /// returns the glyph count read back from `TextLayoutInfo` after each of
+    /// the next 60 frames.
+    fn number_field_glyph_counts_after_text_input_delay(
+        frames_before_text_input_is_added: usize,
+    ) -> Vec<usize> {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(bevy::asset::AssetPlugin {
+            file_path: ".".to_string(),
+            ..default()
+        });
+        app.add_plugins(bevy::text::TextPlugin);
+        app.add_plugins(bevy::input::InputPlugin);
+        app.add_plugins(bevy::a11y::AccessibilityPlugin);
+        app.add_plugins(bevy::window::WindowPlugin::default());
+        app.add_plugins(bevy::image::ImagePlugin::default());
+        app.add_plugins(bevy::picking::DefaultPickingPlugins);
+        app.init_asset::<bevy::image::TextureAtlasLayout>();
+        app.add_plugins(bevy::ui::UiPlugin);
+        app.add_systems(Update, initialize_last_beacon_ui_text_inputs);
+
+        // Mirror the Number Field's authored structure: a container that
+        // will carry `LastBeaconUiTextInput`, with a child `Text` entity
+        // carrying `LastBeaconUiNumberInput` -- the child starts out as
+        // plain `Text` (matching the `.bsn`-authored "42") and only gains
+        // `EditableText` once `initialize_last_beacon_ui_text_inputs`
+        // observes the container's `LastBeaconUiTextInput`.
+        let text_entity = app
+            .world_mut()
+            .spawn((
+                LastBeaconUiNumberInput {
+                    target: "number-field".to_string(),
+                    min: 0.0,
+                    max: 250.0,
+                },
+                LastBeaconUiValueText {
+                    target: "number-field".to_string(),
+                    prefix: String::new(),
+                    suffix: String::new(),
+                },
+                Text::new("42"),
+                TextFont::default(),
+                Node::default(),
+            ))
+            .id();
+        let container_entity = app
+            .world_mut()
+            .spawn(Node::default())
+            .add_child(text_entity)
+            .id();
+
+        for _ in 0..frames_before_text_input_is_added {
+            app.update();
+        }
+
+        app.world_mut()
+            .entity_mut(container_entity)
+            .insert(LastBeaconUiTextInput {
+                value: "42".to_string(),
+                multiline: false,
+            });
+
+        (0..60)
+            .map(|_| {
+                app.update();
+                app.world()
+                    .get::<TextLayoutInfo>(text_entity)
+                    .map(|info| info.glyphs.len())
+                    .unwrap_or(0)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn number_field_editable_text_glyphs_populate_immediately_after_first_layout() {
+        // The real game's scene-loading/command-flush timing determines how
+        // many frames elapse between the Number Field's container spawning
+        // and `initialize_last_beacon_ui_text_inputs` actually observing its
+        // `LastBeaconUiTextInput`. Sweep a range of delays to find whether
+        // any specific timing leaves `TextLayoutInfo` stuck with zero
+        // glyphs -- the reported "Number Field value disappears" bug, seen
+        // both on some scene loads and after some +/- button clicks.
+        for delay in 0..12 {
+            let glyphs_by_frame = number_field_glyph_counts_after_text_input_delay(delay);
+            assert!(
+                glyphs_by_frame.iter().skip(2).all(|&count| count > 0),
+                "with {delay} frame(s) between spawn and LastBeaconUiTextInput being added, \
+                 TextLayoutInfo glyphs must not go to (and stay at) zero once EditableText holds \"42\"; \
+                 per-frame glyph counts were {glyphs_by_frame:?}"
+            );
+        }
+    }
+
+    /// Finds whichever entity currently carries `LastBeaconUiValueText` for
+    /// `target`. `heal_last_beacon_ui_value_text_stuck_glyphs` despawns and
+    /// respawns the stuck entity under a brand new ID, so tests can't hold
+    /// on to the original `Entity` across a heal and must look it up fresh
+    /// each time instead.
+    fn find_value_text_entity(app: &mut App, target: &str) -> Entity {
+        let mut query = app.world_mut().query::<(Entity, &LastBeaconUiValueText)>();
+        query
+            .iter(app.world())
+            .find(|(_, value_text)| value_text.target == target)
+            .map(|(entity, _)| entity)
+            .unwrap_or_else(|| {
+                panic!("no LastBeaconUiValueText entity found for target {target:?}")
+            })
+    }
+
+    #[test]
+    fn stuck_zero_glyph_value_text_self_heals_within_a_few_frames() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(bevy::asset::AssetPlugin {
+            file_path: ".".to_string(),
+            ..default()
+        });
+        app.add_plugins(bevy::text::TextPlugin);
+        app.add_plugins(bevy::input::InputPlugin);
+        app.add_plugins(bevy::a11y::AccessibilityPlugin);
+        app.add_plugins(bevy::window::WindowPlugin::default());
+        app.add_plugins(bevy::image::ImagePlugin::default());
+        app.add_plugins(bevy::picking::DefaultPickingPlugins);
+        app.init_asset::<bevy::image::TextureAtlasLayout>();
+        app.add_plugins(bevy::ui::UiPlugin);
+        app.add_systems(
+            Update,
+            (
+                initialize_last_beacon_ui_text_inputs,
+                heal_last_beacon_ui_value_text_stuck_glyphs,
+            ),
+        );
+
+        let text_entity = app
+            .world_mut()
+            .spawn((
+                LastBeaconUiNumberInput {
+                    target: "number-field".to_string(),
+                    min: 0.0,
+                    max: 250.0,
+                },
+                LastBeaconUiValueText {
+                    target: "number-field".to_string(),
+                    prefix: String::new(),
+                    suffix: String::new(),
+                },
+                Text::new("42"),
+                TextFont::default(),
+                Node::default(),
+            ))
+            .id();
+        app.world_mut()
+            .spawn((
+                LastBeaconUiTextInput {
+                    value: "42".to_string(),
+                    multiline: false,
+                },
+                Node::default(),
+            ))
+            .add_child(text_entity);
+
+        for _ in 0..10 {
+            app.update();
+        }
+        let glyphs_before_corruption = app
+            .world()
+            .get::<TextLayoutInfo>(text_entity)
+            .unwrap()
+            .glyphs
+            .len();
+        assert!(
+            glyphs_before_corruption > 0,
+            "test setup: expected a healthy, non-empty layout before simulating the stuck-glyph defect"
+        );
+
+        // Simulate the exact defect observed in the real game: `TextLayoutInfo`
+        // stuck at zero glyphs despite `EditableText` still holding "42",
+        // with no further edit queued to trigger a relayout.
+        {
+            let mut layout_info = app
+                .world_mut()
+                .get_mut::<TextLayoutInfo>(text_entity)
+                .unwrap();
+            layout_info.glyphs.clear();
+            layout_info.size = Vec2::ZERO;
+        }
+
+        for _ in 0..3 {
+            app.update();
+        }
+
+        // The healer despawns and respawns the stuck entity, so look up
+        // whichever entity now holds the "number-field" value text.
+        let healed_entity = find_value_text_entity(&mut app, "number-field");
+        let glyphs_after_healing = app
+            .world()
+            .get::<TextLayoutInfo>(healed_entity)
+            .unwrap()
+            .glyphs
+            .len();
+        assert!(
+            glyphs_after_healing > 0,
+            "heal_last_beacon_ui_value_text_stuck_glyphs must recover a stuck zero-glyph EditableText within a few frames"
+        );
+        assert_eq!(
+            app.world()
+                .get::<EditableText>(healed_entity)
+                .unwrap()
+                .value()
+                .to_string(),
+            "42",
+            "healing must restore exactly the pre-corruption value, not duplicate or corrupt it"
+        );
+    }
+
+    #[test]
+    fn healing_repeatedly_never_duplicates_the_value() {
+        // Earlier versions of `heal_last_beacon_ui_value_text_stuck_glyphs`
+        // edited the existing `EditableText` in place. That looked fine in
+        // isolated testing, but in the real game it turned a rare, cosmetic
+        // "value goes blank" bug into a much worse one: repeatedly
+        // re-triggering every frame the underlying layout stayed broken,
+        // in one version *prepending* "42" to itself ("4242", "424242", ...)
+        // because `TextEdit::TextEnd(true)`'s selection math silently
+        // no-ops against a zero-line cached layout instead of selecting
+        // anything. This drives the real system, called many times in a row
+        // against a `TextLayoutInfo` that (unlike the real bug, but exactly
+        // like the real bug's *worst case*) never stops looking "stuck", to
+        // prove the current despawn-and-respawn healer cannot duplicate or
+        // grow the value no matter how many times it fires.
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_systems(Update, heal_last_beacon_ui_value_text_stuck_glyphs);
+
+        let text_entity = app
+            .world_mut()
+            .spawn((
+                LastBeaconUiNumberInput {
+                    target: "number-field".to_string(),
+                    min: 0.0,
+                    max: 250.0,
+                },
+                LastBeaconUiValueText {
+                    target: "number-field".to_string(),
+                    prefix: String::new(),
+                    suffix: String::new(),
+                },
+                EditableText::new("42"),
+                TextLayoutInfo::default(),
+                TextFont::default(),
+                TextColor::default(),
+            ))
+            .id();
+        app.world_mut()
+            .spawn(Node::default())
+            .add_child(text_entity);
+
+        for _ in 0..20 {
+            // `TextLayoutInfo::default()` always has zero glyphs, so a
+            // freshly-respawned replacement entity looks exactly as "stuck"
+            // as the one it replaced -- the worst case for a healer that
+            // might otherwise compound edits over time. Every iteration
+            // therefore triggers another despawn-and-respawn cycle.
+            app.update();
+
+            let current_entity = find_value_text_entity(&mut app, "number-field");
+            assert_eq!(
+                app.world()
+                    .get::<EditableText>(current_entity)
+                    .unwrap()
+                    .value()
+                    .to_string(),
+                "42",
+                "repeated healing must never change, duplicate, or grow the value"
+            );
+        }
+    }
+
+    /// `reveal_last_beacon_text_once_fonts_load` must mark `TextFont` as
+    /// changed for every entity it un-marks `SceneContentLoading` on, once
+    /// the shared fonts finish loading.
+    ///
+    /// This is the fix for the "Text Field / Text Box goes permanently
+    /// blank on first click/edit" bug: `apply_last_beacon_ui_font` assigns
+    /// the real font handle to `TextFont` exactly once, on the frame it
+    /// first sees an entity. Real font assets load asynchronously from
+    /// disk; if that load hasn't finished yet at that exact moment,
+    /// `bevy_ui`'s `update_editable_text_styles` (gated on
+    /// `Changed<TextFont>`) fails to resolve the font and silently skips
+    /// applying `FontFamily` to that entity's `PlainEditor` styles --
+    /// forever, since nothing else ever touched `TextFont` again before
+    /// this fix. Without a font family, `PlainEditor` permanently builds
+    /// structurally valid but zero-size, zero-glyph layouts, which stay
+    /// hidden behind the entity's last-good `TextLayoutInfo` until the
+    /// first edit forces a real recompute and it collapses to a
+    /// permanently blank, cursor-less input.
+    ///
+    /// The real async font-loading race that triggers this is not
+    /// hermetically reproducible here: Last Beacon's actual font files are
+    /// small enough that a real `AssetServer` load completes within a
+    /// single `app.update()` in this test environment, so it can never be
+    /// observed still `Loading` on the one frame `apply_last_beacon_ui_font`
+    /// runs (confirmed by probing `AssetServer::get_load_state` immediately
+    /// after that frame during development of this test). Instead, this
+    /// test verifies the actual fix mechanism directly and deterministically:
+    /// once the shared fonts are loaded, does `reveal_last_beacon_text_once_fonts_load`
+    /// give every previously-`SceneContentLoading` entity's `TextFont` a
+    /// fresh `Changed` tick? Manual, live QA confirmed the fix resolves the
+    /// real bug in the running game.
+    #[test]
+    fn reveal_text_once_fonts_load_marks_text_font_changed() {
+        // Deliberately does NOT register `reveal_last_beacon_text_once_fonts_load`
+        // (or anything else) in `Update`: `bevy_text::TextPlugin` alone was
+        // found, during development of this test, to touch `TextFont`'s
+        // change tick on its own for unrelated reasons (confirmed by
+        // observing `Changed<TextFont>` fire even with no Last Beacon
+        // systems registered at all). Watching for `Changed<TextFont>` via a
+        // query is therefore too noisy a signal here; instead, the system
+        // under test is invoked directly with `run_system_once`, and its
+        // effect is checked precisely via the component's raw change tick.
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(bevy::asset::AssetPlugin {
+            file_path: crate::asset_root().to_string_lossy().to_string(),
+            ..default()
+        });
+        app.add_plugins(bevy::text::TextPlugin);
+        app.init_resource::<LastBeaconUiFontHandles>();
+
+        let text_entity = app
+            .world_mut()
+            .spawn((TextFont::default(), SceneContentLoading))
+            .id();
+
+        // Real font files load asynchronously from disk; give it many
+        // frames to actually finish loading (matches the established
+        // pattern in `text_finishing_its_font_load_clears_the_loading_marker`).
+        // Both shared fonts must finish, not just the one this entity uses --
+        // `reveal_last_beacon_text_once_fonts_load` gates on both.
+        for _ in 0..600 {
+            let asset_server = app.world().resource::<AssetServer>();
+            let font_handles = app.world().resource::<LastBeaconUiFontHandles>();
+            let both_loaded = matches!(
+                asset_server.get_load_state(font_handles.ui_font.id()),
+                Some(bevy::asset::LoadState::Loaded)
+            ) && matches!(
+                asset_server.get_load_state(font_handles.symbol_font.id()),
+                Some(bevy::asset::LoadState::Loaded)
+            );
+            if both_loaded {
+                break;
+            }
+            app.update();
+        }
+        assert!(
+            matches!(
+                app.world().resource::<AssetServer>().get_load_state(
+                    app.world()
+                        .resource::<LastBeaconUiFontHandles>()
+                        .ui_font
+                        .id()
+                ),
+                Some(bevy::asset::LoadState::Loaded)
+            ),
+            "test setup: the shared UI font never finished loading"
+        );
+
+        let tick_before = app
+            .world()
+            .entity(text_entity)
+            .get_change_ticks::<TextFont>()
+            .unwrap()
+            .changed;
+
+        use bevy::ecs::system::RunSystemOnce as _;
+        app.world_mut()
+            .run_system_once(reveal_last_beacon_text_once_fonts_load)
+            .unwrap();
+        app.world_mut().flush();
+
+        let tick_after = app
+            .world()
+            .entity(text_entity)
+            .get_change_ticks::<TextFont>()
+            .unwrap()
+            .changed;
+
+        assert_ne!(
+            tick_before, tick_after,
+            "reveal_last_beacon_text_once_fonts_load must mark TextFont changed so \
+             Changed<TextFont>-gated font-resolution systems (like bevy_ui's \
+             update_editable_text_styles) get a genuine retry once the font is loaded"
+        );
+        assert!(
+            app.world()
+                .get::<SceneContentLoading>(text_entity)
+                .is_none(),
+            "the loading marker must still clear once the shared fonts finish loading"
         );
     }
 }

@@ -7,11 +7,6 @@ bevy_ui::ui_node::Node {
 }
 bevy_ecs::hierarchy::Children [
     bevy_ui::widget::text::Text("prototype build 0.0.1")
-    bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(10.0) }
-    bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba {
-        red: 0.278,
-        green: 0.333,
-        blue: 0.412,
-        alpha: 1.0,
-    }))
+    foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Xxs)
+    foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::Border)
 ]

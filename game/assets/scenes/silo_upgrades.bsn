@@ -34,13 +34,13 @@ bevy_ui::ui_node::Node {
 bevy_ecs::hierarchy::Children [
 #PageTitle
 bevy_ui::widget::text::Text("Silo Upgrades")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(24.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 })),
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::XxxlPlus)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextPrimary),
 
 #PageSubtitle
 bevy_ui::widget::text::Text("Permanent improvements to the Beacon.")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Sm)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextMuted)
 ],
 
 #UpgradeContent
@@ -71,8 +71,8 @@ bevy_ui::ui_node::Node {
     border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
     border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
 }
-bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
-bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::SurfaceRaised)
+foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::SurfaceStrong)
 bevy_ecs::hierarchy::Children [
 #UpgradeTreePanelHeader
 bevy_ui::ui_node::Node {
@@ -83,12 +83,12 @@ bevy_ui::ui_node::Node {
     padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
     border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
 }
-bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::SurfaceStrong)
 bevy_ecs::hierarchy::Children [
 #UpgradeTreePanelTitle
 bevy_ui::widget::text::Text("UPGRADE TREE")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Sm)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextMuted)
 ],
 
 #UpgradeTreePanelBody
@@ -113,13 +113,13 @@ bevy_ui::ui_node::Node {
 bevy_ecs::hierarchy::Children [
 #AssemblyUpgradeLabel
 bevy_ui::widget::text::Text("Robot Assembly Bays")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextMuted),
 
 #AssemblyUpgradeValue
 bevy_ui::widget::text::Text("Unlocked")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.984, green: 0.749, blue: 0.141, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::Accent)
 ],
 
 #ResearchUpgrade
@@ -134,13 +134,13 @@ bevy_ui::ui_node::Node {
 bevy_ecs::hierarchy::Children [
 #ResearchUpgradeLabel
 bevy_ui::widget::text::Text("Research Labs")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextMuted),
 
 #ResearchUpgradeValue
 bevy_ui::widget::text::Text("Available")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextPrimary)
 ],
 
 #PowerUpgrade
@@ -155,13 +155,13 @@ bevy_ui::ui_node::Node {
 bevy_ecs::hierarchy::Children [
 #PowerUpgradeLabel
 bevy_ui::widget::text::Text("Power Generation")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextMuted),
 
 #PowerUpgradeValue
 bevy_ui::widget::text::Text("Available")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextPrimary)
 ],
 
 #StorageUpgrade
@@ -176,13 +176,13 @@ bevy_ui::ui_node::Node {
 bevy_ecs::hierarchy::Children [
 #StorageUpgradeLabel
 bevy_ui::widget::text::Text("Storage Warehouses")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextMuted),
 
 #StorageUpgradeValue
 bevy_ui::widget::text::Text("Locked")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextPrimary)
 ],
 
 #ManufacturingUpgrade
@@ -197,13 +197,13 @@ bevy_ui::ui_node::Node {
 bevy_ecs::hierarchy::Children [
 #ManufacturingUpgradeLabel
 bevy_ui::widget::text::Text("Manufacturing Facilities")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextMuted),
 
 #ManufacturingUpgradeValue
 bevy_ui::widget::text::Text("Locked")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextPrimary)
 ],
 
 #RadarUpgrade
@@ -218,13 +218,13 @@ bevy_ui::ui_node::Node {
 bevy_ecs::hierarchy::Children [
 #RadarUpgradeLabel
 bevy_ui::widget::text::Text("Radar Arrays")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextMuted),
 
 #RadarUpgradeValue
 bevy_ui::widget::text::Text("Locked")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextPrimary)
 ],
 
 #DroneUpgrade
@@ -239,13 +239,13 @@ bevy_ui::ui_node::Node {
 bevy_ecs::hierarchy::Children [
 #DroneUpgradeLabel
 bevy_ui::widget::text::Text("Drone Hangars")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextMuted),
 
 #DroneUpgradeValue
 bevy_ui::widget::text::Text("Locked")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextPrimary)
 ],
 
 #TeleporterUpgrade
@@ -260,13 +260,13 @@ bevy_ui::ui_node::Node {
 bevy_ecs::hierarchy::Children [
 #TeleporterUpgradeLabel
 bevy_ui::widget::text::Text("Teleporter Improvements")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 })),
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextMuted),
 
 #TeleporterUpgradeValue
 bevy_ui::widget::text::Text("Locked")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.945, green: 0.961, blue: 0.976, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextPrimary)
 ]
 ]
 ]
@@ -281,8 +281,8 @@ bevy_ui::ui_node::Node {
     border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(2.0), right: bevy_ui::geometry::Val::Px(2.0), top: bevy_ui::geometry::Val::Px(2.0), bottom: bevy_ui::geometry::Val::Px(2.0), },
     border_radius: bevy_ui::ui_node::BorderRadius { top_left: bevy_ui::geometry::Val::Px(2.0), top_right: bevy_ui::geometry::Val::Px(2.0), bottom_right: bevy_ui::geometry::Val::Px(2.0), bottom_left: bevy_ui::geometry::Val::Px(2.0), },
 }
-bevy_ui::ui_node::BackgroundColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.059, green: 0.09, blue: 0.165, alpha: 0.9 }))
-bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::SurfaceRaised)
+foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::SurfaceStrong)
 bevy_ecs::hierarchy::Children [
 #SelectedUpgradePanelHeader
 bevy_ui::ui_node::Node {
@@ -293,12 +293,12 @@ bevy_ui::ui_node::Node {
     padding: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(16.0), right: bevy_ui::geometry::Val::Px(16.0), top: bevy_ui::geometry::Val::Px(8.0), bottom: bevy_ui::geometry::Val::Px(8.0), },
     border: bevy_ui::geometry::UiRect { left: bevy_ui::geometry::Val::Px(0.0), right: bevy_ui::geometry::Val::Px(0.0), top: bevy_ui::geometry::Val::Px(0.0), bottom: bevy_ui::geometry::Val::Px(1.0), },
 }
-bevy_ui::ui_node::BorderColor { top: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), right: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), bottom: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), left: bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.2, green: 0.255, blue: 0.333, alpha: 1.0 }), }
+foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::SurfaceStrong)
 bevy_ecs::hierarchy::Children [
 #SelectedUpgradePanelTitle
 bevy_ui::widget::text::Text("RESEARCH LABS")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(12.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.58, green: 0.639, blue: 0.722, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Sm)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextMuted)
 ],
 
 #SelectedUpgradePanelBody
@@ -313,13 +313,13 @@ bevy_ui::ui_node::Node {
 bevy_ecs::hierarchy::Children [
 #CostText
 bevy_ui::widget::text::Text("800 SCRAP, 2 CORES")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(10.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.392, green: 0.455, blue: 0.545, alpha: 1.0 })),
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Xxs)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextDisabled),
 
 #EffectText
 bevy_ui::widget::text::Text("Unlocks module analysis and new fabrication recipes for recovered technology.")
-bevy_text::text::TextFont { font_size: bevy_text::text::FontSize::Px(14.0) }
-bevy_text::text::TextColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.796, green: 0.835, blue: 0.882, alpha: 1.0 }))
+foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Lg)
+foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::BorderHover)
 ]
 ]
 ]

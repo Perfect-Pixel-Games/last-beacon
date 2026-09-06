@@ -1,0 +1,23 @@
+#AspectRatioContainer
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+    height: bevy_ui::geometry::Val::Percent(100.0),
+    align_items: bevy_ui::ui_node::AlignItems::Center,
+    justify_content: bevy_ui::ui_node::JustifyContent::Center,
+}
+bevy_ecs::hierarchy::Children [
+    #AspectRatioContainerFill
+    bevy_ui::ui_node::Node {
+        align_items: bevy_ui::ui_node::AlignItems::Center,
+        justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    }
+    foundation_runtime_library::ui_theme::FoundationUiThemedBorderWidth(foundation_runtime_library::ui_theme::FoundationUiBorderWidthToken::Thick)
+    foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::SurfaceRaisedOpaque)
+    foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::Accent)
+    last_beacon::ui_widgets::LastBeaconUiAspectRatioBounds { min_aspect_ratio: 1.0, max_aspect_ratio: 1.6 }
+    bevy_ecs::hierarchy::Children [
+        bevy_ui::widget::text::Text("1:1 - 1.6:1")
+        foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Sm)
+        foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::Accent)
+    ]
+]

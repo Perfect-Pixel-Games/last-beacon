@@ -1,0 +1,70 @@
+# Last Beacon's UI design tokens.
+#
+# This is the single source of truth for the reusable widget library's
+# colors, spacing, and typography -- analogous to a CSS stylesheet. Widgets
+# are authored against the token names in `foundation_runtime_library::ui_theme`
+# (e.g. `UiColorToken::Accent`, `UiSpaceToken::Md`), and this file supplies
+# the concrete values those tokens resolve to for Last Beacon specifically.
+# A different game built on Foundation can ship its own `theme.toml` with
+# entirely different values and reuse the same widgets unmodified.
+#
+# Changes here require a game restart to take effect (no live hot-reload).
+
+[colors]
+background          = { r = 0.008, g = 0.024, b = 0.09,  a = 1.0 }
+surface_deepest     = { r = 0.015, g = 0.023, b = 0.042, a = 0.92 }
+surface_deepest_overlay = { r = 0.015, g = 0.023, b = 0.042, a = 0.96 }
+surface_raised      = { r = 0.059, g = 0.09,  b = 0.165, a = 0.9 }
+surface_raised_opaque = { r = 0.059, g = 0.09, b = 0.165, a = 1.0 }
+surface          = { r = 0.118, g = 0.161, b = 0.231, a = 1.0 }
+surface_strong   = { r = 0.2,   g = 0.255, b = 0.333, a = 1.0 }
+border           = { r = 0.278, g = 0.333, b = 0.412, a = 1.0 }
+border_hover     = { r = 0.796, g = 0.835, b = 0.882, a = 1.0 }
+border_disabled  = { r = 0.2,   g = 0.255, b = 0.333, a = 0.5 }
+surface_disabled = { r = 0.118, g = 0.161, b = 0.231, a = 0.5 }
+text_primary     = { r = 0.945, g = 0.961, b = 0.976, a = 1.0 }
+text_bright      = { r = 0.92,  g = 0.96,  b = 1.0,   a = 1.0 }
+text_secondary   = { r = 0.78,  g = 0.827, b = 0.89,  a = 1.0 }
+text_muted       = { r = 0.58,  g = 0.639, b = 0.722, a = 1.0 }
+text_subtle      = { r = 0.5,   g = 0.58,  b = 0.68,  a = 1.0 }
+text_disabled    = { r = 0.392, g = 0.455, b = 0.545, a = 1.0 }
+text_on_accent   = { r = 0.008, g = 0.024, b = 0.09,  a = 1.0 }
+accent           = { r = 0.984, g = 0.749, b = 0.141, a = 1.0 }
+accent_hover     = { r = 1.0,   g = 0.827, b = 0.32,  a = 1.0 }
+accent_pressed   = { r = 0.854, g = 0.55,  b = 0.08,  a = 1.0 }
+accent_soft      = { r = 0.984, g = 0.749, b = 0.141, a = 0.12 }
+secondary_accent = { r = 0.133, g = 0.827, b = 0.933, a = 1.0 }
+success          = { r = 0.204, g = 0.827, b = 0.6,   a = 1.0 }
+transparent      = { r = 0.0,   g = 0.0,   b = 0.0,   a = 0.0 }
+
+[space]
+zero = 0.0
+xxs  = 2.0
+xs   = 4.0
+sm   = 8.0
+md   = 10.0
+lg   = 12.0
+xl   = 16.0
+xxl  = 24.0
+
+[font_sizes]
+xxs   = 10.0
+xs    = 11.0
+sm    = 12.0
+md    = 13.0
+lg    = 14.0
+xl    = 16.0
+xxl   = 18.0
+xxl_plus = 20.0
+xxxl  = 22.0
+xxxl_plus = 24.0
+xxxxl = 28.0
+
+[border_widths]
+none     = 0.0
+hairline = 1.0
+thick    = 2.0
+
+[border_radii]
+none = 0.0
+sm   = 2.0

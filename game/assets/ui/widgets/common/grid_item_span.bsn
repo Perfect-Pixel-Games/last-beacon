@@ -1,0 +1,53 @@
+#GridItemSpan
+bevy_ui::ui_node::Node {
+    width: bevy_ui::geometry::Val::Percent(100.0),
+}
+foundation_runtime_library::ui_theme::FoundationUiThemedGap { row: foundation_runtime_library::ui_theme::FoundationUiSpaceToken::Sm, column: foundation_runtime_library::ui_theme::FoundationUiSpaceToken::Sm }
+last_beacon::ui_widgets::LastBeaconUiUniformGrid { column_count: 3 }
+bevy_ecs::hierarchy::Children [
+    #UniformGridCellOne
+    bevy_ui::ui_node::Node {
+        height: bevy_ui::geometry::Val::Px(48.0),
+        align_items: bevy_ui::ui_node::AlignItems::Center,
+        justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    }
+    foundation_runtime_library::ui_theme::FoundationUiThemedBorderWidth(foundation_runtime_library::ui_theme::FoundationUiBorderWidthToken::Hairline)
+    foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::Surface)
+    foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::Border)
+    bevy_ecs::hierarchy::Children [
+        bevy_ui::widget::text::Text("1")
+        foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Sm)
+        foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextPrimary)
+    ],
+
+    #UniformGridCellSpanning
+    bevy_ui::ui_node::Node {
+        height: bevy_ui::geometry::Val::Px(48.0),
+        align_items: bevy_ui::ui_node::AlignItems::Center,
+        justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    }
+    foundation_runtime_library::ui_theme::FoundationUiThemedBorderWidth(foundation_runtime_library::ui_theme::FoundationUiBorderWidthToken::Hairline)
+    foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::SurfaceRaisedOpaque)
+    foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::Accent)
+    last_beacon::ui_widgets::LastBeaconUiGridItem { column_span: 2, row_span: 1 }
+    bevy_ecs::hierarchy::Children [
+        bevy_ui::widget::text::Text("2 (spans 2 columns)")
+        foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Sm)
+        foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::Accent)
+    ],
+
+    #UniformGridCellThree
+    bevy_ui::ui_node::Node {
+        height: bevy_ui::geometry::Val::Px(48.0),
+        align_items: bevy_ui::ui_node::AlignItems::Center,
+        justify_content: bevy_ui::ui_node::JustifyContent::Center,
+    }
+    foundation_runtime_library::ui_theme::FoundationUiThemedBorderWidth(foundation_runtime_library::ui_theme::FoundationUiBorderWidthToken::Hairline)
+    foundation_runtime_library::ui_theme::FoundationUiThemedBackground(foundation_runtime_library::ui_theme::FoundationUiColorToken::Surface)
+    foundation_runtime_library::ui_theme::FoundationUiThemedBorderColor(foundation_runtime_library::ui_theme::FoundationUiColorToken::Border)
+    bevy_ecs::hierarchy::Children [
+        bevy_ui::widget::text::Text("3")
+        foundation_runtime_library::ui_theme::FoundationUiThemedFontSize(foundation_runtime_library::ui_theme::FoundationUiFontSizeToken::Sm)
+        foundation_runtime_library::ui_theme::FoundationUiThemedText(foundation_runtime_library::ui_theme::FoundationUiColorToken::TextPrimary)
+    ]
+]
