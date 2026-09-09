@@ -13,6 +13,11 @@ crate-type = ["rlib"]
 default = ["dev-tools", "editor"]
 dev-tools = ["dep:linkme", "foundation-runtime-library/dev-tools"]
 editor = ["dep:foundation-editor-library"]
+# Opt-in: enables Bevy's Tracy tracing layer for a live per-system CPU
+# flamegraph. Not in `default` because it has real overhead and needs the
+# external Tracy profiler app connected to be useful. See
+# docs/performance-profiling.md.
+profiling = ["bevy/trace_tracy"]
 
 [dependencies]
 bevy = { version = "0.19.0", features = [
@@ -29,10 +34,10 @@ toml = "0.9"
 [workspace]
 
 [profile.dev]
-opt-level = 0
+opt-level = 1
 
 [profile.dev.package."*"]
-opt-level = 0
+opt-level = 3
 
 [profile.foundation-test]
 inherits = "release"
