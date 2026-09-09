@@ -30,25 +30,48 @@ Bevy has first-class support for it: every system in every schedule
 automatically gets a timed span with no extra code required, once the feature
 is enabled.
 
-### 1. Get the Tracy profiler app
+### The one-command path
+
+```cmd
+scripts\profile.cmd
+```
+
+This launches Tracy (installing it first if it isn't already) and then builds
+and runs the game with the `profiling` feature on, using the `test`
+configuration so the numbers Tracy shows are representative of a real
+optimized build rather than dominated by missing optimizations. The rest of
+this section explains what that command does and how to read the result.
+
+### 1. Get and launch the Tracy profiler app
 
 Tracy is a separate desktop application, not a Rust crate, so it is not
-vendored in this repository. Download a prebuilt `tracy-profiler` (or
-`tracy.exe` on Windows) from the
-[Tracy releases page](https://github.com/wolfpld/tracy/releases) that matches
-the Tracy protocol version Bevy 0.19 depends on. Keep it running; it listens
-for a connection from the game.
+vendored in this repository. Foundation can fetch and launch a pinned,
+checksum-verified build of it directly instead of a manual download:
+
+```cmd
+engine\scripts\foundation-build.cmd tools run tracy
+```
+
+This installs it (once, to a shared per-user cache reused by every Foundation
+game on the machine) if it isn't already there, then launches it detached so
+your terminal isn't blocked while it stays open. Use
+`engine\scripts\foundation-build.cmd tools install tracy` instead if you just
+want it installed without launching it, or `tools list` to check what's
+installed.
 
 ### 2. Build and run the game with the `profiling` feature
 
 ```cmd
-cargo run --manifest-path game/Cargo.toml --features profiling
+engine\scripts\foundation-build.cmd run --project game --features profiling
 ```
 
 `profiling` is opt-in (not part of `default-features`) because the Tracy
 tracing layer has real overhead and is only useful with a Tracy client
 attached. It enables Bevy's `trace_tracy` feature, which pulls in `trace` and
-`debug` so span names are meaningful.
+`debug` so span names are meaningful. `--features <name1,name2>` is additive
+on top of whatever Foundation's own build configuration already enables
+(`dev-tools`, `editor`), so it works alongside the normal `--configuration`/
+`--target` flags too.
 
 ### 3. Capture and read a session
 
