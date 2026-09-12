@@ -2,12 +2,12 @@
 
 ## Metadata
 - Feature slug: `world-landscape-testbed`
-- Feature area: `game`
+- Feature area: `multi-area` (originally `game`; expanded during manual QA, see below)
 - Primary area: `game`
 - Root branch: `feature/world-landscape-testbed`
-- Engine branch: `N/A`
-- Engine submodule pointer: `01f0cfaaebfe8e193096994642ac2da1848ded9a` (unchanged; no engine work planned)
-- Status: `Planned`
+- Engine branch: `feature/world-landscape-testbed` (added during manual QA; see Submodule Plan)
+- Engine submodule pointer: `8585b3d9d316eb541a4ea70e90ac103fb09be97a`
+- Status: `Implemented`
 - Planning model: `gpt-5.5` (role fulfilled by Claude Sonnet 5, per the user's standing instruction that Claude/subagents replace GPT in this workflow)
 - Implementation model: `gpt-5.4` (role fulfilled by Claude Sonnet 5)
 - Review model: `gpt-5.5` (role fulfilled by Claude Sonnet 5)
@@ -31,9 +31,9 @@ Gives the `world` gameplay module (`game/src/world/mod.rs`, currently an empty s
 This is explicitly temporary/testbed content, not a shippable level: no chunking/LOD, no terrain collision, no biome variety beyond a height/slope color blend. It exists so gameplay systems (movement, combat, AI, etc.) have a large, visually realistic space to be tested against instead of a bare cube.
 
 ## Feature Area Classification
-- Area: `game`
+- Area: `multi-area` (originally `game`-only at planning time)
 - Primary area: `game`
-- Rationale: All affected files are Last Beacon-owned gameplay/scene files under `game/src/` and `game/assets/`. Bevy's native atmosphere/bloom/SSAO/tonemapping components are used as-is from the engine's Bevy dependency; no Foundation Engine runtime changes are needed.
+- Rationale: All affected files were originally Last Beacon-owned gameplay/scene files under `game/src/` and `game/assets/`; Bevy's native atmosphere/bloom/SSAO/tonemapping components were expected to be used as-is with no Foundation Engine runtime changes needed. During manual QA (Phase 3), a real bug was found in Foundation's own `foundation-runtime-library::free_fly_camera` (added by the separate, already-merged `enhanced-input-adoption` feature): its movement system didn't respect `FoundationPauseState`, so pausing didn't stop camera movement. Since the bug lives in Foundation's reusable code (shared by any game using the free-fly camera, not Last Beacon-specific), the fix belongs in `engine/`, expanding this feature's area to `multi-area`.
 
 ## Codebase Research
 - `game/src/world/mod.rs`: `LastBeaconWorldGameplayPlugin` is currently an empty-`build` stub (per `docs/plans/gameplay-space-separation/plan.md`), already wired into `LastBeaconPlugin::build` at `game/src/lib.rs:179`. This is where the new scene's spawn system and any per-frame systems (free-fly camera movement) will be registered.
@@ -75,11 +75,11 @@ No external online research was performed. All API details (Bevy `Atmosphere`/`S
 8. Manually run the game, navigate to the World/gameplay-level scene, and visually confirm: sky/atmosphere renders, sun casts shadows, terrain reads as mountains at the intended scale, bloom is visible around the sun, SSAO adds contact shadowing in terrain creases, and the free-fly camera can traverse the full 5km x 5km area.
 
 ## Submodule Plan
-- Engine changes required: `no`
-- Engine branch: `N/A`
-- Engine commit expectation: `N/A`
-- Bound engine commit hash: `01f0cfaaebfe8e193096994642ac2da1848ded9a` (unchanged)
-- Root pointer update required: `no`
+- Engine changes required: `yes` (discovered during manual QA; not anticipated at planning time)
+- Engine branch: `feature/world-landscape-testbed` (created from engine `dev` at `aba3c15f057e140a208cc525cc3d48b4b4ee26df`)
+- Engine commit expectation: gate `move_foundation_free_fly_cameras` (in `foundation-runtime-library::free_fly_camera`) on `foundation_is_not_paused`, matching how other Foundation per-frame systems already respect `FoundationPauseState`.
+- Bound engine commit hash: `8585b3d9d316eb541a4ea70e90ac103fb09be97a`
+- Root pointer update required: `yes`
 
 ## Alternatives Considered
 - **Chunked terrain grid (multiple tile meshes)**: rejected for now. Would enable future per-chunk LOD/streaming/collision culling, but adds real complexity (chunk boundary seams, per-chunk asset management) for what is explicitly temporary testbed content. A single mesh at 512x512 resolution is simple and performant enough at this scale.

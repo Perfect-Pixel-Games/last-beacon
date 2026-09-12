@@ -29,10 +29,21 @@ pub fn spawn_landscape_sky_and_sun(
     scattering_media: &mut Assets<ScatteringMedium>,
 ) -> (Entity, Entity) {
     let scattering_medium = scattering_media.add(ScatteringMedium::default());
+    // Deliberately no `Transform` here: `Atmosphere` requires `GlobalTransform`
+    // and its `on_add` hook places the "planet center" `inner_radius` units
+    // below the origin automatically (so the scene sits near the sphere's
+    // surface, at effectively-flat local curvature). Adding an explicit
+    // `Transform` (even `Transform::default()`) makes Bevy's normal
+    // transform-propagation system immediately overwrite that placement back
+    // to the world origin on the next frame, since propagation treats
+    // `Transform` as authoritative for un-parented entities. With the planet
+    // center collapsed to the origin, "up" (planet-center-to-camera) becomes
+    // highly sensitive to the camera's XZ position instead of a stable
+    // near-vertical direction, which visibly rotates/skews the rendered sky
+    // relative to the actual Y-up terrain.
     let atmosphere_entity = commands
         .spawn((
             Atmosphere::earth(scattering_medium),
-            Transform::default(),
             Name::new("Last Beacon Landscape Atmosphere"),
         ))
         .id();
