@@ -83,10 +83,10 @@
   - Status: Planned
   - Repository: `root`
   - Notes: None
-- [ ] Add free-fly camera movement system (WASD + Space/Shift + mouse-look) registered in `LastBeaconWorldGameplayPlugin::build`
-  - Status: Planned
+- [ ] Consume Foundation's `foundation_free_fly_camera_bundle()`/`FoundationFreeFlyCameraPlugin` (from `foundation-runtime-library::free_fly_camera`) for the World scene's camera, instead of building a bespoke free-fly controller
+  - Status: Unblocked -- `enhanced-input-adoption` (root + engine branches of the same name) has landed this as reusable Foundation runtime content: a `FoundationFreeFlyCameraInput` context with WASD/Space-Shift movement and mouse-look, plus `FoundationFreeFlyCameraSettings`/`FoundationFreeFlyCameraOrientation` components. Bind `Camera3d` + `foundation_free_fly_camera_bundle()` together when spawning the World camera; add `FoundationFreeFlyCameraPlugin` to `LastBeaconWorldGameplayPlugin::build`.
   - Repository: `root`
-  - Notes: None
+  - Notes: Requires bumping this branch's `engine` submodule pointer to (at least) `enhanced-input-adoption`'s engine commit `58da948199f35c8662796a6609e0804a7f86bfb8` once that branch merges to engine `dev` (or rebasing onto it directly if implementation starts before it merges). `bevy_enhanced_input` also becomes a transitive input mechanism for this scene's camera -- no additional game-side wiring needed beyond adding the plugin and bundle.
 - [ ] Update `game/assets/scenes/gameplay_level.bsn` to construct the new marker component instead of `LastBeaconPlaceholderCubeScene`
   - Status: Planned
   - Repository: `root`
@@ -107,10 +107,11 @@
 - User confirmation: Pending
 
 ## Implementation / Review Handoff Notes
-- None
+- The free-fly camera phase (Phase 3) is unblocked now that `enhanced-input-adoption` has landed `FoundationFreeFlyCameraInput`/`foundation_free_fly_camera_bundle()` in `foundation-runtime-library`. Phases 1-2 (terrain, sky/lighting/post-processing) have no dependency on that feature and can proceed independently at any time.
 
 ## Postponed Work
 - None
 
 ## Progress Log
 - `2026-09-12`: Plan and tracker created; `feature/world-landscape-testbed` branch created from `dev`.
+- `2026-09-12`: `enhanced-input-adoption` feature landed (engine commit `58da948199f35c8662796a6609e0804a7f86bfb8`), unblocking this plan's free-fly camera task (Phase 3). Noted the dependency and updated task guidance above; no code changed on this branch yet.
