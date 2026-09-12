@@ -18,9 +18,12 @@ use bevy::{
 use foundation_editor_library::prelude::*;
 use foundation_runtime_library::prelude::*;
 
+pub mod hub;
 pub mod scenes;
+pub mod shared;
 pub mod ui_theme;
 pub mod ui_widgets;
+pub mod world;
 
 /// Foundation game name used by the engine `--game` argument.
 pub const GAME_NAME: &str = "last-beacon";
@@ -168,6 +171,12 @@ impl Plugin for LastBeaconPlugin {
         .register_type::<ui_widgets::LastBeaconUiSliderFill>()
         .register_type::<ui_widgets::LastBeaconUiFocusIndicator>()
         .add_plugins(ui_widgets::LastBeaconUiLayoutWidgetsPlugin)
+        // Shared cross-space gameplay state/messaging installs before Hub and
+        // World so their systems can rely on `LastBeaconGameplaySpace` and the
+        // shared resource/message types already existing.
+        .add_plugins(shared::LastBeaconSharedGameplayPlugin)
+        .add_plugins(hub::LastBeaconHubGameplayPlugin)
+        .add_plugins(world::LastBeaconWorldGameplayPlugin)
         // Overrides the loud placeholder theme `FoundationPlugin` installs by
         // default with Last Beacon's real palette/spacing/type scale.
         .insert_resource(ui_theme::load_last_beacon_ui_theme())

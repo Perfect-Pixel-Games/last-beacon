@@ -7,7 +7,7 @@
 - Root branch: `feature/gameplay-space-separation`
 - Engine branch: `N/A`
 - Engine submodule pointer: `N/A` (no engine changes planned)
-- Status: `Planned`
+- Status: `Implemented`
 - Planning model: `gpt-5.5` (role fulfilled by Claude Sonnet 5, per the user's standing instruction that Claude/subagents replace GPT in this workflow)
 - Implementation model: `gpt-5.4` (role fulfilled by Claude Sonnet 5)
 - Review model: `gpt-5.5` (role fulfilled by Claude Sonnet 5)
