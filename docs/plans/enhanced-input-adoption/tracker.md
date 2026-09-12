@@ -22,9 +22,9 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Pending` (this commit)
+- Root commit/push state: `Committed and pushed` -- `6981826` on `feature/enhanced-input-adoption`
 - Engine commit/push state: `Committed and pushed` -- `58da948199f35c8662796a6609e0804a7f86bfb8` on `feature/enhanced-input-adoption`
-- Root submodule pointer update: `Pending` (this commit)
+- Root submodule pointer update: `Complete` -- `git ls-tree HEAD engine` confirms `58da948199f35c8662796a6609e0804a7f86bfb8`
 
 ## Phase 1: Dependency, plugin wiring, and context scaffolding (engine)
 **Status:** Complete
@@ -127,18 +127,18 @@
   - Status: Complete
   - Repository: `engine`
   - Notes: Commit `58da948199f35c8662796a6609e0804a7f86bfb8`, pushed to `origin/feature/enhanced-input-adoption`.
-- [ ] Update root `engine` submodule pointer to the recorded engine commit hash; commit on root branch
-  - Status: In progress (this commit)
+- [x] Update root `engine` submodule pointer to the recorded engine commit hash; commit on root branch
+  - Status: Complete
   - Repository: `root`
-  - Notes: None
+  - Notes: Committed as `6981826` on `feature/enhanced-input-adoption` (root) and pushed; `git ls-tree HEAD engine` confirms the pointer is `58da948199f35c8662796a6609e0804a7f86bfb8`.
 - [ ] Manual QA: pause-menu Escape, splash-screen skip, console toggle/navigation/scroll, UI text-box scrollbar drag/wheel-scroll, slider drag all behave identically to before; free-fly camera moves/looks correctly when consumed by a game
-  - Status: Pending -- requires interactive keyboard/mouse testing in a running window, which an AI agent cannot perform. Automated test coverage (156 engine tests + 55 game tests) exercises the underlying logic extensively, including two purpose-built regression tests for the new free-fly camera, but a human should confirm the actual in-game feel before merging.
+  - Status: Partially complete -- ran `scripts/run.cmd` as a startup smoke test: the real game binary (`foundation-test` profile) built and launched via the actual `App::run()` path with `EnhancedInputPlugin` and all migrated contexts active, with no startup panic (confirms the plugin build order and `add_input_context` calls don't blow up at real launch time, beyond what `cargo test`/`cargo build` alone can prove). The process was left running and exited cleanly on its own shortly after. Interactive verification (pressing Escape/backtick/scrolling and confirming they *feel* right) still requires the user, since an AI agent cannot drive keyboard/mouse input into a native window.
   - Repository: `root`
-  - Notes: Flagged to the user as an open item rather than claimed as done.
-- [ ] Update `docs/plans/world-landscape-testbed/tracker.md` to note the free-fly camera phase is unblocked and should consume `FoundationFreeFlyCameraInput`
-  - Status: Pending
+  - Notes: Flagged remaining interactive verification to the user rather than claimed as done.
+- [x] Update `docs/plans/world-landscape-testbed/tracker.md` to note the free-fly camera phase is unblocked and should consume `FoundationFreeFlyCameraInput`
+  - Status: Complete
   - Repository: `root`
-  - Notes: None
+  - Notes: Committed as `ba2c7c9` on `feature/world-landscape-testbed` and pushed.
 
 ### Validation
 - Engine validation: `Passed` -- `engine/scripts/format-project.cmd`, `lint-project.cmd`, `test-project.cmd`, `compile-project.cmd`, `doc-project.cmd` all green
@@ -175,4 +175,4 @@
 ## Progress Log
 - `2026-09-12`: Plan and tracker created; root branch `feature/enhanced-input-adoption` created from `dev`; engine branch `feature/enhanced-input-adoption` created from `origin/dev` at `01f0cfaaebfe8e193096994642ac2da1848ded9a`.
 - `2026-09-12`: User approved the plan ("continue"). Verified root branch is `feature/enhanced-input-adoption` and engine branch is `feature/enhanced-input-adoption` (both confirmed via `git branch --show-current`); engine working tree clean. Starting Phase 1 implementation.
-- `2026-09-12`: Phases 1-4 implemented and validated (engine: format/lint/test/compile/doc all green; game: validate.cmd green). Engine work committed (`58da948199f35c8662796a6609e0804a7f86bfb8`) and pushed. Root submodule pointer update and root commit/push in progress. Manual interactive QA and `world-landscape-testbed` tracker cross-reference update still pending.
+- `2026-09-12`: Phases 1-4 implemented and validated (engine: format/lint/test/compile/doc all green; game: validate.cmd green). Engine work committed (`58da948199f35c8662796a6609e0804a7f86bfb8`) and pushed. Root submodule pointer update committed (`6981826`) and pushed. `world-landscape-testbed` tracker cross-reference updated (`ba2c7c9` on that branch) and pushed. Ran `scripts/run.cmd` as a startup smoke test: game launched cleanly via the real `App::run()` path with no panic, then exited on its own. Interactive manual QA (does input actually feel right) remains for the user -- an AI agent cannot drive a native window's keyboard/mouse. Feature implementation complete; awaiting user review/merge decision.
