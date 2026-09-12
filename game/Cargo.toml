@@ -25,6 +25,7 @@ bevy = { version = "0.19.0", features = [
     "reflect_documentation",
     "serialize",
 ] }
+bevy_enhanced_input = "0.26.0"
 foundation-editor-library = { path = "../engine/crates/foundation-editor-library", optional = true }
 foundation-runtime-library = { path = "../engine/crates/foundation-runtime-library", default-features = false }
 linkme = { version = "0.3", optional = true }

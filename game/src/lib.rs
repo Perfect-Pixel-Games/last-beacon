@@ -14,6 +14,7 @@ use bevy::{
         RenderPlugin,
     },
 };
+use bevy_enhanced_input::prelude::*;
 #[cfg(feature = "editor")]
 use foundation_editor_library::prelude::*;
 use foundation_runtime_library::prelude::*;
@@ -130,6 +131,18 @@ impl Plugin for LastBeaconPlugin {
         if !app.is_plugin_added::<bevy::input_focus::tab_navigation::TabNavigationPlugin>() {
             app.add_plugins(bevy::input_focus::tab_navigation::TabNavigationPlugin);
         }
+
+        // `foundation_runtime_library::FoundationPlugin` normally adds this
+        // first, but guard here too so `LastBeaconPlugin` also works on its
+        // own (e.g. in tests that skip `FoundationPlugin`).
+        if !app.is_plugin_added::<bevy_enhanced_input::EnhancedInputPlugin>() {
+            app.add_plugins(bevy_enhanced_input::EnhancedInputPlugin);
+        }
+        app.add_input_context::<ui_widgets::LastBeaconUiScrollInput>()
+            .add_systems(
+                Startup,
+                ui_widgets::spawn_last_beacon_ui_scroll_input_context,
+            );
 
         // Credits JSON lives under this game's asset directory; the reusable
         // credits systems only search roots that games register here.

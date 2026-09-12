@@ -11,10 +11,7 @@ use std::{
 
 use bevy::{
     ecs::system::SystemParam,
-    input::{
-        keyboard::{Key, KeyboardInput},
-        mouse::{MouseScrollUnit, MouseWheel},
-    },
+    input::keyboard::{Key, KeyboardInput},
     input_focus::{
         tab_navigation::{TabGroup, TabIndex},
         FocusCause, InputFocus, InputFocusVisible,
@@ -31,8 +28,54 @@ use bevy::{
     },
     window::PrimaryWindow,
 };
+use bevy_enhanced_input::prelude::*;
 use foundation_runtime_library::scene_stack::{SceneContentLoading, SceneOwner};
 use foundation_runtime_library::ui_theme::{FoundationUiColorToken, FoundationUiTheme};
+
+/// Reusable input context for Last Beacon's UI scrollbar-drag and
+/// mouse-wheel-scroll behavior (multiline text boxes and sliders).
+///
+/// Spawned once by [`spawn_last_beacon_ui_scroll_input_context`]; nothing else
+/// needs to spawn or configure this.
+#[derive(Component, Default)]
+pub struct LastBeaconUiScrollInput;
+
+/// Whether the left mouse button is currently held, for drag-to-scroll and
+/// drag-to-adjust widget interactions.
+#[derive(InputAction)]
+#[action_output(bool)]
+pub struct LastBeaconUiPointerPrimaryHeld;
+
+/// This frame's accumulated mouse-wheel delta.
+#[derive(InputAction)]
+#[action_output(Vec2)]
+pub struct LastBeaconUiScrollWheel;
+
+/// Whether a Shift key is held, which swaps vertical wheel scroll to
+/// horizontal in multiline text boxes.
+#[derive(InputAction)]
+#[action_output(bool)]
+pub struct LastBeaconUiScrollModifier;
+
+pub fn spawn_last_beacon_ui_scroll_input_context(mut commands: Commands) {
+    commands.spawn((
+        LastBeaconUiScrollInput,
+        actions!(LastBeaconUiScrollInput[
+            (
+                Action::<LastBeaconUiPointerPrimaryHeld>::new(),
+                bindings![MouseButton::Left],
+            ),
+            (
+                Action::<LastBeaconUiScrollWheel>::new(),
+                bindings![Binding::mouse_wheel()],
+            ),
+            (
+                Action::<LastBeaconUiScrollModifier>::new(),
+                bindings![KeyCode::ShiftLeft, KeyCode::ShiftRight],
+            ),
+        ]),
+    ));
+}
 
 /// Requests that a reusable Last Beacon BSN widget asset be applied to this entity.
 #[derive(Clone, Debug, Default, Component, Reflect)]
@@ -1306,7 +1349,7 @@ pub fn apply_last_beacon_ui_focus_outline(
 /// Applies scrollbar track dragging to multiline text boxes.
 #[allow(clippy::too_many_arguments)]
 pub fn drag_last_beacon_ui_text_box_scrollbars(
-    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    pointer_primary_held: Single<&Action<LastBeaconUiPointerPrimaryHeld>>,
     mut scroll_drag: ResMut<LastBeaconUiTextBoxScrollDrag>,
     mut scroll_overrides: ResMut<LastBeaconUiTextBoxScrollOverrides>,
     text_inputs: Query<(Entity, &LastBeaconUiTextInput, Option<&Children>)>,
@@ -1325,7 +1368,7 @@ pub fn drag_last_beacon_ui_text_box_scrollbars(
         With<EditableText>,
     >,
 ) {
-    if !mouse_buttons.pressed(MouseButton::Left) {
+    if !***pointer_primary_held {
         scroll_drag.active_text_box = None;
         return;
     }
@@ -1418,8 +1461,8 @@ pub fn drag_last_beacon_ui_text_box_scrollbars(
 
 /// Applies mouse-wheel scrolling to hovered multiline text boxes.
 pub fn scroll_last_beacon_ui_text_inputs(
-    mut mouse_wheel_messages: MessageReader<MouseWheel>,
-    keyboard_input: Res<ButtonInput<KeyCode>>,
+    scroll_wheel_action: Single<&Action<LastBeaconUiScrollWheel>>,
+    scroll_modifier_action: Single<&Action<LastBeaconUiScrollModifier>>,
     mut scroll_overrides: ResMut<LastBeaconUiTextBoxScrollOverrides>,
     mut text_inputs: LastBeaconUiTextInputScrollQuery,
     children_query: Query<&Children>,
@@ -1429,27 +1472,21 @@ pub fn scroll_last_beacon_ui_text_inputs(
         With<EditableText>,
     >,
 ) {
-    let shift_is_pressed =
-        keyboard_input.pressed(KeyCode::ShiftLeft) || keyboard_input.pressed(KeyCode::ShiftRight);
-    let mut vertical_scroll_delta = 0.0;
-    let mut horizontal_scroll_delta = 0.0;
+    let shift_is_pressed = ***scroll_modifier_action;
+    // `bevy_enhanced_input` already normalizes pixel-unit wheel deltas into
+    // line-unit equivalents (see `Binding::mouse_wheel()` in the crate
+    // source), so this only needs to re-apply this UI's own line-step scale;
+    // it no longer distinguishes `MouseScrollUnit::Line` from `Pixel` itself.
+    // Pixel-scrolling devices (trackpads) may feel slightly different as a
+    // result; line-unit devices (the common case) are unaffected.
+    let scroll_wheel_delta =
+        Vec2::new(scroll_wheel_action.x, scroll_wheel_action.y) * TEXT_BOX_SCROLL_LINE_STEP;
 
-    for mouse_wheel_message in mouse_wheel_messages.read() {
-        let message_scroll_delta = match mouse_wheel_message.unit {
-            MouseScrollUnit::Line => Vec2::new(
-                mouse_wheel_message.x * TEXT_BOX_SCROLL_LINE_STEP,
-                mouse_wheel_message.y * TEXT_BOX_SCROLL_LINE_STEP,
-            ),
-            MouseScrollUnit::Pixel => Vec2::new(mouse_wheel_message.x, mouse_wheel_message.y),
-        };
-
-        if shift_is_pressed {
-            horizontal_scroll_delta += message_scroll_delta.x - message_scroll_delta.y;
-        } else {
-            horizontal_scroll_delta += message_scroll_delta.x;
-            vertical_scroll_delta += message_scroll_delta.y;
-        }
-    }
+    let (horizontal_scroll_delta, vertical_scroll_delta) = if shift_is_pressed {
+        (scroll_wheel_delta.x - scroll_wheel_delta.y, 0.0)
+    } else {
+        (scroll_wheel_delta.x, scroll_wheel_delta.y)
+    };
 
     if vertical_scroll_delta.abs() < f32::EPSILON && horizontal_scroll_delta.abs() < f32::EPSILON {
         return;
@@ -1706,13 +1743,13 @@ pub fn refresh_last_beacon_ui_text_box_scrollbars(
 
 /// Updates slider values from cursor position while pressed or dragged.
 pub fn update_last_beacon_ui_sliders(
-    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    pointer_primary_held: Single<&Action<LastBeaconUiPointerPrimaryHeld>>,
     mut input_values: ResMut<LastBeaconUiInputValues>,
     sliders: LastBeaconUiSliderInteractionQuery,
 ) {
     for (_slider_entity, slider, interaction, relative_cursor_position) in &sliders {
         let slider_is_active = *interaction == Interaction::Pressed
-            || (*interaction == Interaction::Hovered && mouse_buttons.pressed(MouseButton::Left));
+            || (*interaction == Interaction::Hovered && ***pointer_primary_held);
         if !slider_is_active || slider.target.is_empty() {
             continue;
         }
