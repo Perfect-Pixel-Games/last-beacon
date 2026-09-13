@@ -8,10 +8,13 @@
 
 use std::f32::consts::FRAC_PI_2;
 
-use bevy::prelude::*;
+use bevy::{
+    prelude::*,
+    window::{CursorGrabMode, CursorOptions, PrimaryWindow},
+};
 use bevy_enhanced_input::prelude::*;
 use foundation_runtime_library::prelude::{
-    add_enhanced_input_plugin_if_missing, foundation_is_not_paused,
+    add_enhanced_input_plugin_if_missing, foundation_is_not_paused, FoundationPauseState,
 };
 
 /// Keeps the camera from pitching perfectly vertical, which would make yaw
@@ -22,7 +25,9 @@ const LAST_BEACON_FREE_FLY_CAMERA_PITCH_LIMIT_MARGIN: f32 = 0.01;
 ///
 /// Movement stops while [`foundation_runtime_library::prelude::FoundationPauseState`]
 /// reports the game as paused, matching how other Foundation-owned per-frame
-/// systems respect pause.
+/// systems respect pause. The primary window's cursor is also locked and
+/// hidden while flying, then unlocked and shown while paused (see
+/// [`lock_cursor_for_last_beacon_free_fly_cameras`]).
 #[derive(Default)]
 pub struct LastBeaconFreeFlyCameraPlugin;
 
@@ -35,7 +40,10 @@ impl Plugin for LastBeaconFreeFlyCameraPlugin {
         app.add_input_context::<LastBeaconFreeFlyCameraInput>()
             .add_systems(
                 Update,
-                move_last_beacon_free_fly_cameras.run_if(foundation_is_not_paused),
+                (
+                    move_last_beacon_free_fly_cameras.run_if(foundation_is_not_paused),
+                    lock_cursor_for_last_beacon_free_fly_cameras,
+                ),
             );
     }
 }
@@ -267,10 +275,39 @@ fn move_last_beacon_free_fly_cameras(
     }
 }
 
+/// Locks and hides the primary window's cursor while a free-fly camera is
+/// active and gameplay isn't paused, so mouse-look isn't interrupted by the
+/// cursor hitting the edge of the window. Releases and shows it again while
+/// paused (e.g. the pause menu needs a free, visible cursor to click its
+/// buttons), even though [`move_last_beacon_free_fly_cameras`] itself stops
+/// running at that point.
+fn lock_cursor_for_last_beacon_free_fly_cameras(
+    pause_state: Res<FoundationPauseState>,
+    free_fly_cameras: Query<(), With<LastBeaconFreeFlyCameraInput>>,
+    mut primary_windows: Query<&mut CursorOptions, With<PrimaryWindow>>,
+) {
+    let Ok(mut cursor_options) = primary_windows.single_mut() else {
+        return;
+    };
+
+    let should_lock_cursor = !pause_state.paused && !free_fly_cameras.is_empty();
+    let (desired_visible, desired_grab_mode) = if should_lock_cursor {
+        (false, CursorGrabMode::Locked)
+    } else {
+        (true, CursorGrabMode::None)
+    };
+
+    if cursor_options.visible != desired_visible {
+        cursor_options.visible = desired_visible;
+    }
+    if cursor_options.grab_mode != desired_grab_mode {
+        cursor_options.grab_mode = desired_grab_mode;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use bevy::input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll};
-    use foundation_runtime_library::prelude::FoundationPauseState;
 
     use super::*;
 
@@ -281,6 +318,8 @@ mod tests {
         app.init_resource::<AccumulatedMouseMotion>();
         app.init_resource::<AccumulatedMouseScroll>();
         app.init_resource::<FoundationPauseState>();
+        app.world_mut()
+            .spawn((PrimaryWindow, CursorOptions::default()));
         app.add_plugins(LastBeaconFreeFlyCameraPlugin);
         // `bevy_enhanced_input` finishes context setup in `Plugin::finish`, which
         // only runs automatically through `App::run()`. Tests that drive the app
@@ -441,5 +480,59 @@ mod tests {
             settings.move_speed, settings.max_move_speed,
             "move speed should clamp at max_move_speed after scrolling far past it"
         );
+    }
+
+    fn primary_window_cursor_options(app: &mut App) -> CursorOptions {
+        app.world_mut()
+            .query_filtered::<&CursorOptions, With<PrimaryWindow>>()
+            .single(app.world())
+            .expect("test app should have a primary window")
+            .clone()
+    }
+
+    #[test]
+    fn cursor_locks_and_hides_while_flying_unpaused() {
+        let (mut app, _free_fly_camera_entity) = test_app_with_free_fly_camera();
+
+        app.update();
+
+        let cursor_options = primary_window_cursor_options(&mut app);
+        assert!(!cursor_options.visible);
+        assert_eq!(cursor_options.grab_mode, CursorGrabMode::Locked);
+    }
+
+    #[test]
+    fn cursor_unlocks_and_shows_while_paused() {
+        let (mut app, _free_fly_camera_entity) = test_app_with_free_fly_camera();
+
+        app.world_mut()
+            .resource_mut::<FoundationPauseState>()
+            .paused = true;
+        app.update();
+
+        let cursor_options = primary_window_cursor_options(&mut app);
+        assert!(cursor_options.visible);
+        assert_eq!(cursor_options.grab_mode, CursorGrabMode::None);
+    }
+
+    #[test]
+    fn cursor_stays_unlocked_without_a_free_fly_camera() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.init_resource::<ButtonInput<KeyCode>>();
+        app.init_resource::<AccumulatedMouseMotion>();
+        app.init_resource::<AccumulatedMouseScroll>();
+        app.init_resource::<FoundationPauseState>();
+        app.world_mut()
+            .spawn((PrimaryWindow, CursorOptions::default()));
+        app.add_plugins(LastBeaconFreeFlyCameraPlugin);
+        app.finish();
+        app.cleanup();
+
+        app.update();
+
+        let cursor_options = primary_window_cursor_options(&mut app);
+        assert!(cursor_options.visible);
+        assert_eq!(cursor_options.grab_mode, CursorGrabMode::None);
     }
 }
