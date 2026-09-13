@@ -5,13 +5,25 @@ bevy_ecs::hierarchy::Children [
     last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/core.bsn" }
     bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 1.0, z: 0.0 } },
 
+    // Rotated (not just translated) so its root/tip axis actually points
+    // from CoreBlock's `left` socket toward ChassisPlate's `front_left`
+    // corner, instead of straddling the wrong side of both (see the
+    // Task 10 review fix: an un-rotated beam left both anchors ~2 units
+    // off). The beam's local root/tip span (2.0) is longer than the
+    // straight-line distance between those two targets (~1.436), so a
+    // rigid transform can't zero out both anchor gaps at once -- this
+    // rotation+translation splits the unavoidable residual evenly,
+    // leaving each anchor ~0.28 units off (see the throwaway
+    // verification test run for Task 10's fix).
     #BeamLeft
     last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.5, z: -0.75 } },
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -0.5, y: 0.5, z: -0.625 }, rotation: glam::Quat { x: 0.0, y: 0.223364, z: -0.893456, w: 0.389673 } },
 
+    // Mirror of BeamLeft's rotation across z, aiming at CoreBlock's
+    // `right` socket and ChassisPlate's `front_right` corner instead.
     #BeamRight
     last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.5, z: 0.75 } },
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -0.5, y: 0.5, z: 0.625 }, rotation: glam::Quat { x: 0.0, y: -0.223364, z: -0.893456, w: 0.389673 } },
 
     #ChassisPlate
     last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/plate.bsn" }
