@@ -94,6 +94,20 @@ pub struct LandscapeGenerationSettings {
     /// way, the blend still starts and ends at exactly the same points --
     /// only the shape of the curve between them changes.
     pub color_blend_sharpness: f32,
+    /// How much a vertex's slope shifts its *effective* height for the
+    /// snow-cap blend, as a fraction of the mesh's own height range. `0.0`
+    /// disables this (snow appears at exactly the same height regardless of
+    /// slope -- a flat, unnaturally uniform contour band around the
+    /// mountain). Positive values make steeper terrain need more elevation
+    /// before showing snow, while flat ground still starts snowing at the
+    /// unshifted height thresholds -- so the snowline follows the terrain's
+    /// own slope variation instead of a flat band, and steep faces can stay
+    /// bare much closer to the peak. Kept at or below `0.15` (`1.0` minus
+    /// the snow blend's own end threshold, `0.85`), this mesh's single
+    /// highest vertex is still guaranteed pure white regardless of its
+    /// slope; higher values trade that guarantee for a stronger slope
+    /// effect at the very top too.
+    pub snow_slope_bias: f32,
 }
 
 impl Default for LandscapeGenerationSettings {
@@ -107,7 +121,8 @@ impl Default for LandscapeGenerationSettings {
             lowland_flatten_strength: 0.65,
             color_rock_slope_start: 0.01,
             color_rock_slope_end: 0.3,
-            color_blend_sharpness: 1.0,
+            color_blend_sharpness: 16.0,
+            snow_slope_bias: 0.12,
         }
     }
 }
@@ -160,6 +175,7 @@ pub fn apply_named_parameter(
         "color-rock-slope-start" => settings.color_rock_slope_start = value,
         "color-rock-slope-end" => settings.color_rock_slope_end = value,
         "color-blend-sharpness" => settings.color_blend_sharpness = value,
+        "snow-slope-bias" => settings.snow_slope_bias = value,
         _ => return Err(format!("unknown landscape parameter '{name}'")),
     }
     Ok(())
@@ -214,6 +230,7 @@ pub fn named_parameter_value(
         "color-rock-slope-start" => settings.color_rock_slope_start,
         "color-rock-slope-end" => settings.color_rock_slope_end,
         "color-blend-sharpness" => settings.color_blend_sharpness,
+        "snow-slope-bias" => settings.snow_slope_bias,
         _ => return Err(format!("unknown landscape parameter '{name}'")),
     };
     Ok(value)
@@ -439,10 +456,17 @@ fn compute_landscape_vertex_colors(
             );
             let sloped_color = LANDSCAPE_GRASS_COLOR.lerp(LANDSCAPE_ROCK_COLOR, rock_fraction);
 
-            // White snow caps layer on top by altitude alone, so peaks read as
-            // white even where they're steep, rather than competing with rock.
+            // White snow caps still layer on by altitude, but steeper ground
+            // needs more of it: shifting each vertex's *effective* height
+            // down in proportion to its own slope means flat shoulders start
+            // showing snow at the unmodified height, while steep faces need
+            // to climb higher before they do too. That makes the snowline
+            // follow the terrain's own (already-noisy) slope variation
+            // instead of tracing a single flat, unnaturally uniform contour.
+            let snow_height_penalty = normalized_slope_fraction * settings.snow_slope_bias;
+            let effective_snow_height_fraction = (height_fraction - snow_height_penalty).max(0.0);
             let snow_fraction = sharpen_blend_fraction(
-                smoothstep(0.65, 0.85, height_fraction),
+                smoothstep(0.65, 0.85, effective_snow_height_fraction),
                 settings.color_blend_sharpness,
             );
             let blended_color = sloped_color.lerp(LANDSCAPE_SNOW_COLOR, snow_fraction);
@@ -587,6 +611,7 @@ mod tests {
             "color-rock-slope-start",
             "color-rock-slope-end",
             "color-blend-sharpness",
+            "snow-slope-bias",
         ];
 
         for name in names {
@@ -800,52 +825,154 @@ mod tests {
         );
     }
 
+    /// Five positions/normals set up so `min`/`max` height and `max` slope
+    /// are pinned to known values: index 0/1 anchor the height range at 0
+    /// and 100, index 2 is a perfectly flat vertex (an exact fixed point of
+    /// the rock blend, regardless of sharpness), index 3 sits at
+    /// `normalized_slope_fraction` `0.15` -- squarely inside the default
+    /// `color_rock_slope_start`/`color_rock_slope_end` range, so its
+    /// pre-sharpen rock fraction is a non-trivial ~`0.47`, not close to
+    /// either endpoint -- and index 4 is the steepest vertex in the set
+    /// (`normalized_slope_fraction` is defined relative to it). All test
+    /// vertices share a height of `30.0` (fraction `0.3`), far below the
+    /// snow blend's own range, so the snow layer can't interfere.
+    fn rock_blend_test_positions_and_normals() -> (Vec<Vec3>, Vec<Vec3>) {
+        let positions = vec![
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 100.0, 0.0),
+            Vec3::new(1.0, 30.0, 0.0),
+            Vec3::new(2.0, 30.0, 0.0),
+            Vec3::new(3.0, 50.0, 0.0),
+        ];
+        let normals = vec![
+            Vec3::Y,
+            Vec3::Y,
+            Vec3::Y,
+            Vec3::new(0.38, 0.925, 0.0),
+            Vec3::new(0.866, 0.5, 0.0),
+        ];
+        (positions, normals)
+    }
+
     #[test]
-    fn color_blend_sharpness_changes_mid_blend_colors_but_not_pure_grass_vertices() {
-        // Pure-grass vertices (rock_fraction == 0, a fixed point of
-        // `sharpen_blend_fraction`) should be untouched by this parameter,
-        // while at least some other vertex's blended color should change --
-        // confirming it reshapes the curve between the thresholds rather
-        // than moving the thresholds themselves.
-        let mut settings = LandscapeGenerationSettings::default();
-        let positions = build_landscape_positions(1337, &settings);
-        let triangle_indices = build_landscape_triangle_indices();
-        let normals = compute_landscape_normals(&positions, &triangle_indices);
+    fn color_blend_sharpness_leaves_a_perfectly_flat_vertex_pure_grass() {
+        let (positions, normals) = rock_blend_test_positions_and_normals();
+        let pure_grass = [
+            LANDSCAPE_GRASS_COLOR.x,
+            LANDSCAPE_GRASS_COLOR.y,
+            LANDSCAPE_GRASS_COLOR.z,
+            1.0,
+        ];
 
-        let colors_at = |settings: &LandscapeGenerationSettings| {
-            compute_landscape_vertex_colors(&positions, &normals, settings)
-        };
-
-        let baseline_colors = colors_at(&settings);
-        settings.color_blend_sharpness = 6.0;
-        let sharpened_colors = colors_at(&settings);
-
-        let is_pure_grass = |color: &[f32; 4]| {
-            (color[0] - LANDSCAPE_GRASS_COLOR.x).abs() < 1e-4
-                && (color[1] - LANDSCAPE_GRASS_COLOR.y).abs() < 1e-4
-                && (color[2] - LANDSCAPE_GRASS_COLOR.z).abs() < 1e-4
-        };
-
-        let mut any_color_changed = false;
-        for (baseline, sharpened) in baseline_colors.iter().zip(&sharpened_colors) {
-            if is_pure_grass(baseline) {
-                assert!(
-                    is_pure_grass(sharpened),
-                    "a pure-grass vertex should stay pure grass regardless of blend sharpness"
-                );
-                continue;
-            }
-
-            let changed = baseline
-                .iter()
-                .zip(sharpened)
-                .any(|(base_channel, sharp_channel)| (base_channel - sharp_channel).abs() > 1e-4);
-            any_color_changed |= changed;
+        for sharpness in [0.25, 1.0, 6.0, 16.0] {
+            let settings = LandscapeGenerationSettings {
+                color_blend_sharpness: sharpness,
+                ..Default::default()
+            };
+            let colors = compute_landscape_vertex_colors(&positions, &normals, &settings);
+            assert_eq!(
+                colors[2], pure_grass,
+                "a perfectly flat vertex should stay pure grass at sharpness {sharpness}"
+            );
         }
+    }
+
+    #[test]
+    fn color_blend_sharpness_changes_a_partially_blended_vertex_color() {
+        let (positions, normals) = rock_blend_test_positions_and_normals();
+        let low_sharpness_settings = LandscapeGenerationSettings {
+            color_blend_sharpness: 1.0,
+            ..Default::default()
+        };
+        let high_sharpness_settings = LandscapeGenerationSettings {
+            color_blend_sharpness: 16.0,
+            ..Default::default()
+        };
+
+        let low_colors =
+            compute_landscape_vertex_colors(&positions, &normals, &low_sharpness_settings);
+        let high_colors =
+            compute_landscape_vertex_colors(&positions, &normals, &high_sharpness_settings);
+
+        assert_ne!(
+            low_colors[3], high_colors[3],
+            "a partially rock-blended vertex's color should change with blend sharpness"
+        );
+    }
+
+    /// Four positions/normals set up so `min`/`max` height and `max` slope
+    /// are pinned to known values: index 0/1 anchor the height range at 0
+    /// and 100, index 2 is a flat vertex at height-fraction 0.8, and index 3
+    /// is a steep vertex (the steepest in the set, so its
+    /// `normalized_slope_fraction` is exactly `1.0`) at the same
+    /// height-fraction.
+    fn snow_bias_test_positions_and_normals() -> (Vec<Vec3>, Vec<Vec3>) {
+        let positions = vec![
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 100.0, 0.0),
+            Vec3::new(1.0, 80.0, 0.0),
+            Vec3::new(2.0, 80.0, 0.0),
+        ];
+        let normals = vec![
+            Vec3::Y,
+            Vec3::Y,
+            Vec3::Y,
+            Vec3::new(0.8, 0.6, 0.0).normalize(),
+        ];
+        (positions, normals)
+    }
+
+    /// `color_rock_slope_start`/`color_rock_slope_end` thresholds that
+    /// saturate the rock blend to `1.0` for every `normalized_slope_fraction`
+    /// in `0..=1`, so the flat and steep test vertices in
+    /// [`snow_bias_test_positions_and_normals`] get an identical
+    /// `sloped_color` (pure rock) -- isolating the snow layer as the only
+    /// possible source of any color difference between them.
+    fn rock_blend_saturated_to_rock_settings() -> LandscapeGenerationSettings {
+        LandscapeGenerationSettings {
+            color_rock_slope_start: -1.0,
+            color_rock_slope_end: -0.5,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn snow_slope_bias_zero_matches_pure_height_based_snow() {
+        let (positions, normals) = snow_bias_test_positions_and_normals();
+        let settings = LandscapeGenerationSettings {
+            snow_slope_bias: 0.0,
+            color_blend_sharpness: 1.0,
+            ..rock_blend_saturated_to_rock_settings()
+        };
+
+        let colors = compute_landscape_vertex_colors(&positions, &normals, &settings);
+
+        // With no slope bias, the flat and steep vertices sit at the same
+        // height-fraction (0.8) and should therefore get the exact same
+        // snow blend, regardless of their very different slopes.
+        assert_eq!(
+            colors[2], colors[3],
+            "with snow_slope_bias at 0.0, slope should not affect the snow blend"
+        );
+    }
+
+    #[test]
+    fn steeper_terrain_needs_more_height_to_show_snow() {
+        let (positions, normals) = snow_bias_test_positions_and_normals();
+        let settings = LandscapeGenerationSettings {
+            color_blend_sharpness: 1.0,
+            snow_slope_bias: 0.12,
+            ..rock_blend_saturated_to_rock_settings()
+        };
+
+        let colors = compute_landscape_vertex_colors(&positions, &normals, &settings);
+        let flat_vertex_whiteness = colors[2][0] + colors[2][1] + colors[2][2];
+        let steep_vertex_whiteness = colors[3][0] + colors[3][1] + colors[3][2];
 
         assert!(
-            any_color_changed,
-            "expected color_blend_sharpness to change at least one vertex's blended color"
+            flat_vertex_whiteness > steep_vertex_whiteness,
+            "at the same height, flatter ground should show more snow than steep ground: \
+             flat={flat_vertex_whiteness}, steep={steep_vertex_whiteness}"
         );
     }
 }
