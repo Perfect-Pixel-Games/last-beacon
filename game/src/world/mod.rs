@@ -32,7 +32,7 @@ impl Plugin for LastBeaconWorldGameplayPlugin {
                 rebuild_landscape_terrain_when_settings_change
                     .run_if(resource_changed::<landscape::LandscapeGenerationSettings>),
             )
-            .add_systems(Update, keep_ui_camera_transparent_while_world_scene_is_open);
+            .add_systems(Update, keep_pause_menu_visible_over_the_world_scene);
     }
 }
 
@@ -46,33 +46,48 @@ struct LastBeaconLandscapeTerrainMesh {
 }
 
 /// Marker for the World landscape scene's own 3D camera, used by
-/// [`keep_ui_camera_transparent_while_world_scene_is_open`] to tell whether
-/// that scene is currently open.
+/// [`keep_pause_menu_visible_over_the_world_scene`] to tell whether that
+/// scene is currently open.
 #[derive(Component)]
 struct LastBeaconLandscapeCamera;
 
-/// Keeps the persistent UI camera (`spawn_default_camera` in `game/src/lib.rs`)
-/// from clearing over the World scene's own camera.
+/// The World scene's 3D camera's normal render order, above the persistent
+/// UI camera's order (100, `spawn_default_camera` in `game/src/lib.rs`) so it
+/// paints over an assumed-empty UI layer during ordinary gameplay -- this is
+/// the same arrangement already proven to render correctly.
+const LAST_BEACON_LANDSCAPE_CAMERA_ORDER: isize = 200;
+
+/// Order the UI camera renders at instead, while paused, so the pause menu
+/// draws on top of the frozen World scene instead of being painted over by
+/// it every frame.
+const LAST_BEACON_UI_CAMERA_PAUSED_ORDER: isize = LAST_BEACON_LANDSCAPE_CAMERA_ORDER + 100;
+
+/// Lets the pause menu (and any other UI opened while paused) render on top
+/// of the World scene, instead of being painted over by it every frame.
 ///
-/// That UI camera renders at order 100 with `ClearColorConfig::Default`,
-/// which is correct for menu-only scenes (nothing renders below it, so it
-/// must clear the screen itself), but would otherwise wipe out the World
-/// scene's 3D render -- which renders below it, at the default order -- every
-/// frame, including when a menu (e.g. the pause overlay) is opened on top of
-/// World. Switching to `ClearColorConfig::None` while
-/// [`LastBeaconLandscapeCamera`] exists lets the UI camera's render (menus,
-/// or nothing at all during normal gameplay) composite over the World scene
-/// instead of erasing it.
-fn keep_ui_camera_transparent_while_world_scene_is_open(
+/// Normally the World scene's camera renders above the persistent UI camera
+/// (see [`LAST_BEACON_LANDSCAPE_CAMERA_ORDER`]) so it can fill the screen
+/// without needing to know whether any UI is present. That's backwards for
+/// the pause menu, which needs to show *on top* of the (now-frozen) World
+/// scene. Rather than always reordering the two cameras -- which would make
+/// every frame of ordinary gameplay depend on MSAA writeback compositing
+/// correctly between differently-configured cameras -- this only swaps them
+/// while [`FoundationPauseState`] reports paused *and* the World scene's own
+/// camera exists, keeping ordinary gameplay on the unchanged, already-proven
+/// rendering path.
+fn keep_pause_menu_visible_over_the_world_scene(
+    pause_state: Res<FoundationPauseState>,
     world_scene_cameras: Query<(), With<LastBeaconLandscapeCamera>>,
     mut ui_cameras: Query<&mut Camera, With<Camera2d>>,
 ) {
-    let desired_clear_color = if world_scene_cameras.is_empty() {
-        ClearColorConfig::Default
+    let should_render_above_world_scene = pause_state.paused && !world_scene_cameras.is_empty();
+    let (desired_order, desired_clear_color) = if should_render_above_world_scene {
+        (LAST_BEACON_UI_CAMERA_PAUSED_ORDER, ClearColorConfig::None)
     } else {
-        ClearColorConfig::None
+        (100, ClearColorConfig::Default)
     };
     for mut ui_camera in &mut ui_cameras {
+        ui_camera.order = desired_order;
         ui_camera.clear_color = desired_clear_color;
     }
 }
@@ -132,6 +147,7 @@ fn initialize_last_beacon_landscape_test_scenes(
     landscape_settings: Res<landscape::LandscapeGenerationSettings>,
     landscape_test_scenes: LandscapeTestSceneInitQuery,
     scene_owners: Query<&SceneOwner>,
+    existing_terrain_owners: Query<Option<&SceneOwner>, With<LastBeaconLandscapeTerrainMesh>>,
 ) {
     for (scene_entity, landscape_test_scene, scene_owner, parent_link) in &landscape_test_scenes {
         let effective_scene_owner =
@@ -139,6 +155,25 @@ fn initialize_last_beacon_landscape_test_scenes(
         debug!(
             "Initializing LastBeaconLandscapeTestScene on {scene_entity:?} with scene_owner={effective_scene_owner:?}"
         );
+
+        // The BSN scene-loading pipeline can spawn this scene's root entity
+        // more than once while resolving a single `open_scene` request (e.g.
+        // an initial placeholder root later replaced by the fully-resolved
+        // one), each triggering `Added<LastBeaconLandscapeTestScene>`. Since
+        // this system's terrain/camera/atmosphere/sun are spawned
+        // imperatively rather than as BSN-authored children, they aren't
+        // cleaned up when that replacement happens, leaving duplicate
+        // cameras behind -- harmless when they shared one render order, but
+        // a genuine ambiguity (and blank/black render) now that this scene's
+        // camera renders at the default order. Skip re-initializing for a
+        // scene_owner this system has already built a terrain for.
+        if effective_scene_owner.is_some()
+            && existing_terrain_owners
+                .iter()
+                .any(|existing_owner| existing_owner.copied() == effective_scene_owner)
+        {
+            continue;
+        }
 
         let terrain_mesh = meshes.add(landscape::build_landscape_mesh(
             landscape_test_scene.seed,
@@ -186,18 +221,22 @@ fn initialize_last_beacon_landscape_test_scenes(
             CAMERA_SPAWN_Z,
         );
         // `spawn_default_camera` (`game/src/lib.rs`) always keeps a `Camera2d`
-        // at order 100 alive for UI rendering (menus, the pause overlay,
-        // etc.). This camera must render at the default order (0, below
-        // that), so the persistent UI camera draws *after* it and can show
-        // things -- like the pause menu -- on top of the 3D scene instead of
-        // being permanently painted over by it every frame. See
-        // `keep_ui_camera_transparent_while_world_scene_is_open`, which
-        // switches that UI camera to `ClearColorConfig::None` while this
-        // camera exists, so its render shows through behind the UI instead
-        // of being wiped by the UI camera's own clear pass.
+        // at order 100 alive for UI rendering, with the default
+        // `ClearColorConfig::Default` -- which clears the whole viewport to
+        // `ClearColor` every frame regardless of camera order. Rendering
+        // above it (with `ClearColorConfig::None`) draws on top without
+        // re-clearing, which is safe here because this scene's sky+terrain
+        // fill the entire frame. See `keep_pause_menu_visible_over_the_world_scene`
+        // for how the pause menu still gets to show on top of this scene
+        // despite that ordering.
         let camera_entity = commands
             .spawn((
                 Camera3d::default(),
+                Camera {
+                    order: LAST_BEACON_LANDSCAPE_CAMERA_ORDER,
+                    clear_color: ClearColorConfig::None,
+                    ..default()
+                },
                 LastBeaconLandscapeCamera,
                 Transform::from_translation(camera_position),
                 environment::landscape_camera_rendering_bundle(),
@@ -277,4 +316,72 @@ pub fn get_landscape_parameter(
 pub fn reset_landscape_parameters(mut settings: ResMut<landscape::LandscapeGenerationSettings>) {
     *settings = landscape::LandscapeGenerationSettings::default();
     info!("landscape parameters reset to defaults");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_app_with_ui_camera() -> (App, Entity) {
+        let mut app = App::new();
+        app.init_resource::<FoundationPauseState>();
+        app.add_systems(Update, keep_pause_menu_visible_over_the_world_scene);
+
+        let ui_camera_entity = app.world_mut().spawn((Camera2d, Camera::default())).id();
+
+        (app, ui_camera_entity)
+    }
+
+    #[test]
+    fn ui_camera_stays_at_its_normal_order_when_not_paused() {
+        let (mut app, ui_camera_entity) = test_app_with_ui_camera();
+        app.world_mut().spawn(LastBeaconLandscapeCamera);
+
+        app.update();
+
+        let ui_camera = app
+            .world()
+            .get::<Camera>(ui_camera_entity)
+            .expect("UI camera should exist");
+        assert_eq!(ui_camera.order, 100);
+        assert!(matches!(ui_camera.clear_color, ClearColorConfig::Default));
+    }
+
+    #[test]
+    fn ui_camera_renders_above_world_scene_while_paused() {
+        let (mut app, ui_camera_entity) = test_app_with_ui_camera();
+        app.world_mut().spawn(LastBeaconLandscapeCamera);
+        app.world_mut()
+            .resource_mut::<FoundationPauseState>()
+            .paused = true;
+
+        app.update();
+
+        let ui_camera = app
+            .world()
+            .get::<Camera>(ui_camera_entity)
+            .expect("UI camera should exist");
+        assert_eq!(ui_camera.order, LAST_BEACON_UI_CAMERA_PAUSED_ORDER);
+        assert!(ui_camera.order > LAST_BEACON_LANDSCAPE_CAMERA_ORDER);
+        assert!(matches!(ui_camera.clear_color, ClearColorConfig::None));
+    }
+
+    #[test]
+    fn pausing_without_a_world_scene_open_does_not_reorder_the_ui_camera() {
+        let (mut app, ui_camera_entity) = test_app_with_ui_camera();
+        // No `LastBeaconLandscapeCamera` spawned -- e.g. paused in a scene
+        // that doesn't have a competing high-order 3D camera.
+        app.world_mut()
+            .resource_mut::<FoundationPauseState>()
+            .paused = true;
+
+        app.update();
+
+        let ui_camera = app
+            .world()
+            .get::<Camera>(ui_camera_entity)
+            .expect("UI camera should exist");
+        assert_eq!(ui_camera.order, 100);
+        assert!(matches!(ui_camera.clear_color, ClearColorConfig::Default));
+    }
 }
