@@ -11,13 +11,16 @@ use foundation_runtime_library::prelude::*;
 
 use crate::scenes::{BEACON_SCENE, GAMEPLAY_LEVEL_SCENE};
 
+pub mod vehicle;
+
 /// Installs Last Beacon's shared cross-space gameplay state and messaging.
 #[derive(Default)]
 pub struct LastBeaconSharedGameplayPlugin;
 
 impl Plugin for LastBeaconSharedGameplayPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<LastBeaconSharedGameplayState>()
+        app.add_plugins(vehicle::LastBeaconVehiclePlugin)
+            .init_resource::<LastBeaconSharedGameplayState>()
             .init_resource::<LastBeaconGameplaySpace>()
             .register_type::<LastBeaconSharedGameplayState>()
             .register_type::<LastBeaconGameplaySpace>()
