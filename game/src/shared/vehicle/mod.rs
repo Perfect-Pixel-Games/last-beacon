@@ -75,6 +75,19 @@ impl Default for LastBeaconVehicleWheelModuleBody {
     }
 }
 
+/// Marks a child entity of a module's root as a named attachment point.
+///
+/// The entity's own `Transform.translation` is that socket's local anchor
+/// offset relative to the module's rigid body -- authored directly as a
+/// plain `Transform` in `.bsn`, no marker/system workaround needed since
+/// `Transform` is a plain public-field struct.
+#[derive(Clone, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconVehicleModuleSocket {
+    /// Name used by a [`LastBeaconVehicleConnection`] to reference this socket.
+    pub socket_name: String,
+}
+
 /// Installs Last Beacon's modular-vehicle attachment system.
 #[derive(Default)]
 pub struct LastBeaconVehiclePlugin;
@@ -83,6 +96,7 @@ impl Plugin for LastBeaconVehiclePlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<LastBeaconVehicleModuleBody>()
             .register_type::<LastBeaconVehicleWheelModuleBody>()
+            .register_type::<LastBeaconVehicleModuleSocket>()
             .add_systems(
                 Update,
                 (
