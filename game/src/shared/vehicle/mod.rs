@@ -7,8 +7,12 @@
 //! itself; concrete gameplay modules (powered wheels, thrusters, weapons)
 //! are future work built on top of it.
 
+mod instance;
 mod module_body;
 
+pub use instance::{
+    apply_pending_last_beacon_vehicle_module_instances, queue_last_beacon_vehicle_module_instances,
+};
 pub use module_body::{
     materialize_last_beacon_vehicle_module_bodies,
     materialize_last_beacon_vehicle_wheel_module_bodies,
@@ -88,6 +92,21 @@ pub struct LastBeaconVehicleModuleSocket {
     pub socket_name: String,
 }
 
+/// Authored in a *vehicle* `.bsn`, one per module placed in that vehicle.
+///
+/// A system loads the referenced module `.bsn` and applies its content onto
+/// this same entity, so this entity becomes that module's rigid body once
+/// resolved -- keeping whatever `Name`/`Transform` the vehicle `.bsn` already
+/// authored here for placement and for [`LastBeaconVehicleConnection`] to
+/// find it by name.
+#[derive(Clone, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconVehicleModuleInstance {
+    /// Asset-relative path to the module's `.bsn` file, e.g.
+    /// `"vehicle/modules/core.bsn"`.
+    pub asset_path: String,
+}
+
 /// Installs Last Beacon's modular-vehicle attachment system.
 #[derive(Default)]
 pub struct LastBeaconVehiclePlugin;
@@ -97,12 +116,16 @@ impl Plugin for LastBeaconVehiclePlugin {
         app.register_type::<LastBeaconVehicleModuleBody>()
             .register_type::<LastBeaconVehicleWheelModuleBody>()
             .register_type::<LastBeaconVehicleModuleSocket>()
+            .register_type::<LastBeaconVehicleModuleInstance>()
             .add_systems(
                 Update,
                 (
                     materialize_last_beacon_vehicle_module_bodies,
                     materialize_last_beacon_vehicle_wheel_module_bodies,
-                ),
+                    queue_last_beacon_vehicle_module_instances,
+                    apply_pending_last_beacon_vehicle_module_instances,
+                )
+                    .chain(),
             );
     }
 }
