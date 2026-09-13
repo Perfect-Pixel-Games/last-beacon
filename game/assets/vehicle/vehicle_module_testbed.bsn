@@ -1,0 +1,63 @@
+#Vehicle
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 450.0, z: 1450.0 } }
+bevy_ecs::hierarchy::Children [
+    #CoreBlock
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/core.bsn" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 1.0, z: 0.0 } },
+
+    #BeamLeft
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.5, z: -0.75 } },
+
+    #BeamRight
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.5, z: 0.75 } },
+
+    #ChassisPlate
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/plate.bsn" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 0.0 } },
+
+    #WheelFrontLeft
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: -0.3, z: -0.9 } }
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 0.0, y: 4.0, z: 0.0 }),
+
+    #WheelFrontRight
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: -0.3, z: 0.9 } }
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 0.0, y: 4.0, z: 0.0 }),
+
+    #WheelBackLeft
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: -0.3, z: -0.9 } }
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 0.0, y: 4.0, z: 0.0 }),
+
+    #WheelBackRight
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: -0.3, z: 0.9 } }
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 0.0, y: 4.0, z: 0.0 }),
+
+    #ConnCoreToBeamLeft
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "CoreBlock", socket_a: "left", module_b: "BeamLeft", socket_b: "root" },
+
+    #ConnCoreToBeamRight
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "CoreBlock", socket_a: "right", module_b: "BeamRight", socket_b: "root" },
+
+    #ConnBeamLeftToChassis
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamLeft", socket_a: "tip", module_b: "ChassisPlate", socket_b: "front_left" },
+
+    #ConnBeamRightToChassis
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamRight", socket_a: "tip", module_b: "ChassisPlate", socket_b: "front_right" },
+
+    #ConnWheelFrontLeft
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "front_left", module_b: "WheelFrontLeft", socket_b: "axle" },
+
+    #ConnWheelFrontRight
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "front_right", module_b: "WheelFrontRight", socket_b: "axle" },
+
+    #ConnWheelBackLeft
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "back_left", module_b: "WheelBackLeft", socket_b: "axle" },
+
+    #ConnWheelBackRight
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "back_right", module_b: "WheelBackRight", socket_b: "axle" }
+]

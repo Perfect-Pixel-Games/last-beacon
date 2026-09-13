@@ -251,6 +251,15 @@ fn initialize_last_beacon_landscape_test_scenes(
             ))
             .id();
 
+        // Temporary proof of the modular-vehicle attachment system (see
+        // docs/superpowers/specs/2026-09-13-vehicle-module-foundations-design.md):
+        // a test wagon spawned near the camera's starting position so it's
+        // immediately visible. Like the rest of this testbed, it is not
+        // scene-owned and will not despawn when this scene closes -- an
+        // accepted temporary limitation matching this file's existing
+        // "not shippable, replace before shipping" testbed content.
+        commands.spawn_bsn_asset("vehicle/vehicle_module_testbed.bsn");
+
         if let Some(scene_owner) = effective_scene_owner {
             for generated_entity in [terrain_entity, atmosphere_entity, sun_entity, camera_entity] {
                 commands.entity(generated_entity).insert(scene_owner);
