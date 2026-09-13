@@ -11,6 +11,7 @@ use bevy::{
     prelude::*,
     render::{
         settings::{Backends, InstanceFlags, RenderCreation, WgpuSettings},
+        view::Msaa,
         RenderPlugin,
     },
 };
@@ -114,6 +115,18 @@ fn spawn_default_camera(mut commands: Commands) {
             order: camera_order,
             ..default()
         },
+        // Off rather than the default `Sample4`: this camera sometimes needs
+        // to render *after* a 3D scene camera with `ClearColorConfig::None`
+        // (e.g. the pause menu showing over `world`'s landscape scene, see
+        // `world::keep_pause_menu_visible_over_the_world_scene`), which
+        // relies on that earlier camera's render being preserved through a
+        // simple "load" of the existing framebuffer. With MSAA enabled that
+        // instead requires this camera's multisampled texture to first be
+        // seeded via MSAA writeback, which produced a solid black backdrop
+        // instead of the scene showing through. UI text/shapes don't
+        // meaningfully benefit from hardware MSAA, so disabling it here
+        // sidesteps that whole class of cross-camera compositing risk.
+        Msaa::Off,
     ));
 }
 
