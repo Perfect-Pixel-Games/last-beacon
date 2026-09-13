@@ -11,8 +11,11 @@ use bevy::{camera::ClearColorConfig, light::atmosphere::ScatteringMedium, prelud
 use foundation_runtime_library::prelude::*;
 
 pub mod environment;
+pub mod free_fly_camera;
 pub mod landscape;
 pub mod shader_erosion;
+
+use free_fly_camera::{last_beacon_free_fly_camera_bundle, LastBeaconFreeFlyCameraPlugin};
 
 /// Installs Last Beacon's World gameplay systems.
 #[derive(Default)]
@@ -20,7 +23,7 @@ pub struct LastBeaconWorldGameplayPlugin;
 
 impl Plugin for LastBeaconWorldGameplayPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(FoundationFreeFlyCameraPlugin)
+        app.add_plugins(LastBeaconFreeFlyCameraPlugin)
             .init_resource::<landscape::LandscapeGenerationSettings>()
             .register_type::<LastBeaconLandscapeTestScene>()
             .add_systems(Update, initialize_last_beacon_landscape_test_scenes)
@@ -169,7 +172,7 @@ fn initialize_last_beacon_landscape_test_scenes(
                 },
                 Transform::from_translation(camera_position),
                 environment::landscape_camera_rendering_bundle(),
-                foundation_free_fly_camera_bundle(),
+                last_beacon_free_fly_camera_bundle(),
                 Name::new("Last Beacon Landscape Free-Fly Camera"),
             ))
             .id();
