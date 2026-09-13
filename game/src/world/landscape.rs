@@ -130,10 +130,10 @@ impl Default for LandscapeGenerationSettings {
             lowland_flatten_strength: 0.65,
             color_rock_slope_start: 0.01,
             color_rock_slope_end: 0.3,
-            color_blend_sharpness: 16.0,
-            snow_height_start: 0.65,
+            snow_height_start: 0.2,
             snow_height_end: 0.85,
-            snow_slope_bias: 0.12,
+            snow_slope_bias: 0.3,
+            color_blend_sharpness: 32.0,
         }
     }
 }
