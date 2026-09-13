@@ -47,16 +47,36 @@ impl Plugin for LastBeaconFreeFlyCameraPlugin {
 /// after the fact, since its actions/bindings must be spawned in the same
 /// command as the context component.
 #[derive(Component)]
-#[require(LastBeaconFreeFlyCameraSettings, LastBeaconFreeFlyCameraOrientation)]
+#[require(
+    LastBeaconFreeFlyCameraSettings,
+    LastBeaconFreeFlyCameraOrientation,
+    LastBeaconFreeFlyCameraVelocity
+)]
 pub struct LastBeaconFreeFlyCameraInput;
 
 /// Tunable speed/sensitivity for a free-fly camera entity.
 #[derive(Component, Clone, Copy, Debug)]
 pub struct LastBeaconFreeFlyCameraSettings {
-    /// Movement speed in world units per second.
+    /// Top movement speed, in world units per second, that the camera
+    /// accelerates toward. Adjustable at runtime by scrolling the mouse
+    /// wheel; see [`LastBeaconFreeFlyCameraSpeedAdjust`].
     pub move_speed: f32,
     /// Radians of rotation applied per pixel of mouse motion.
     pub look_sensitivity: f32,
+    /// Seconds it takes the camera to accelerate from a stop up to
+    /// `move_speed` (and to decelerate back down to a stop). Acceleration is
+    /// derived from this and `move_speed` rather than stored separately, so
+    /// a camera scrolled to twice the speed still reaches full speed in the
+    /// same amount of time, not twice as long -- scrolling to change speed
+    /// changes the camera's acceleration along with it.
+    pub acceleration_time_seconds: f32,
+    /// Multiplier applied to `move_speed` per unit of mouse wheel scroll
+    /// (one "line" of scroll on most mice/trackpads).
+    pub scroll_speed_multiplier: f32,
+    /// Lower bound `move_speed` is clamped to when adjusted via scroll.
+    pub min_move_speed: f32,
+    /// Upper bound `move_speed` is clamped to when adjusted via scroll.
+    pub max_move_speed: f32,
 }
 
 impl Default for LastBeaconFreeFlyCameraSettings {
@@ -64,6 +84,10 @@ impl Default for LastBeaconFreeFlyCameraSettings {
         Self {
             move_speed: 10.0,
             look_sensitivity: 0.002,
+            acceleration_time_seconds: 0.25,
+            scroll_speed_multiplier: 1.15,
+            min_move_speed: 1.0,
+            max_move_speed: 250.0,
         }
     }
 }
@@ -81,6 +105,15 @@ pub struct LastBeaconFreeFlyCameraOrientation {
     pub pitch: f32,
 }
 
+/// Current velocity of a free-fly camera entity, in world units per second.
+///
+/// Tracked separately from `Transform` so movement can accelerate toward (and
+/// decelerate away from) the input-driven target velocity instead of
+/// snapping directly to it, which would otherwise make every start, stop, and
+/// direction change feel instantaneous and jerky.
+#[derive(Component, Clone, Copy, Debug, Default)]
+pub struct LastBeaconFreeFlyCameraVelocity(pub Vec3);
+
 /// Horizontal movement action (WASD). Output `x` is strafe, `y` is forward/back.
 #[derive(InputAction)]
 #[action_output(Vec2)]
@@ -95,6 +128,13 @@ pub struct LastBeaconFreeFlyCameraVertical;
 #[derive(InputAction)]
 #[action_output(Vec2)]
 pub struct LastBeaconFreeFlyCameraLook;
+
+/// Mouse wheel scroll action, used to adjust the camera's speed (and, since
+/// acceleration is derived from it, its acceleration too). Output `y` is
+/// positive when scrolling up/away from the user.
+#[derive(InputAction)]
+#[action_output(Vec2)]
+pub struct LastBeaconFreeFlyCameraSpeedAdjust;
 
 /// Returns the bundle a scene spawns to make an entity a free-fly camera.
 ///
@@ -127,6 +167,10 @@ pub fn last_beacon_free_fly_camera_bundle() -> impl Bundle {
                 Action::<LastBeaconFreeFlyCameraLook>::new(),
                 bindings![Binding::mouse_motion()],
             ),
+            (
+                Action::<LastBeaconFreeFlyCameraSpeedAdjust>::new(),
+                bindings![Binding::mouse_wheel()],
+            ),
         ]),
     )
 }
@@ -137,7 +181,8 @@ type LastBeaconFreeFlyCameraQuery<'world, 'state> = Query<
     (
         &'static mut Transform,
         &'static mut LastBeaconFreeFlyCameraOrientation,
-        &'static LastBeaconFreeFlyCameraSettings,
+        &'static mut LastBeaconFreeFlyCameraVelocity,
+        &'static mut LastBeaconFreeFlyCameraSettings,
         &'static Actions<LastBeaconFreeFlyCameraInput>,
     ),
 >;
@@ -148,9 +193,12 @@ fn move_last_beacon_free_fly_cameras(
     move_actions: Query<&Action<LastBeaconFreeFlyCameraMove>>,
     vertical_actions: Query<&Action<LastBeaconFreeFlyCameraVertical>>,
     look_actions: Query<&Action<LastBeaconFreeFlyCameraLook>>,
+    speed_adjust_actions: Query<&Action<LastBeaconFreeFlyCameraSpeedAdjust>>,
 ) {
     let elapsed_seconds = time.delta_secs();
-    for (mut transform, mut orientation, settings, camera_actions) in &mut free_fly_cameras {
+    for (mut transform, mut orientation, mut velocity, mut settings, camera_actions) in
+        &mut free_fly_cameras
+    {
         // `Action<A>` lives on a separate entity related to the context entity
         // via the `Actions<C>`/`ActionOf<C>` relationship, not as a component
         // on the context entity itself, hence the `iter_many` lookups below.
@@ -163,6 +211,20 @@ fn move_last_beacon_free_fly_cameras(
         let Some(look_action) = look_actions.iter_many(camera_actions).next() else {
             continue;
         };
+        let Some(speed_adjust_action) = speed_adjust_actions.iter_many(camera_actions).next()
+        else {
+            continue;
+        };
+
+        // Scroll wheel adjusts top speed multiplicatively, so it feels
+        // proportionate across the whole speed range instead of a fixed
+        // per-notch amount that's tiny at high speeds or huge at low ones.
+        let scroll_amount = speed_adjust_action.y;
+        if scroll_amount != 0.0 {
+            let scale = settings.scroll_speed_multiplier.powf(scroll_amount);
+            settings.move_speed = (settings.move_speed * scale)
+                .clamp(settings.min_move_speed, settings.max_move_speed);
+        }
 
         // Mouse motion is in screen pixels; negate so moving the mouse right
         // yaws right and moving it up pitches up.
@@ -186,14 +248,28 @@ fn move_last_beacon_free_fly_cameras(
         }
 
         let vertical_move_amount: f32 = **vertical_action;
-        let world_movement = world_move_direction + Vec3::Y * vertical_move_amount;
-        transform.translation += world_movement * settings.move_speed * elapsed_seconds;
+        let target_direction = world_move_direction + Vec3::Y * vertical_move_amount;
+        let target_velocity = target_direction * settings.move_speed;
+
+        // Accelerate/decelerate current velocity toward the target velocity,
+        // capped by how far `acceleration` can move it within this frame,
+        // rather than snapping straight to it.
+        let acceleration = settings.move_speed / settings.acceleration_time_seconds.max(1e-4);
+        let velocity_delta = target_velocity - velocity.0;
+        let max_delta_this_frame = acceleration * elapsed_seconds;
+        if velocity_delta.length_squared() > max_delta_this_frame * max_delta_this_frame {
+            velocity.0 += velocity_delta.normalize() * max_delta_this_frame;
+        } else {
+            velocity.0 = target_velocity;
+        }
+
+        transform.translation += velocity.0 * elapsed_seconds;
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use bevy::input::mouse::AccumulatedMouseMotion;
+    use bevy::input::mouse::{AccumulatedMouseMotion, AccumulatedMouseScroll};
     use foundation_runtime_library::prelude::FoundationPauseState;
 
     use super::*;
@@ -203,6 +279,7 @@ mod tests {
         app.add_plugins(MinimalPlugins);
         app.init_resource::<ButtonInput<KeyCode>>();
         app.init_resource::<AccumulatedMouseMotion>();
+        app.init_resource::<AccumulatedMouseScroll>();
         app.init_resource::<FoundationPauseState>();
         app.add_plugins(LastBeaconFreeFlyCameraPlugin);
         // `bevy_enhanced_input` finishes context setup in `Plugin::finish`, which
@@ -223,7 +300,7 @@ mod tests {
     }
 
     #[test]
-    fn pressing_w_moves_camera_forward() {
+    fn pressing_w_accelerates_camera_forward() {
         let (mut app, free_fly_camera_entity) = test_app_with_free_fly_camera();
 
         app.world_mut()
@@ -233,17 +310,22 @@ mod tests {
 
         // `TimePlugin` (part of `MinimalPlugins`) recomputes `Time`'s delta from
         // the real clock every frame, so this test can't force an exact elapsed
-        // duration -- it instead checks the movement formula against whatever
-        // real (small, non-deterministic) delta actually elapsed.
+        // duration -- it instead checks the acceleration formula against
+        // whatever real (small, non-deterministic) delta actually elapsed,
+        // assuming that delta stays well under `acceleration_time_seconds`
+        // (true for any realistic single frame), so the camera is still
+        // ramping up rather than already clamped to `move_speed`.
         let elapsed_seconds = app.world().resource::<Time>().delta_secs();
+        let settings = LastBeaconFreeFlyCameraSettings::default();
+        let acceleration = settings.move_speed / settings.acceleration_time_seconds;
+        let expected_z = -acceleration * elapsed_seconds * elapsed_seconds;
+
         let camera_transform = app
             .world()
             .get::<Transform>(free_fly_camera_entity)
             .expect("free-fly camera should have a Transform");
-        let default_move_speed = LastBeaconFreeFlyCameraSettings::default().move_speed;
-        let expected_z = -default_move_speed * elapsed_seconds;
-        // Facing the default -Z direction, "forward" (W) should decrease Z by
-        // move_speed * elapsed_seconds.
+        // Facing the default -Z direction, "forward" (W) should decrease Z
+        // while ramping up toward move_speed.
         assert!(
             (camera_transform.translation.z - expected_z).abs() < 0.0001,
             "expected the camera to move to z={expected_z}, got {:?}",
@@ -295,6 +377,69 @@ mod tests {
             orientation.yaw < 0.0,
             "expected negative yaw after rightward mouse motion, got {}",
             orientation.yaw
+        );
+    }
+
+    #[test]
+    fn scrolling_up_increases_move_speed() {
+        let (mut app, free_fly_camera_entity) = test_app_with_free_fly_camera();
+        let initial_speed = LastBeaconFreeFlyCameraSettings::default().move_speed;
+
+        app.world_mut()
+            .resource_mut::<AccumulatedMouseScroll>()
+            .delta = Vec2::new(0.0, 1.0);
+        app.update();
+
+        let settings = app
+            .world()
+            .get::<LastBeaconFreeFlyCameraSettings>(free_fly_camera_entity)
+            .expect("free-fly camera should have settings");
+        assert!(
+            settings.move_speed > initial_speed,
+            "expected scrolling up to increase move speed above {initial_speed}, got {}",
+            settings.move_speed
+        );
+    }
+
+    #[test]
+    fn scrolling_down_decreases_move_speed() {
+        let (mut app, free_fly_camera_entity) = test_app_with_free_fly_camera();
+        let initial_speed = LastBeaconFreeFlyCameraSettings::default().move_speed;
+
+        app.world_mut()
+            .resource_mut::<AccumulatedMouseScroll>()
+            .delta = Vec2::new(0.0, -1.0);
+        app.update();
+
+        let settings = app
+            .world()
+            .get::<LastBeaconFreeFlyCameraSettings>(free_fly_camera_entity)
+            .expect("free-fly camera should have settings");
+        assert!(
+            settings.move_speed < initial_speed,
+            "expected scrolling down to decrease move speed below {initial_speed}, got {}",
+            settings.move_speed
+        );
+    }
+
+    #[test]
+    fn move_speed_is_clamped_to_configured_bounds() {
+        let (mut app, free_fly_camera_entity) = test_app_with_free_fly_camera();
+
+        for _ in 0..500 {
+            app.world_mut()
+                .resource_mut::<AccumulatedMouseScroll>()
+                .delta = Vec2::new(0.0, 1.0);
+            app.update();
+        }
+
+        let settings = app
+            .world()
+            .get::<LastBeaconFreeFlyCameraSettings>(free_fly_camera_entity)
+            .expect("free-fly camera should have settings");
+        assert_eq!(
+            settings.move_speed, settings.max_move_speed,
+            "move speed should clamp at max_move_speed after scrolling far past it"
         );
     }
 }
