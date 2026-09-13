@@ -47,6 +47,25 @@ pub struct LastBeaconVehicleConnectionResolved;
 /// side it's named on.
 const LAST_BEACON_VEHICLE_HINGE_AXIS: Vec3 = Vec3::Y;
 
+/// Every module instance in the vehicle, along with the two pieces of state
+/// [`wire_last_beacon_vehicle_connections`] needs to decide whether it is
+/// safe to reference in a joint yet: whether it's still loading its own
+/// `.bsn` content, and whether it has actually been materialized into a
+/// rigid body. Factored into a named type (rather than inlined at each call
+/// site) both to satisfy clippy's `type_complexity` lint and because the
+/// same query shape is needed by [`find_named_module_instance`].
+type ModuleInstancesQuery<'world, 'state> = Query<
+    'world,
+    'state,
+    (
+        Entity,
+        &'static Name,
+        Option<&'static LastBeaconVehicleModuleInstancePending>,
+        Has<RigidBody>,
+    ),
+    With<LastBeaconVehicleModuleInstance>,
+>;
+
 /// Resolves every unresolved [`LastBeaconVehicleConnection`] and spawns its
 /// joint once both named module instances have finished loading.
 pub fn wire_last_beacon_vehicle_connections(
@@ -55,14 +74,7 @@ pub fn wire_last_beacon_vehicle_connections(
         (Entity, &LastBeaconVehicleConnection, &ChildOf),
         Without<LastBeaconVehicleConnectionResolved>,
     >,
-    module_instances: Query<
-        (
-            Entity,
-            &Name,
-            Option<&LastBeaconVehicleModuleInstancePending>,
-        ),
-        With<LastBeaconVehicleModuleInstance>,
-    >,
+    module_instances: ModuleInstancesQuery,
     children_query: Query<&Children>,
     sockets: Query<(&LastBeaconVehicleModuleSocket, &Transform)>,
 ) {
@@ -88,8 +100,24 @@ pub fn wire_last_beacon_vehicle_connections(
         };
 
         // Wait for both referenced modules to finish loading their own
-        // `.bsn` module definition before their sockets exist to search.
-        if module_a.is_pending || module_b.is_pending {
+        // `.bsn` module definition before their sockets exist to search, AND
+        // for each to have actually become a rigid body -- belt-and-suspenders
+        // against the "Neither body ... is in an island" Avian3D panic this
+        // module previously shipped (see `LastBeaconVehiclePlugin`'s system
+        // ordering comment in `mod.rs`). `is_pending` alone only proves a
+        // module's `.bsn` content has been applied; `RigidBody` insertion
+        // happens later, via a separate deferred `Commands` flush in
+        // `materialize_last_beacon_vehicle_module_bodies`/
+        // `_wheel_module_bodies`. Trusting system-chain ordering alone to
+        // keep those two events in the same frame is an implicit invariant a
+        // future refactor could silently break; checking `RigidBody`
+        // presence here directly makes this system self-sufficient instead
+        // of relying purely on schedule ordering elsewhere.
+        if module_a.is_pending
+            || module_b.is_pending
+            || !module_a.has_rigid_body
+            || !module_b.has_rigid_body
+        {
             continue;
         }
 
@@ -155,25 +183,20 @@ pub fn wire_last_beacon_vehicle_connections(
 struct ResolvedModuleInstance {
     entity: Entity,
     is_pending: bool,
+    has_rigid_body: bool,
 }
 
 fn find_named_module_instance(
     sibling_entities: &Children,
-    module_instances: &Query<
-        (
-            Entity,
-            &Name,
-            Option<&LastBeaconVehicleModuleInstancePending>,
-        ),
-        With<LastBeaconVehicleModuleInstance>,
-    >,
+    module_instances: &ModuleInstancesQuery,
     instance_name: &str,
 ) -> Option<ResolvedModuleInstance> {
     sibling_entities.iter().find_map(|sibling_entity| {
-        let (entity, name, pending) = module_instances.get(sibling_entity).ok()?;
+        let (entity, name, pending, has_rigid_body) = module_instances.get(sibling_entity).ok()?;
         (name.as_str() == instance_name).then_some(ResolvedModuleInstance {
             entity,
             is_pending: pending.is_some(),
+            has_rigid_body,
         })
     })
 }
@@ -233,12 +256,17 @@ mod tests {
         world.entity_mut(module_entity).add_child(socket_entity);
         // The wiring system only requires `With<LastBeaconVehicleModuleInstance>`
         // to recognize an entity as a module instance; content beyond that
-        // doesn't matter for this test.
-        world
-            .entity_mut(module_entity)
-            .insert(LastBeaconVehicleModuleInstance {
+        // doesn't matter for this test. `RigidBody` is included because
+        // "resolved" here is meant to mean "fully materialized, ready to be
+        // wired" -- matching what `materialize_last_beacon_vehicle_module_bodies`/
+        // `_wheel_module_bodies` insert once a module's content is actually
+        // applied.
+        world.entity_mut(module_entity).insert((
+            LastBeaconVehicleModuleInstance {
                 asset_path: "unused.bsn".to_string(),
-            });
+            },
+            RigidBody::Dynamic,
+        ));
         module_entity
     }
 
@@ -451,5 +479,84 @@ mod tests {
 
         let mut joints = app.world_mut().query::<&FixedJoint>();
         assert_eq!(joints.iter(app.world()).count(), 1);
+    }
+
+    #[test]
+    fn a_connection_referencing_a_non_pending_module_without_a_rigid_body_yet_does_not_spawn_a_joint_yet(
+    ) {
+        // Mirrors `a_connection_referencing_a_still_pending_module_does_not_spawn_a_joint_yet`,
+        // but for the belt-and-suspenders check this test targets directly:
+        // a module can have already finished applying its `.bsn` content
+        // (so `LastBeaconVehicleModuleInstancePending` is gone) for one or
+        // more frames before `materialize_last_beacon_vehicle_module_bodies`/
+        // `_wheel_module_bodies` gets around to inserting its `RigidBody` --
+        // exactly the one-frame gap that caused the "Neither body ... is in
+        // an island" Avian3D panic this module now defends against
+        // independently of `LastBeaconVehiclePlugin`'s system ordering.
+        let mut app = test_app();
+
+        let (module_a, module_b, connection_entity) = {
+            let world = app.world_mut();
+
+            let module_a = spawn_resolved_module(
+                world,
+                "ModuleA",
+                "front",
+                Vec3::ZERO,
+                LastBeaconVehicleJointKind::Fixed,
+            );
+            let module_b = spawn_resolved_module(
+                world,
+                "ModuleB",
+                "root",
+                Vec3::ZERO,
+                LastBeaconVehicleJointKind::Fixed,
+            );
+            // Simulate ModuleB having already applied its `.bsn` content
+            // (no `LastBeaconVehicleModuleInstancePending` marker) but not
+            // yet having been materialized into a rigid body.
+            world.entity_mut(module_b).remove::<RigidBody>();
+            let vehicle_root = world.spawn_empty().id();
+            let connection_entity = world
+                .spawn(LastBeaconVehicleConnection {
+                    module_a: "ModuleA".to_string(),
+                    socket_a: "front".to_string(),
+                    module_b: "ModuleB".to_string(),
+                    socket_b: "root".to_string(),
+                })
+                .id();
+            world
+                .entity_mut(vehicle_root)
+                .add_children(&[module_a, module_b, connection_entity]);
+
+            (module_a, module_b, connection_entity)
+        };
+
+        app.update();
+
+        let mut joints = app.world_mut().query::<&FixedJoint>();
+        assert_eq!(
+            joints.iter(app.world()).count(),
+            0,
+            "no joint should spawn while ModuleB is not yet a rigid body, even though it is no longer pending"
+        );
+        assert!(app
+            .world()
+            .get::<LastBeaconVehicleConnectionResolved>(connection_entity)
+            .is_none());
+
+        // Now let materialization "catch up" and confirm the joint spawns.
+        app.world_mut()
+            .entity_mut(module_b)
+            .insert(RigidBody::Dynamic);
+        app.update();
+
+        let mut joints = app.world_mut().query::<&FixedJoint>();
+        let joint = joints
+            .iter(app.world())
+            .next()
+            .expect("a FixedJoint should have been spawned once ModuleB became a rigid body");
+        assert_eq!(joint.body1, module_a);
+        assert_eq!(joint.body2, module_b);
     }
 }
