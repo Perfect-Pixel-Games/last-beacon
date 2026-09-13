@@ -7,9 +7,11 @@
 //! itself; concrete gameplay modules (powered wheels, thrusters, weapons)
 //! are future work built on top of it.
 
+mod connection;
 mod instance;
 mod module_body;
 
+pub use connection::wire_last_beacon_vehicle_connections;
 pub use instance::{
     apply_pending_last_beacon_vehicle_module_instances, queue_last_beacon_vehicle_module_instances,
 };
@@ -87,6 +89,7 @@ impl Default for LastBeaconVehicleWheelModuleBody {
 /// `Transform` is a plain public-field struct.
 #[derive(Clone, Debug, Default, Component, Reflect)]
 #[reflect(Component, Default)]
+#[require(Transform)]
 pub struct LastBeaconVehicleModuleSocket {
     /// Name used by a [`LastBeaconVehicleConnection`] to reference this socket.
     pub socket_name: String,
@@ -107,6 +110,41 @@ pub struct LastBeaconVehicleModuleInstance {
     pub asset_path: String,
 }
 
+/// Which kind of Avian3D joint a [`LastBeaconVehicleConnection`] spawns.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Reflect)]
+#[reflect(Default)]
+pub enum LastBeaconVehicleJointKind {
+    /// A rigid weld -- zero relative motion between the two sockets. The
+    /// default for ordinary structural connections.
+    #[default]
+    Fixed,
+    /// A free-spinning hinge, for wheels. Always rotates about the *wheel*
+    /// module's own local Y axis, matching `Collider::cylinder`'s natural
+    /// rotational symmetry axis -- see `connection::LAST_BEACON_VEHICLE_HINGE_AXIS`.
+    Hinge,
+}
+
+/// A sibling entity under a vehicle root, naming two module instances (by
+/// `Name`) and a socket on each (by `socket_name`) to join together.
+///
+/// [`wire_last_beacon_vehicle_connections`] resolves this once both named
+/// module instances have finished loading and spawns the corresponding
+/// Avian3D joint entity.
+#[derive(Clone, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconVehicleConnection {
+    /// `Name` of the first module instance in this vehicle.
+    pub module_a: String,
+    /// Socket name on `module_a` to anchor this joint to.
+    pub socket_a: String,
+    /// `Name` of the second module instance in this vehicle.
+    pub module_b: String,
+    /// Socket name on `module_b` to anchor this joint to.
+    pub socket_b: String,
+    /// Which joint type to spawn.
+    pub joint_kind: LastBeaconVehicleJointKind,
+}
+
 /// Installs Last Beacon's modular-vehicle attachment system.
 #[derive(Default)]
 pub struct LastBeaconVehiclePlugin;
@@ -117,6 +155,8 @@ impl Plugin for LastBeaconVehiclePlugin {
             .register_type::<LastBeaconVehicleWheelModuleBody>()
             .register_type::<LastBeaconVehicleModuleSocket>()
             .register_type::<LastBeaconVehicleModuleInstance>()
+            .register_type::<LastBeaconVehicleConnection>()
+            .register_type::<LastBeaconVehicleJointKind>()
             .add_systems(
                 Update,
                 (
@@ -124,6 +164,7 @@ impl Plugin for LastBeaconVehiclePlugin {
                     materialize_last_beacon_vehicle_wheel_module_bodies,
                     queue_last_beacon_vehicle_module_instances,
                     apply_pending_last_beacon_vehicle_module_instances,
+                    wire_last_beacon_vehicle_connections,
                 )
                     .chain(),
             );
