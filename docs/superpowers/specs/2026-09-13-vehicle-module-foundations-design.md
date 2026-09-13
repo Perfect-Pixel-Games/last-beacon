@@ -104,13 +104,19 @@ regression test in `foundation-runtime-library`'s `lib.rs`):
 - **`LastBeaconVehicleWheelModuleBody { radius, width, mass, color }`** —
   same idea for the Wheel module's cylinder shape
   (`Collider::cylinder(radius, width)`), since a wheel isn't a box.
-- **`LastBeaconVehicleModuleSocket { socket_name }`** — authored on a child
-  entity of a module root, alongside a plain `Transform` giving that socket's
-  local anchor offset relative to the module's rigid body. No orientation
-  data beyond that is authored; a `Fixed` joint welds whatever relative pose
-  the two bodies have when connected, and a `Hinge` joint's axis is always
-  the socket's local X (see below) — so a socket's `Transform` only needs a
-  translation in practice.
+- **`LastBeaconVehicleModuleSocket { socket_name, attachment_kind }`** —
+  authored on a child entity of a module root, alongside a plain `Transform`
+  giving that socket's local anchor offset relative to the module's rigid
+  body. `attachment_kind` (`LastBeaconVehicleJointKind::Fixed` default, or
+  `::Hinge`) is intrinsic to the *socket*, not the connection: a wheel
+  module's axle socket declares itself `Hinge`, every other socket defaults
+  to `Fixed`. This is deliberate — a future in-game vehicle editor should
+  never ask an end user "is this a hinge?" when they connect two parts; the
+  module's own socket already knows. No orientation data beyond the anchor
+  offset is authored; a `Fixed` joint welds whatever relative pose the two
+  bodies have when connected, and a `Hinge` joint's axis is always the
+  hinge-declaring module's own local Y (see below) — so a socket's
+  `Transform` only needs a translation in practice.
 - **`LastBeaconVehicleModuleInstance { asset_path }`** — authored in a
   *vehicle* `.bsn`, one per module placed in that vehicle. A system loads and
   applies that module's `.bsn` onto this entity, the same load/apply flow
@@ -119,21 +125,26 @@ regression test in `foundation-runtime-library`'s `lib.rs`):
   `#CoreBlock`) and an approximate placement `Transform` for initial
   layout — approximate because the joint, not the authored transform, is
   what ultimately pins modules together once physics starts stepping.
-- **`LastBeaconVehicleConnection { module_a, socket_a, module_b, socket_b, joint_kind }`**
+- **`LastBeaconVehicleConnection { module_a, socket_a, module_b, socket_b }`**
   — a sibling entity under the vehicle root, naming two module instances (by
-  `Name`) and a socket on each (by `socket_name`). `joint_kind` is
-  `LastBeaconVehicleJointKind::Fixed` (default) or `::Hinge`. A system waits
-  until both referenced module instances have finished resolving (no longer
-  carrying their "pending" marker), resolves each named socket among that
-  module's children, and spawns the corresponding Avian joint
-  (`FixedJoint` or a revolute joint) using each socket's local `Transform.translation`
-  as the joint's local anchor on that body. For `Hinge`, the joint's
-  rotation axis is fixed to the *wheel* socket's local X axis by convention
-  — nothing extra is authored per connection.
+  `Name`) and a socket on each (by `socket_name`). It carries no joint-kind
+  field of its own. A system waits until both referenced module instances
+  have finished resolving (no longer carrying their "pending" marker),
+  resolves each named socket among that module's children, and spawns the
+  corresponding Avian joint (`FixedJoint` or a revolute joint) using each
+  socket's local `Transform.translation` as the joint's local anchor on that
+  body. The joint kind is derived from the two resolved sockets themselves:
+  if either socket's `attachment_kind` is `Hinge`, a revolute joint is
+  spawned (rotation axis fixed to that socket's owning module's local Y axis
+  — verified against Avian3D's own solver source to be applied independently
+  in each body's local frame, so this is correct regardless of which side of
+  the connection names the wheel); otherwise a `FixedJoint` welds the two
+  bodies. Nothing extra is authored per connection — the vehicle author just
+  names two sockets.
 
 Named sockets today, but nothing about this model requires it going forward:
 the joint-wiring system only ever needs to resolve two
-`(rigid body entity, local anchor, optional axis)` pairs. A future
+`(rigid body entity, local anchor, attachment kind)` pairs. A future
 free-placement tool could produce a `LastBeaconVehicleConnection`-equivalent
 from an arbitrary clicked point instead of a pre-declared socket without
 changing this system.
@@ -149,9 +160,11 @@ Four `.bsn` files under `game/assets/vehicle/modules/`:
 - **`plate.bsn`** — flat box, sockets at its four corners
   (`front_left`, `front_right`, `back_left`, `back_right`). Acts as a chassis
   panel.
-- **`wheel.bsn`** — cylinder, one socket (`axle`) at its center, meant to be
-  connected with `joint_kind: Hinge` so it spins freely (unpowered — no
-  motor/target velocity, just a free revolute constraint).
+- **`wheel.bsn`** — cylinder, one socket (`axle`) at its center, with
+  `attachment_kind: Hinge` authored directly on that socket, so any
+  connection using it spins freely (unpowered — no motor/target velocity,
+  just a free revolute constraint) without the vehicle author having to
+  specify anything about joints.
 
 ## Test vehicle
 
