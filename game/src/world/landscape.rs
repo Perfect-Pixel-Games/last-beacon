@@ -94,19 +94,28 @@ pub struct LandscapeGenerationSettings {
     /// way, the blend still starts and ends at exactly the same points --
     /// only the shape of the curve between them changes.
     pub color_blend_sharpness: f32,
+    /// Fraction (`0`-`1`) of the mesh's own height range at which the
+    /// grey/green-to-white snow-cap blend starts on flat ground (before
+    /// [`snow_slope_bias`](Self::snow_slope_bias) shifts it for steeper
+    /// vertices). `0` is the mesh's lowest point, `1` is its highest.
+    pub snow_height_start: f32,
+    /// Fraction of the mesh's height range at which flat ground reaches
+    /// full white. See
+    /// [`snow_height_start`](Self::snow_height_start).
+    pub snow_height_end: f32,
     /// How much a vertex's slope shifts its *effective* height for the
     /// snow-cap blend, as a fraction of the mesh's own height range. `0.0`
     /// disables this (snow appears at exactly the same height regardless of
     /// slope -- a flat, unnaturally uniform contour band around the
     /// mountain). Positive values make steeper terrain need more elevation
-    /// before showing snow, while flat ground still starts snowing at the
-    /// unshifted height thresholds -- so the snowline follows the terrain's
-    /// own slope variation instead of a flat band, and steep faces can stay
-    /// bare much closer to the peak. Kept at or below `0.15` (`1.0` minus
-    /// the snow blend's own end threshold, `0.85`), this mesh's single
-    /// highest vertex is still guaranteed pure white regardless of its
-    /// slope; higher values trade that guarantee for a stronger slope
-    /// effect at the very top too.
+    /// before showing snow, while flat ground still starts snowing at
+    /// [`snow_height_start`](Self::snow_height_start) unshifted -- so the
+    /// snowline follows the terrain's own slope variation instead of a flat
+    /// band, and steep faces can stay bare much closer to the peak. Kept at
+    /// or below `1.0` minus [`snow_height_end`](Self::snow_height_end), this
+    /// mesh's single highest vertex is still guaranteed pure white
+    /// regardless of its slope; higher values trade that guarantee for a
+    /// stronger slope effect at the very top too.
     pub snow_slope_bias: f32,
 }
 
@@ -122,6 +131,8 @@ impl Default for LandscapeGenerationSettings {
             color_rock_slope_start: 0.01,
             color_rock_slope_end: 0.3,
             color_blend_sharpness: 16.0,
+            snow_height_start: 0.65,
+            snow_height_end: 0.85,
             snow_slope_bias: 0.12,
         }
     }
@@ -175,6 +186,8 @@ pub fn apply_named_parameter(
         "color-rock-slope-start" => settings.color_rock_slope_start = value,
         "color-rock-slope-end" => settings.color_rock_slope_end = value,
         "color-blend-sharpness" => settings.color_blend_sharpness = value,
+        "snow-height-start" => settings.snow_height_start = value,
+        "snow-height-end" => settings.snow_height_end = value,
         "snow-slope-bias" => settings.snow_slope_bias = value,
         _ => return Err(format!("unknown landscape parameter '{name}'")),
     }
@@ -230,6 +243,8 @@ pub fn named_parameter_value(
         "color-rock-slope-start" => settings.color_rock_slope_start,
         "color-rock-slope-end" => settings.color_rock_slope_end,
         "color-blend-sharpness" => settings.color_blend_sharpness,
+        "snow-height-start" => settings.snow_height_start,
+        "snow-height-end" => settings.snow_height_end,
         "snow-slope-bias" => settings.snow_slope_bias,
         _ => return Err(format!("unknown landscape parameter '{name}'")),
     };
@@ -466,7 +481,11 @@ fn compute_landscape_vertex_colors(
             let snow_height_penalty = normalized_slope_fraction * settings.snow_slope_bias;
             let effective_snow_height_fraction = (height_fraction - snow_height_penalty).max(0.0);
             let snow_fraction = sharpen_blend_fraction(
-                smoothstep(0.65, 0.85, effective_snow_height_fraction),
+                smoothstep(
+                    settings.snow_height_start,
+                    settings.snow_height_end,
+                    effective_snow_height_fraction,
+                ),
                 settings.color_blend_sharpness,
             );
             let blended_color = sloped_color.lerp(LANDSCAPE_SNOW_COLOR, snow_fraction);
@@ -611,6 +630,8 @@ mod tests {
             "color-rock-slope-start",
             "color-rock-slope-end",
             "color-blend-sharpness",
+            "snow-height-start",
+            "snow-height-end",
             "snow-slope-bias",
         ];
 
@@ -974,5 +995,56 @@ mod tests {
             "at the same height, flatter ground should show more snow than steep ground: \
              flat={flat_vertex_whiteness}, steep={steep_vertex_whiteness}"
         );
+    }
+
+    #[test]
+    fn snow_height_thresholds_move_where_flat_ground_starts_snowing() {
+        // The flat vertex here sits at height-fraction 0.8, inside the
+        // default 0.65..0.85 snow band, so it shows a partial snow blend by
+        // default. Moving the whole band above it should leave it with no
+        // snow blend at all, confirming these thresholds -- not just
+        // `snow_slope_bias` -- control where the blend happens.
+        let (positions, normals) = snow_bias_test_positions_and_normals();
+        let flat_vertex_index = 2;
+
+        let default_settings = LandscapeGenerationSettings {
+            snow_slope_bias: 0.0,
+            ..Default::default()
+        };
+        let default_colors =
+            compute_landscape_vertex_colors(&positions, &normals, &default_settings);
+
+        let shifted_settings = LandscapeGenerationSettings {
+            snow_slope_bias: 0.0,
+            snow_height_start: 0.9,
+            snow_height_end: 0.95,
+            ..Default::default()
+        };
+        let shifted_colors =
+            compute_landscape_vertex_colors(&positions, &normals, &shifted_settings);
+
+        assert_ne!(
+            default_colors[flat_vertex_index], shifted_colors[flat_vertex_index],
+            "moving snow_height_start/end above a vertex's height should change its color"
+        );
+
+        // This vertex is perfectly flat, so with no snow contribution its
+        // color is pure grass (its slope is well below
+        // `color_rock_slope_start` too).
+        let grass_color_only = [
+            LANDSCAPE_GRASS_COLOR.x,
+            LANDSCAPE_GRASS_COLOR.y,
+            LANDSCAPE_GRASS_COLOR.z,
+            1.0,
+        ];
+        for (channel, grass_channel) in shifted_colors[flat_vertex_index]
+            .iter()
+            .zip(grass_color_only)
+        {
+            assert!(
+                (channel - grass_channel).abs() < 1e-4,
+                "with the snow band moved above this vertex, it should show no snow blend at all"
+            );
+        }
     }
 }
