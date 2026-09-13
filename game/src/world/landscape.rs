@@ -84,6 +84,16 @@ pub struct LandscapeGenerationSettings {
     /// Fraction of the mesh's steepest slope at which the blend reaches full
     /// grey. See [`color_rock_slope_start`](Self::color_rock_slope_start).
     pub color_rock_slope_end: f32,
+    /// Controls how sharply the color blends (green-to-grey by slope, and
+    /// the snow cap by height) switch between colors, independent of where
+    /// [`color_rock_slope_start`](Self::color_rock_slope_start)/
+    /// [`color_rock_slope_end`](Self::color_rock_slope_end) place that
+    /// transition. `1.0` leaves the smoothstep's natural S-curve unchanged;
+    /// values above `1.0` make the transition snap more abruptly around its
+    /// midpoint; values below `1.0` spread it out more gradually. Either
+    /// way, the blend still starts and ends at exactly the same points --
+    /// only the shape of the curve between them changes.
+    pub color_blend_sharpness: f32,
 }
 
 impl Default for LandscapeGenerationSettings {
@@ -97,6 +107,7 @@ impl Default for LandscapeGenerationSettings {
             lowland_flatten_strength: 0.65,
             color_rock_slope_start: 0.01,
             color_rock_slope_end: 0.3,
+            color_blend_sharpness: 1.0,
         }
     }
 }
@@ -148,6 +159,7 @@ pub fn apply_named_parameter(
         "lowland-flatten-strength" => settings.lowland_flatten_strength = value,
         "color-rock-slope-start" => settings.color_rock_slope_start = value,
         "color-rock-slope-end" => settings.color_rock_slope_end = value,
+        "color-blend-sharpness" => settings.color_blend_sharpness = value,
         _ => return Err(format!("unknown landscape parameter '{name}'")),
     }
     Ok(())
@@ -201,6 +213,7 @@ pub fn named_parameter_value(
         "lowland-flatten-strength" => settings.lowland_flatten_strength,
         "color-rock-slope-start" => settings.color_rock_slope_start,
         "color-rock-slope-end" => settings.color_rock_slope_end,
+        "color-blend-sharpness" => settings.color_blend_sharpness,
         _ => return Err(format!("unknown landscape parameter '{name}'")),
     };
     Ok(value)
@@ -416,16 +429,22 @@ fn compute_landscape_vertex_colors(
 
             // Base color is purely slope-driven: green on flat ground, grey on
             // steep slopes, with a smooth gradient between the two.
-            let rock_fraction = smoothstep(
-                settings.color_rock_slope_start,
-                settings.color_rock_slope_end,
-                normalized_slope_fraction,
+            let rock_fraction = sharpen_blend_fraction(
+                smoothstep(
+                    settings.color_rock_slope_start,
+                    settings.color_rock_slope_end,
+                    normalized_slope_fraction,
+                ),
+                settings.color_blend_sharpness,
             );
             let sloped_color = LANDSCAPE_GRASS_COLOR.lerp(LANDSCAPE_ROCK_COLOR, rock_fraction);
 
             // White snow caps layer on top by altitude alone, so peaks read as
             // white even where they're steep, rather than competing with rock.
-            let snow_fraction = smoothstep(0.65, 0.85, height_fraction);
+            let snow_fraction = sharpen_blend_fraction(
+                smoothstep(0.65, 0.85, height_fraction),
+                settings.color_blend_sharpness,
+            );
             let blended_color = sloped_color.lerp(LANDSCAPE_SNOW_COLOR, snow_fraction);
 
             [blended_color.x, blended_color.y, blended_color.z, 1.0]
@@ -437,6 +456,21 @@ fn compute_landscape_vertex_colors(
 fn smoothstep(edge0: f32, edge1: f32, value: f32) -> f32 {
     let normalized_value = ((value - edge0) / (edge1 - edge0)).clamp(0.0, 1.0);
     normalized_value * normalized_value * (3.0 - 2.0 * normalized_value)
+}
+
+/// Steepens or softens a `0..=1` blend fraction around its midpoint, without
+/// moving where it reaches `0` or `1` -- so callers can control how sharply
+/// a blend transitions without touching whatever thresholds decided *where*
+/// it transitions. `sharpness == 1.0` is the identity (no change); `> 1.0`
+/// snaps the transition harder around the midpoint; `< 1.0` spreads it out
+/// more gradually.
+fn sharpen_blend_fraction(fraction: f32, sharpness: f32) -> f32 {
+    let sharpness = sharpness.max(1e-4);
+    if fraction < 0.5 {
+        0.5 * (2.0 * fraction).powf(sharpness)
+    } else {
+        1.0 - 0.5 * (2.0 * (1.0 - fraction)).powf(sharpness)
+    }
 }
 
 #[cfg(test)]
@@ -552,6 +586,7 @@ mod tests {
             "lowland-flatten-strength",
             "color-rock-slope-start",
             "color-rock-slope-end",
+            "color-blend-sharpness",
         ];
 
         for name in names {
@@ -710,6 +745,107 @@ mod tests {
             visibly_rocky_count > normals.len() / 100,
             "expected at least 1% of vertices to show a visible rock blend, got {visibly_rocky_count}/{}",
             normals.len()
+        );
+    }
+
+    #[test]
+    fn sharpen_blend_fraction_is_identity_at_default_sharpness() {
+        for fraction in [0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0] {
+            let sharpened = sharpen_blend_fraction(fraction, 1.0);
+            assert!(
+                (sharpened - fraction).abs() < 1e-5,
+                "sharpness 1.0 should leave {fraction} unchanged, got {sharpened}"
+            );
+        }
+    }
+
+    #[test]
+    fn sharpen_blend_fraction_keeps_endpoints_fixed() {
+        for sharpness in [0.1, 0.5, 1.0, 2.0, 8.0] {
+            assert!(
+                sharpen_blend_fraction(0.0, sharpness).abs() < 1e-5,
+                "sharpness {sharpness} should not move the 0.0 endpoint"
+            );
+            assert!(
+                (sharpen_blend_fraction(1.0, sharpness) - 1.0).abs() < 1e-5,
+                "sharpness {sharpness} should not move the 1.0 endpoint"
+            );
+        }
+    }
+
+    #[test]
+    fn higher_sharpness_pushes_the_midpoint_region_away_from_center() {
+        let soft = sharpen_blend_fraction(0.25, 1.0);
+        let sharp = sharpen_blend_fraction(0.25, 4.0);
+        assert!(
+            sharp < soft,
+            "sharpness above 1.0 should pull a below-midpoint fraction closer to 0, got soft={soft} sharp={sharp}"
+        );
+
+        let soft = sharpen_blend_fraction(0.75, 1.0);
+        let sharp = sharpen_blend_fraction(0.75, 4.0);
+        assert!(
+            sharp > soft,
+            "sharpness above 1.0 should push an above-midpoint fraction closer to 1, got soft={soft} sharp={sharp}"
+        );
+    }
+
+    #[test]
+    fn lower_sharpness_pulls_values_toward_the_midpoint() {
+        let neutral = sharpen_blend_fraction(0.25, 1.0);
+        let gradual = sharpen_blend_fraction(0.25, 0.25);
+        assert!(
+            gradual > neutral,
+            "sharpness below 1.0 should pull a below-midpoint fraction toward 0.5, got neutral={neutral} gradual={gradual}"
+        );
+    }
+
+    #[test]
+    fn color_blend_sharpness_changes_mid_blend_colors_but_not_pure_grass_vertices() {
+        // Pure-grass vertices (rock_fraction == 0, a fixed point of
+        // `sharpen_blend_fraction`) should be untouched by this parameter,
+        // while at least some other vertex's blended color should change --
+        // confirming it reshapes the curve between the thresholds rather
+        // than moving the thresholds themselves.
+        let mut settings = LandscapeGenerationSettings::default();
+        let positions = build_landscape_positions(1337, &settings);
+        let triangle_indices = build_landscape_triangle_indices();
+        let normals = compute_landscape_normals(&positions, &triangle_indices);
+
+        let colors_at = |settings: &LandscapeGenerationSettings| {
+            compute_landscape_vertex_colors(&positions, &normals, settings)
+        };
+
+        let baseline_colors = colors_at(&settings);
+        settings.color_blend_sharpness = 6.0;
+        let sharpened_colors = colors_at(&settings);
+
+        let is_pure_grass = |color: &[f32; 4]| {
+            (color[0] - LANDSCAPE_GRASS_COLOR.x).abs() < 1e-4
+                && (color[1] - LANDSCAPE_GRASS_COLOR.y).abs() < 1e-4
+                && (color[2] - LANDSCAPE_GRASS_COLOR.z).abs() < 1e-4
+        };
+
+        let mut any_color_changed = false;
+        for (baseline, sharpened) in baseline_colors.iter().zip(&sharpened_colors) {
+            if is_pure_grass(baseline) {
+                assert!(
+                    is_pure_grass(sharpened),
+                    "a pure-grass vertex should stay pure grass regardless of blend sharpness"
+                );
+                continue;
+            }
+
+            let changed = baseline
+                .iter()
+                .zip(sharpened)
+                .any(|(base_channel, sharp_channel)| (base_channel - sharp_channel).abs() > 1e-4);
+            any_color_changed |= changed;
+        }
+
+        assert!(
+            any_color_changed,
+            "expected color_blend_sharpness to change at least one vertex's blended color"
         );
     }
 }
