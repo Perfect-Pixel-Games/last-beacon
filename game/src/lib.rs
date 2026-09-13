@@ -8,6 +8,7 @@ use std::path::PathBuf;
 
 use bevy::{
     asset::AssetPlugin,
+    camera::Hdr,
     prelude::*,
     render::{
         settings::{Backends, InstanceFlags, RenderCreation, WgpuSettings},
@@ -127,6 +128,21 @@ fn spawn_default_camera(mut commands: Commands) {
         // meaningfully benefit from hardware MSAA, so disabling it here
         // sidesteps that whole class of cross-camera compositing risk.
         Msaa::Off,
+        // Bevy groups cameras sharing a render target by `(target, hdr)` to
+        // decide blending (`bevy_render::camera::sort_cameras`): only the
+        // first camera *within a group* replaces the framebuffer outright;
+        // every other camera in that same group alpha-blends over it
+        // (`bevy_core_pipeline::upscaling`). The World scene's camera
+        // (`world::environment::landscape_camera_rendering_bundle`) has
+        // `Hdr`, so without it here this camera formed its own separate
+        // `(window, hdr=false)` group and was *also* treated as "first" --
+        // replacing the whole framebuffer with its own mostly-transparent
+        // UI render instead of blending over the World scene, which is what
+        // actually produced the black backdrop behind the pause menu.
+        // Adding `Hdr` here puts both cameras in the same group so this one
+        // (rendering after World's, whichever order is currently active)
+        // alpha-blends on top as intended.
+        Hdr,
     ));
 }
 
