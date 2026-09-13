@@ -93,6 +93,13 @@ impl Default for LastBeaconVehicleWheelModuleBody {
 pub struct LastBeaconVehicleModuleSocket {
     /// Name used by a [`LastBeaconVehicleConnection`] to reference this socket.
     pub socket_name: String,
+    /// The kind of joint any [`LastBeaconVehicleConnection`] using this
+    /// socket produces. `Fixed` (the default) welds rigidly; `Hinge` allows
+    /// free rotation about this socket's owning module's own local Y axis --
+    /// only meaningful for wheel-like modules. This is an intrinsic property
+    /// of the socket (and therefore the module), not something a vehicle
+    /// author chooses per-connection.
+    pub attachment_kind: LastBeaconVehicleJointKind,
 }
 
 /// Authored in a *vehicle* `.bsn`, one per module placed in that vehicle.
@@ -110,7 +117,14 @@ pub struct LastBeaconVehicleModuleInstance {
     pub asset_path: String,
 }
 
-/// Which kind of Avian3D joint a [`LastBeaconVehicleConnection`] spawns.
+/// Which kind of Avian3D joint a socket produces when a
+/// [`LastBeaconVehicleConnection`] uses it.
+///
+/// Authored on [`LastBeaconVehicleModuleSocket`] as an intrinsic property of
+/// that socket -- a wheel's axle socket is always a hinge, every other
+/// module's sockets are always a rigid lock -- rather than chosen per
+/// [`LastBeaconVehicleConnection`], since a vehicle author (or, eventually,
+/// an in-game vehicle editor) should never have to decide this themselves.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Reflect)]
 #[reflect(Default)]
 pub enum LastBeaconVehicleJointKind {
@@ -129,7 +143,8 @@ pub enum LastBeaconVehicleJointKind {
 ///
 /// [`wire_last_beacon_vehicle_connections`] resolves this once both named
 /// module instances have finished loading and spawns the corresponding
-/// Avian3D joint entity.
+/// Avian3D joint entity -- the joint kind is derived from the two named
+/// sockets' own [`LastBeaconVehicleJointKind`], not authored here.
 #[derive(Clone, Debug, Default, Component, Reflect)]
 #[reflect(Component, Default)]
 pub struct LastBeaconVehicleConnection {
@@ -141,8 +156,6 @@ pub struct LastBeaconVehicleConnection {
     pub module_b: String,
     /// Socket name on `module_b` to anchor this joint to.
     pub socket_b: String,
-    /// Which joint type to spawn.
-    pub joint_kind: LastBeaconVehicleJointKind,
 }
 
 /// Installs Last Beacon's modular-vehicle attachment system.

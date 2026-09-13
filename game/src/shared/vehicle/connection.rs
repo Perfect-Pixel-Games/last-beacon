@@ -28,6 +28,23 @@ pub struct LastBeaconVehicleConnectionResolved;
 /// axis (its shape is defined with its height running along local Y), so a
 /// wheel module never needs its own rotation authored just to make its spin
 /// axis line up with this convention.
+///
+/// A [`LastBeaconVehicleConnection`] can name its hinge-declaring socket as
+/// either `module_a` or `module_b`, so it might seem like `RevoluteJoint`'s
+/// `body1`/`body2` need to be swapped depending on which side the wheel is
+/// on. They don't: per Avian3D's `RevoluteJoint::hinge_axis` docs and its
+/// `RevoluteJointSolverData::prepare` (in
+/// `avian3d::dynamics::solver::xpbd::joints::revolute`), this single field
+/// is reinterpreted independently in *each* body's own local frame --
+/// `a1 = rotation1 * local_basis1 * hinge_axis` and the equivalent `a2` for
+/// body2 -- as long as neither joint frame's basis is overridden (this
+/// module never calls `with_local_basis1`/`with_local_basis2`/`with_basis`,
+/// so both stay at the identity default set by `RevoluteJoint::new`). With
+/// an identity basis, "local Y" already means *that body's own* local Y
+/// regardless of whether the body is `body1` or `body2`. So `module_a` can
+/// always be passed as `body1` and `module_b` as `body2`, unswapped, and the
+/// hinge axis still correctly refers to the wheel's own rotation whichever
+/// side it's named on.
 const LAST_BEACON_VEHICLE_HINGE_AXIS: Vec3 = Vec3::Y;
 
 /// Resolves every unresolved [`LastBeaconVehicleConnection`] and spawns its
@@ -107,22 +124,26 @@ pub fn wire_last_beacon_vehicle_connections(
             continue;
         };
 
-        match connection.joint_kind {
-            LastBeaconVehicleJointKind::Fixed => {
-                commands.spawn(
-                    FixedJoint::new(module_a.entity, module_b.entity)
-                        .with_local_anchor1(socket_a)
-                        .with_local_anchor2(socket_b),
-                );
-            }
-            LastBeaconVehicleJointKind::Hinge => {
-                commands.spawn(
-                    RevoluteJoint::new(module_a.entity, module_b.entity)
-                        .with_local_anchor1(socket_a)
-                        .with_local_anchor2(socket_b)
-                        .with_hinge_axis(LAST_BEACON_VEHICLE_HINGE_AXIS),
-                );
-            }
+        // Either socket declaring `Hinge` makes this a hinge connection --
+        // see `LAST_BEACON_VEHICLE_HINGE_AXIS` for why `module_a`/`module_b`
+        // never need to be swapped to `body1`/`body2` based on which side
+        // the hinge-declaring socket is on.
+        let is_hinge = matches!(socket_a.attachment_kind, LastBeaconVehicleJointKind::Hinge)
+            || matches!(socket_b.attachment_kind, LastBeaconVehicleJointKind::Hinge);
+
+        if is_hinge {
+            commands.spawn(
+                RevoluteJoint::new(module_a.entity, module_b.entity)
+                    .with_local_anchor1(socket_a.local_anchor)
+                    .with_local_anchor2(socket_b.local_anchor)
+                    .with_hinge_axis(LAST_BEACON_VEHICLE_HINGE_AXIS),
+            );
+        } else {
+            commands.spawn(
+                FixedJoint::new(module_a.entity, module_b.entity)
+                    .with_local_anchor1(socket_a.local_anchor)
+                    .with_local_anchor2(socket_b.local_anchor),
+            );
         }
 
         commands
@@ -157,16 +178,27 @@ fn find_named_module_instance(
     })
 }
 
+/// A socket resolved by name: its local anchor offset plus the joint kind it
+/// declares, so the caller can derive the connection's overall joint kind
+/// without the connection itself authoring one.
+struct ResolvedSocket {
+    local_anchor: Vec3,
+    attachment_kind: LastBeaconVehicleJointKind,
+}
+
 fn find_named_socket(
     module_entity: Entity,
     children_query: &Query<&Children>,
     sockets: &Query<(&LastBeaconVehicleModuleSocket, &Transform)>,
     socket_name: &str,
-) -> Option<Vec3> {
+) -> Option<ResolvedSocket> {
     let module_children = children_query.get(module_entity).ok()?;
     module_children.iter().find_map(|child_entity| {
         let (socket, transform) = sockets.get(child_entity).ok()?;
-        (socket.socket_name == socket_name).then_some(transform.translation)
+        (socket.socket_name == socket_name).then_some(ResolvedSocket {
+            local_anchor: transform.translation,
+            attachment_kind: socket.attachment_kind,
+        })
     })
 }
 
@@ -186,12 +218,14 @@ mod tests {
         name: &str,
         socket_name: &str,
         socket_offset: Vec3,
+        attachment_kind: LastBeaconVehicleJointKind,
     ) -> Entity {
         let module_entity = world.spawn(Name::new(name.to_string())).id();
         let socket_entity = world
             .spawn((
                 LastBeaconVehicleModuleSocket {
                     socket_name: socket_name.to_string(),
+                    attachment_kind,
                 },
                 Transform::from_translation(socket_offset),
             ))
@@ -213,8 +247,20 @@ mod tests {
         let mut app = test_app();
         let world = app.world_mut();
 
-        let module_a = spawn_resolved_module(world, "ModuleA", "front", Vec3::new(0.5, 0.0, 0.0));
-        let module_b = spawn_resolved_module(world, "ModuleB", "root", Vec3::new(-1.0, 0.0, 0.0));
+        let module_a = spawn_resolved_module(
+            world,
+            "ModuleA",
+            "front",
+            Vec3::new(0.5, 0.0, 0.0),
+            LastBeaconVehicleJointKind::Fixed,
+        );
+        let module_b = spawn_resolved_module(
+            world,
+            "ModuleB",
+            "root",
+            Vec3::new(-1.0, 0.0, 0.0),
+            LastBeaconVehicleJointKind::Fixed,
+        );
         let vehicle_root = world.spawn_empty().id();
         let connection_entity = world
             .spawn(LastBeaconVehicleConnection {
@@ -222,7 +268,6 @@ mod tests {
                 socket_a: "front".to_string(),
                 module_b: "ModuleB".to_string(),
                 socket_b: "root".to_string(),
-                joint_kind: LastBeaconVehicleJointKind::Fixed,
             })
             .id();
         world
@@ -249,8 +294,23 @@ mod tests {
         let mut app = test_app();
         let world = app.world_mut();
 
-        let chassis = spawn_resolved_module(world, "Chassis", "corner", Vec3::new(1.0, 0.0, 1.0));
-        let wheel = spawn_resolved_module(world, "Wheel", "axle", Vec3::ZERO);
+        // The wheel's own socket declares `Hinge`; the chassis's socket
+        // stays at the `Fixed` default. The wheel is named second
+        // (`module_b`) here.
+        let chassis = spawn_resolved_module(
+            world,
+            "Chassis",
+            "corner",
+            Vec3::new(1.0, 0.0, 1.0),
+            LastBeaconVehicleJointKind::Fixed,
+        );
+        let wheel = spawn_resolved_module(
+            world,
+            "Wheel",
+            "axle",
+            Vec3::ZERO,
+            LastBeaconVehicleJointKind::Hinge,
+        );
         let vehicle_root = world.spawn_empty().id();
         let connection_entity = world
             .spawn(LastBeaconVehicleConnection {
@@ -258,7 +318,6 @@ mod tests {
                 socket_a: "corner".to_string(),
                 module_b: "Wheel".to_string(),
                 socket_b: "axle".to_string(),
-                joint_kind: LastBeaconVehicleJointKind::Hinge,
             })
             .id();
         world
@@ -274,14 +333,81 @@ mod tests {
     }
 
     #[test]
+    fn a_hinge_connection_still_spawns_a_revolute_joint_when_the_wheel_is_named_first() {
+        let mut app = test_app();
+        let world = app.world_mut();
+
+        // Same setup as the test above, but with the wheel named first
+        // (`module_a`) instead of second, proving the resulting joint's
+        // hinge axis still refers to the wheel's own rotation regardless of
+        // which side of the connection names it -- see
+        // `LAST_BEACON_VEHICLE_HINGE_AXIS` for why `module_a`/`module_b` are
+        // always passed straight through as `body1`/`body2`, unswapped.
+        let wheel = spawn_resolved_module(
+            world,
+            "Wheel",
+            "axle",
+            Vec3::ZERO,
+            LastBeaconVehicleJointKind::Hinge,
+        );
+        let chassis = spawn_resolved_module(
+            world,
+            "Chassis",
+            "corner",
+            Vec3::new(1.0, 0.0, 1.0),
+            LastBeaconVehicleJointKind::Fixed,
+        );
+        let vehicle_root = world.spawn_empty().id();
+        let connection_entity = world
+            .spawn(LastBeaconVehicleConnection {
+                module_a: "Wheel".to_string(),
+                socket_a: "axle".to_string(),
+                module_b: "Chassis".to_string(),
+                socket_b: "corner".to_string(),
+            })
+            .id();
+        world
+            .entity_mut(vehicle_root)
+            .add_children(&[wheel, chassis, connection_entity]);
+
+        app.update();
+
+        let mut joints = app.world_mut().query::<&RevoluteJoint>();
+        let joint = joints
+            .iter(app.world())
+            .next()
+            .expect("a RevoluteJoint should have been spawned even with the wheel named first");
+        assert_eq!(
+            joint.body1, wheel,
+            "body1 should be the wheel (module_a here), so its own local Y keeps meaning the wheel's spin axis"
+        );
+        assert_eq!(joint.body2, chassis);
+        assert_eq!(joint.hinge_axis, LAST_BEACON_VEHICLE_HINGE_AXIS);
+        let mut fixed_joints = app.world_mut().query::<&FixedJoint>();
+        assert_eq!(fixed_joints.iter(app.world()).count(), 0);
+    }
+
+    #[test]
     fn a_connection_referencing_a_still_pending_module_does_not_spawn_a_joint_yet() {
         let mut app = test_app();
 
         let (_module_a, module_b, connection_entity) = {
             let world = app.world_mut();
 
-            let module_a = spawn_resolved_module(world, "ModuleA", "front", Vec3::ZERO);
-            let module_b = spawn_resolved_module(world, "ModuleB", "root", Vec3::ZERO);
+            let module_a = spawn_resolved_module(
+                world,
+                "ModuleA",
+                "front",
+                Vec3::ZERO,
+                LastBeaconVehicleJointKind::Fixed,
+            );
+            let module_b = spawn_resolved_module(
+                world,
+                "ModuleB",
+                "root",
+                Vec3::ZERO,
+                LastBeaconVehicleJointKind::Fixed,
+            );
             // Simulate ModuleB still loading its own `.bsn` module definition.
             world
                 .entity_mut(module_b)
@@ -295,7 +421,6 @@ mod tests {
                     socket_a: "front".to_string(),
                     module_b: "ModuleB".to_string(),
                     socket_b: "root".to_string(),
-                    joint_kind: LastBeaconVehicleJointKind::Fixed,
                 })
                 .id();
             world
