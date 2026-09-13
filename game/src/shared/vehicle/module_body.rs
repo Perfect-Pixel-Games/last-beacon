@@ -4,7 +4,7 @@
 use avian3d::prelude::*;
 use bevy::prelude::*;
 
-use super::LastBeaconVehicleModuleBody;
+use super::{LastBeaconVehicleModuleBody, LastBeaconVehicleWheelModuleBody};
 
 /// Builds the mesh, material, rigid body, collider, and mass for every
 /// newly-authored [`LastBeaconVehicleModuleBody`].
@@ -34,6 +34,34 @@ pub fn materialize_last_beacon_vehicle_module_bodies(
             RigidBody::Dynamic,
             Collider::cuboid(module_body.size_x, module_body.size_y, module_body.size_z),
             Mass(module_body.mass),
+        ));
+    }
+}
+
+/// Builds the mesh, material, rigid body, collider, and mass for every
+/// newly-authored [`LastBeaconVehicleWheelModuleBody`].
+pub fn materialize_last_beacon_vehicle_wheel_module_bodies(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    wheel_bodies: Query<
+        (Entity, &LastBeaconVehicleWheelModuleBody),
+        Added<LastBeaconVehicleWheelModuleBody>,
+    >,
+) {
+    for (wheel_entity, wheel_body) in &wheel_bodies {
+        let mesh = meshes.add(Cylinder::new(wheel_body.radius, wheel_body.width));
+        let material = materials.add(StandardMaterial {
+            base_color: last_beacon_vehicle_module_color(&wheel_body.color),
+            ..default()
+        });
+
+        commands.entity(wheel_entity).insert((
+            Mesh3d(mesh),
+            MeshMaterial3d(material),
+            RigidBody::Dynamic,
+            Collider::cylinder(wheel_body.radius, wheel_body.width),
+            Mass(wheel_body.mass),
         ));
     }
 }
@@ -94,6 +122,36 @@ mod tests {
             .world()
             .get::<MeshMaterial3d<StandardMaterial>>(module_entity)
             .is_some());
+    }
+
+    #[test]
+    fn materializing_a_wheel_body_adds_a_dynamic_rigid_body_and_collider() {
+        let mut app = App::new();
+        app.add_plugins(MinimalPlugins);
+        app.add_plugins(AssetPlugin::default());
+        app.init_asset::<Mesh>();
+        app.init_asset::<StandardMaterial>();
+        app.add_systems(Update, materialize_last_beacon_vehicle_wheel_module_bodies);
+
+        let wheel_entity = app
+            .world_mut()
+            .spawn(LastBeaconVehicleWheelModuleBody {
+                radius: 0.6,
+                width: 0.4,
+                mass: 6.0,
+                color: "charcoal".to_string(),
+            })
+            .id();
+
+        app.update();
+
+        assert!(matches!(
+            app.world().get::<RigidBody>(wheel_entity),
+            Some(RigidBody::Dynamic)
+        ));
+        assert!(app.world().get::<Collider>(wheel_entity).is_some());
+        assert!(app.world().get::<Mass>(wheel_entity).is_some());
+        assert!(app.world().get::<Mesh3d>(wheel_entity).is_some());
     }
 
     #[test]

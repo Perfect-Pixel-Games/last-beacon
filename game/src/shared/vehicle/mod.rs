@@ -9,7 +9,10 @@
 
 mod module_body;
 
-pub use module_body::materialize_last_beacon_vehicle_module_bodies;
+pub use module_body::{
+    materialize_last_beacon_vehicle_module_bodies,
+    materialize_last_beacon_vehicle_wheel_module_bodies,
+};
 
 use bevy::prelude::*;
 
@@ -45,6 +48,33 @@ impl Default for LastBeaconVehicleModuleBody {
     }
 }
 
+/// Authored on a wheel module's root entity. Separate from
+/// [`LastBeaconVehicleModuleBody`] because a wheel is a cylinder, not a box,
+/// and needs its own collider/mesh construction.
+#[derive(Clone, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconVehicleWheelModuleBody {
+    /// Wheel radius in meters.
+    pub radius: f32,
+    /// Full wheel width (the cylinder's height, along local Y) in meters.
+    pub width: f32,
+    /// Rigid body mass in kilograms.
+    pub mass: f32,
+    /// Named color, resolved by `module_body::last_beacon_vehicle_module_color`.
+    pub color: String,
+}
+
+impl Default for LastBeaconVehicleWheelModuleBody {
+    fn default() -> Self {
+        Self {
+            radius: 0.5,
+            width: 0.3,
+            mass: 5.0,
+            color: "charcoal".to_string(),
+        }
+    }
+}
+
 /// Installs Last Beacon's modular-vehicle attachment system.
 #[derive(Default)]
 pub struct LastBeaconVehiclePlugin;
@@ -52,6 +82,13 @@ pub struct LastBeaconVehiclePlugin;
 impl Plugin for LastBeaconVehiclePlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<LastBeaconVehicleModuleBody>()
-            .add_systems(Update, materialize_last_beacon_vehicle_module_bodies);
+            .register_type::<LastBeaconVehicleWheelModuleBody>()
+            .add_systems(
+                Update,
+                (
+                    materialize_last_beacon_vehicle_module_bodies,
+                    materialize_last_beacon_vehicle_wheel_module_bodies,
+                ),
+            );
     }
 }
