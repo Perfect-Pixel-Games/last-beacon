@@ -116,13 +116,18 @@ fn rebuild_landscape_terrain_when_settings_change(
 #[derive(Clone, Copy, Debug, Component, Reflect)]
 #[reflect(Component, Default)]
 pub struct LastBeaconLandscapeTestScene {
-    /// Seed for the procedural terrain's Perlin noise.
+    /// Seed for the procedural terrain's Perlin noise. Randomized by
+    /// [`Default`] so each run generates a different landscape; the BSN
+    /// scene authors this component with no fields set so it keeps that
+    /// random default instead of pinning a fixed seed.
     pub seed: u32,
 }
 
 impl Default for LastBeaconLandscapeTestScene {
     fn default() -> Self {
-        Self { seed: 1337 }
+        Self {
+            seed: rand::random(),
+        }
     }
 }
 
@@ -152,8 +157,9 @@ fn initialize_last_beacon_landscape_test_scenes(
     for (scene_entity, landscape_test_scene, scene_owner, parent_link) in &landscape_test_scenes {
         let effective_scene_owner =
             effective_landscape_test_scene_owner(scene_owner.copied(), parent_link, &scene_owners);
-        debug!(
-            "Initializing LastBeaconLandscapeTestScene on {scene_entity:?} with scene_owner={effective_scene_owner:?}"
+        info!(
+            "Initializing LastBeaconLandscapeTestScene on {scene_entity:?} with scene_owner={effective_scene_owner:?}, seed={}",
+            landscape_test_scene.seed
         );
 
         // The BSN scene-loading pipeline can spawn this scene's root entity
