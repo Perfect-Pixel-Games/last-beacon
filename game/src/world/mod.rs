@@ -15,7 +15,10 @@ pub mod free_fly_camera;
 pub mod landscape;
 pub mod shader_erosion;
 
-use free_fly_camera::{last_beacon_free_fly_camera_bundle, LastBeaconFreeFlyCameraPlugin};
+use free_fly_camera::{
+    last_beacon_free_fly_camera_bundle, LastBeaconFreeFlyCameraOrientation,
+    LastBeaconFreeFlyCameraPlugin,
+};
 
 /// Installs Last Beacon's World gameplay systems.
 #[derive(Default)]
@@ -206,26 +209,20 @@ fn initialize_last_beacon_landscape_test_scenes(
         let (atmosphere_entity, sun_entity) =
             environment::spawn_landscape_sky_and_sun(&mut commands, &mut scattering_media);
 
-        // Set back from the origin so the free-fly camera starts with the
-        // landscape's mountains already in view, and comfortably above
-        // whatever the actual terrain height happens to be at that spot for
-        // this seed -- a fixed Y here previously landed the camera at
-        // ground level (or inside the mesh) depending on the seed's noise
-        // value at that exact point.
-        const CAMERA_SPAWN_X: f32 = 0.0;
-        const CAMERA_SPAWN_Z: f32 = 1500.0;
-        const CAMERA_HEIGHT_ABOVE_TERRAIN: f32 = 400.0;
-        let terrain_height_at_camera = landscape::landscape_height_at(
-            landscape_test_scene.seed,
-            CAMERA_SPAWN_X,
-            CAMERA_SPAWN_Z,
-            &landscape_settings,
-        );
-        let camera_position = Vec3::new(
-            CAMERA_SPAWN_X,
-            terrain_height_at_camera + CAMERA_HEIGHT_ABOVE_TERRAIN,
-            CAMERA_SPAWN_Z,
-        );
+        // The test wagon's own root `Transform` in
+        // `vehicle/vehicle_module_testbed.bsn` (must stay in sync with that
+        // file). The camera spawns 10m short of it along Z and faces `+Z`
+        // (yaw = PI, flipping the free-fly camera's default `-Z` forward) so
+        // the wagon is immediately visible dead ahead without needing to fly
+        // around and find it.
+        const VEHICLE_TESTBED_POSITION: Vec3 = Vec3::new(0.0, 450.0, 1450.0);
+        const CAMERA_DISTANCE_FROM_VEHICLE_TESTBED: f32 = 10.0;
+        let camera_position =
+            VEHICLE_TESTBED_POSITION - Vec3::new(0.0, 0.0, CAMERA_DISTANCE_FROM_VEHICLE_TESTBED);
+        let camera_orientation_facing_the_vehicle_testbed = LastBeaconFreeFlyCameraOrientation {
+            yaw: std::f32::consts::PI,
+            pitch: 0.0,
+        };
         // `spawn_default_camera` (`game/src/lib.rs`) always keeps a `Camera2d`
         // at order 100 alive for UI rendering, with the default
         // `ClearColorConfig::Default` -- which clears the whole viewport to
@@ -247,6 +244,10 @@ fn initialize_last_beacon_landscape_test_scenes(
                 Transform::from_translation(camera_position),
                 environment::landscape_camera_rendering_bundle(),
                 last_beacon_free_fly_camera_bundle(),
+                // Overrides the orientation the bundle above just inserted,
+                // so the camera looks at the vehicle testbed instead of the
+                // default forward direction.
+                camera_orientation_facing_the_vehicle_testbed,
                 Name::new("Last Beacon Landscape Free-Fly Camera"),
             ))
             .id();
