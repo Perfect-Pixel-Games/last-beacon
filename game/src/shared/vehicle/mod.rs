@@ -21,6 +21,7 @@ pub use module_body::{
 };
 
 use bevy::prelude::*;
+use foundation_runtime_library::prelude::apply_pending_bsn_instances;
 
 /// Authored on a box-shaped module's root entity (Core, Beam, Plate). A
 /// reactive system turns this into the real mesh, material, rigid body,
@@ -173,13 +174,54 @@ impl Plugin for LastBeaconVehiclePlugin {
             .add_systems(
                 Update,
                 (
-                    materialize_last_beacon_vehicle_module_bodies,
-                    materialize_last_beacon_vehicle_wheel_module_bodies,
+                    // `queue_*`/`apply_pending_*` must run before the
+                    // `materialize_*` systems: `apply_pending_*` is an
+                    // exclusive system that synchronously inserts a module's
+                    // `LastBeaconVehicleModuleBody`/`WheelModuleBody` the
+                    // instant its `.bsn` resolves (no command buffering), so
+                    // running it first makes that insertion visible to the
+                    // `materialize_*` systems' `Added<>` queries in this same
+                    // `Update` pass. That in turn means `RigidBody`/`Collider`
+                    // insertion (deferred via `Commands`) and
+                    // `wire_last_beacon_vehicle_connections`'s joint spawn
+                    // (also deferred via `Commands`, and must run last since
+                    // it only proceeds once a module instance is no longer
+                    // pending) get flushed to the `World` together at the end
+                    // of this chain -- so Avian's physics schedule never sees
+                    // a joint referencing a module entity that isn't a rigid
+                    // body yet. Reversing this order (materialize before
+                    // apply) left a one-frame gap where a joint could
+                    // reference a not-yet-a-rigid-body entity, which Avian's
+                    // island builder panics on ("Neither body ... is in an
+                    // island").
                     queue_last_beacon_vehicle_module_instances,
                     apply_pending_last_beacon_vehicle_module_instances,
+                    materialize_last_beacon_vehicle_module_bodies,
+                    materialize_last_beacon_vehicle_wheel_module_bodies,
                     wire_last_beacon_vehicle_connections,
                 )
-                    .chain(),
+                    .chain()
+                    // `queue_*` reads `Added<LastBeaconVehicleModuleInstance>`,
+                    // but nothing previously ordered this chain relative to
+                    // Foundation's own `apply_pending_bsn_instances` -- which
+                    // is what actually spawns module-instance entities when
+                    // an enclosing vehicle `.bsn` (or a nested one) resolves.
+                    // Without this constraint, Bevy's scheduler is free to
+                    // interleave the two plugins' systems arbitrarily, and
+                    // when `apply_pending_bsn_instances` happens to run
+                    // *between* `queue_*` and `wire_last_beacon_vehicle_connections`
+                    // in the same `Update` pass, `wire_*` sees a
+                    // freshly-spawned module instance that has no
+                    // `LastBeaconVehicleModuleInstancePending` marker yet
+                    // (because `queue_*` hasn't had a chance to add one) and
+                    // wrongly treats "not started loading" the same as
+                    // "fully resolved" -- permanently marking the connection
+                    // resolved without ever finding its sockets or spawning
+                    // its joint. Ordering this whole chain after Foundation's
+                    // apply guarantees `queue_*` always observes a
+                    // newly-spawned module instance in the same frame it
+                    // appears, before `wire_*` gets a chance to look at it.
+                    .after(apply_pending_bsn_instances),
             );
     }
 }
