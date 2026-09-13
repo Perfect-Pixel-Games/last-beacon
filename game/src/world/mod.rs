@@ -12,6 +12,7 @@ use foundation_runtime_library::prelude::*;
 
 pub mod environment;
 pub mod landscape;
+pub mod shader_erosion;
 
 /// Installs Last Beacon's World gameplay systems.
 #[derive(Default)]
@@ -20,8 +21,38 @@ pub struct LastBeaconWorldGameplayPlugin;
 impl Plugin for LastBeaconWorldGameplayPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(FoundationFreeFlyCameraPlugin)
+            .init_resource::<landscape::LandscapeGenerationSettings>()
             .register_type::<LastBeaconLandscapeTestScene>()
-            .add_systems(Update, initialize_last_beacon_landscape_test_scenes);
+            .add_systems(Update, initialize_last_beacon_landscape_test_scenes)
+            .add_systems(
+                Update,
+                rebuild_landscape_terrain_when_settings_change
+                    .run_if(resource_changed::<landscape::LandscapeGenerationSettings>),
+            );
+    }
+}
+
+/// Marker for the terrain mesh entity, used by
+/// [`rebuild_landscape_terrain_when_settings_change`] to find and regenerate
+/// the mesh in place when [`landscape::LandscapeGenerationSettings`] changes
+/// (e.g. via the `landscape.set` debug console command).
+#[derive(Component)]
+struct LastBeaconLandscapeTerrainMesh {
+    seed: u32,
+}
+
+/// Regenerates the landscape terrain mesh in place whenever
+/// [`landscape::LandscapeGenerationSettings`] changes, so debug-console
+/// parameter tweaks are visible immediately without reopening the scene.
+fn rebuild_landscape_terrain_when_settings_change(
+    settings: Res<landscape::LandscapeGenerationSettings>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    terrain_query: Query<(&LastBeaconLandscapeTerrainMesh, &Mesh3d)>,
+) {
+    for (terrain_marker, mesh_handle) in &terrain_query {
+        if let Some(mut mesh) = meshes.get_mut(&mesh_handle.0) {
+            *mesh = landscape::build_landscape_mesh(terrain_marker.seed, &settings);
+        }
     }
 }
 
@@ -62,6 +93,7 @@ fn initialize_last_beacon_landscape_test_scenes(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut scattering_media: ResMut<Assets<ScatteringMedium>>,
+    landscape_settings: Res<landscape::LandscapeGenerationSettings>,
     landscape_test_scenes: LandscapeTestSceneInitQuery,
     scene_owners: Query<&SceneOwner>,
 ) {
@@ -72,7 +104,10 @@ fn initialize_last_beacon_landscape_test_scenes(
             "Initializing LastBeaconLandscapeTestScene on {scene_entity:?} with scene_owner={effective_scene_owner:?}"
         );
 
-        let terrain_mesh = meshes.add(landscape::build_landscape_mesh(landscape_test_scene.seed));
+        let terrain_mesh = meshes.add(landscape::build_landscape_mesh(
+            landscape_test_scene.seed,
+            &landscape_settings,
+        ));
         let terrain_material = materials.add(StandardMaterial {
             base_color: Color::WHITE,
             perceptual_roughness: 0.92,
@@ -84,6 +119,9 @@ fn initialize_last_beacon_landscape_test_scenes(
                 Mesh3d(terrain_mesh),
                 MeshMaterial3d(terrain_material),
                 Transform::IDENTITY,
+                LastBeaconLandscapeTerrainMesh {
+                    seed: landscape_test_scene.seed,
+                },
                 Name::new("Last Beacon Landscape Terrain"),
             ))
             .id();
@@ -104,6 +142,7 @@ fn initialize_last_beacon_landscape_test_scenes(
             landscape_test_scene.seed,
             CAMERA_SPAWN_X,
             CAMERA_SPAWN_Z,
+            &landscape_settings,
         );
         let camera_position = Vec3::new(
             CAMERA_SPAWN_X,
@@ -151,4 +190,59 @@ fn effective_landscape_test_scene_owner(
     scene_owner.or_else(|| {
         parent_link.and_then(|parent_link| scene_owners.get(parent_link.parent()).ok().copied())
     })
+}
+
+/// Inputs for the `landscape.set` debug console command.
+#[cfg(feature = "dev-tools")]
+#[derive(Clone, Debug, ConsoleCommandInput)]
+pub struct LandscapeSetParameterInputs {
+    /// Name of the terrain-generation parameter to set; see
+    /// [`landscape::apply_named_parameter`] for the full list of names.
+    pub name: String,
+    /// New value for the named parameter.
+    pub value: f32,
+}
+
+/// Sets one terrain-generation parameter and triggers a mesh rebuild, so the
+/// Shadertoy source's runtime-adjustable knobs can be explored live in-game.
+#[cfg(feature = "dev-tools")]
+#[console_command(name = "landscape.set")]
+pub fn set_landscape_parameter(
+    inputs: ConsoleInputs<LandscapeSetParameterInputs>,
+    mut settings: ResMut<landscape::LandscapeGenerationSettings>,
+) {
+    match landscape::apply_named_parameter(&mut settings, &inputs.name, inputs.value) {
+        Ok(()) => info!("landscape.{} = {}", inputs.name, inputs.value),
+        Err(message) => error!("{message}"),
+    }
+}
+
+/// Inputs for the `landscape.get` debug console command.
+#[cfg(feature = "dev-tools")]
+#[derive(Clone, Debug, ConsoleCommandInput)]
+pub struct LandscapeGetParameterInputs {
+    /// Name of the terrain-generation parameter to read; see
+    /// [`landscape::named_parameter_value`] for the full list of names.
+    pub name: String,
+}
+
+/// Prints the current value of one terrain-generation parameter.
+#[cfg(feature = "dev-tools")]
+#[console_command(name = "landscape.get")]
+pub fn get_landscape_parameter(
+    inputs: ConsoleInputs<LandscapeGetParameterInputs>,
+    settings: Res<landscape::LandscapeGenerationSettings>,
+) {
+    match landscape::named_parameter_value(&settings, &inputs.name) {
+        Ok(value) => info!("landscape.{} = {value}", inputs.name),
+        Err(message) => error!("{message}"),
+    }
+}
+
+/// Resets every terrain-generation parameter to the shader's own defaults.
+#[cfg(feature = "dev-tools")]
+#[console_command(name = "landscape.reset")]
+pub fn reset_landscape_parameters(mut settings: ResMut<landscape::LandscapeGenerationSettings>) {
+    *settings = landscape::LandscapeGenerationSettings::default();
+    info!("landscape parameters reset to defaults");
 }
