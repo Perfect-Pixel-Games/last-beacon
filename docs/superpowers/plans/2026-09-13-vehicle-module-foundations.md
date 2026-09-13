@@ -1510,18 +1510,20 @@ bevy_ecs::hierarchy::Children [
     last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamRight", socket_a: "tip", module_b: "ChassisPlate", socket_b: "front_right" },
 
     #ConnWheelFrontLeft
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "front_left", module_b: "WheelFrontLeft", socket_b: "axle", joint_kind: last_beacon::shared::vehicle::LastBeaconVehicleJointKind::Hinge },
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "front_left", module_b: "WheelFrontLeft", socket_b: "axle" },
 
     #ConnWheelFrontRight
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "front_right", module_b: "WheelFrontRight", socket_b: "axle", joint_kind: last_beacon::shared::vehicle::LastBeaconVehicleJointKind::Hinge },
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "front_right", module_b: "WheelFrontRight", socket_b: "axle" },
 
     #ConnWheelBackLeft
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "back_left", module_b: "WheelBackLeft", socket_b: "axle", joint_kind: last_beacon::shared::vehicle::LastBeaconVehicleJointKind::Hinge },
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "back_left", module_b: "WheelBackLeft", socket_b: "axle" },
 
     #ConnWheelBackRight
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "back_right", module_b: "WheelBackRight", socket_b: "axle", joint_kind: last_beacon::shared::vehicle::LastBeaconVehicleJointKind::Hinge }
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "back_right", module_b: "WheelBackRight", socket_b: "axle" }
 ]
 ```
+
+**Note (post-Task-9 revision):** `LastBeaconVehicleConnection` no longer has a `joint_kind` field — that was moved onto `LastBeaconVehicleModuleSocket` as `attachment_kind`, since a wheel's axle socket should intrinsically know it's a hinge rather than requiring every connection that uses it to say so. `wheel.bsn`'s `#Axle` socket already authors `attachment_kind: last_beacon::shared::vehicle::LastBeaconVehicleJointKind::Hinge` (added when this revision landed), so the four wheel connections above need no joint-kind field at all — `wire_last_beacon_vehicle_connections` derives `Hinge` automatically from the wheel's own socket. See `docs/superpowers/specs/2026-09-13-vehicle-module-foundations-design.md` for the full rationale.
 
 - [ ] **Step 2: Spawn the wagon from the landscape testbed's init system**
 
