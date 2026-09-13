@@ -803,6 +803,7 @@ fn mark_module_instance_failed(world: &mut World, instance_entity: Entity, failu
         });
     }
 }
+```
 
 ```rust
 #[cfg(test)]
