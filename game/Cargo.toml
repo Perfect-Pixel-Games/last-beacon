@@ -29,6 +29,7 @@ bevy_enhanced_input = "0.26.0"
 foundation-editor-library = { path = "../engine/crates/foundation-editor-library", optional = true }
 foundation-runtime-library = { path = "../engine/crates/foundation-runtime-library", default-features = false }
 linkme = { version = "0.3", optional = true }
+rand = "0.10"
 serde = { version = "1", features = ["derive"] }
 toml = "0.9"
 

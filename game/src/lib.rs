@@ -8,9 +8,11 @@ use std::path::PathBuf;
 
 use bevy::{
     asset::AssetPlugin,
+    camera::Hdr,
     prelude::*,
     render::{
         settings::{Backends, InstanceFlags, RenderCreation, WgpuSettings},
+        view::Msaa,
         RenderPlugin,
     },
 };
@@ -114,6 +116,33 @@ fn spawn_default_camera(mut commands: Commands) {
             order: camera_order,
             ..default()
         },
+        // Off rather than the default `Sample4`: this camera sometimes needs
+        // to render *after* a 3D scene camera with `ClearColorConfig::None`
+        // (e.g. the pause menu showing over `world`'s landscape scene, see
+        // `world::keep_pause_menu_visible_over_the_world_scene`), which
+        // relies on that earlier camera's render being preserved through a
+        // simple "load" of the existing framebuffer. With MSAA enabled that
+        // instead requires this camera's multisampled texture to first be
+        // seeded via MSAA writeback, which produced a solid black backdrop
+        // instead of the scene showing through. UI text/shapes don't
+        // meaningfully benefit from hardware MSAA, so disabling it here
+        // sidesteps that whole class of cross-camera compositing risk.
+        Msaa::Off,
+        // Bevy groups cameras sharing a render target by `(target, hdr)` to
+        // decide blending (`bevy_render::camera::sort_cameras`): only the
+        // first camera *within a group* replaces the framebuffer outright;
+        // every other camera in that same group alpha-blends over it
+        // (`bevy_core_pipeline::upscaling`). The World scene's camera
+        // (`world::environment::landscape_camera_rendering_bundle`) has
+        // `Hdr`, so without it here this camera formed its own separate
+        // `(window, hdr=false)` group and was *also* treated as "first" --
+        // replacing the whole framebuffer with its own mostly-transparent
+        // UI render instead of blending over the World scene, which is what
+        // actually produced the black backdrop behind the pause menu.
+        // Adding `Hdr` here puts both cameras in the same group so this one
+        // (rendering after World's, whichever order is currently active)
+        // alpha-blends on top as intended.
+        Hdr,
     ));
 }
 

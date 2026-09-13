@@ -18,6 +18,7 @@ use last_beacon::{
         LastBeaconUiTextScrollTrack, LastBeaconUiUniformGrid, LastBeaconUiValueButton,
         LastBeaconUiValueText,
     },
+    world::LastBeaconLandscapeTestScene,
     LastBeaconHideWhenSettingsOpen, LastBeaconPlaceholderCubeScene,
 };
 
@@ -335,6 +336,7 @@ fn register_bsn_test_types(app: &mut App) {
         .register_type::<LastBeaconBsnWidget>()
         .register_type::<LastBeaconBeaconPageButton>()
         .register_type::<LastBeaconPlaceholderCubeScene>()
+        .register_type::<LastBeaconLandscapeTestScene>()
         .register_type::<LastBeaconHideWhenSettingsOpen>()
         .register_type::<LastBeaconMainMenuPrimaryButton>()
         .register_type::<LastBeaconBeaconPrimaryButton>()
