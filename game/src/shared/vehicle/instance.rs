@@ -14,11 +14,16 @@ use super::LastBeaconVehicleModuleInstance;
 
 /// Tracks a module instance whose `.bsn` asset is still loading/resolving.
 ///
-/// `pub(super)` so [`super::connection`]'s joint-wiring system can check
-/// whether a referenced module instance has finished loading yet.
+/// `pub` (not `pub(super)`) because [`super::connection`]'s
+/// `wire_last_beacon_vehicle_connections` uses it in a `Query` parameter
+/// type, and that function is itself `pub fn`, re-exported all the way to
+/// the crate root via `mod.rs`/`shared.rs`. rustc treats it as reachable at
+/// full `pub` visibility, so this type (and its field) must meet that same
+/// bar — `pub(super)` alone trips clippy's `private_interfaces` lint under
+/// `-D warnings`.
 #[derive(Clone, Debug, Component)]
-pub(super) struct LastBeaconVehicleModuleInstancePending {
-    pub(super) scene_handle: Handle<ScenePatch>,
+pub struct LastBeaconVehicleModuleInstancePending {
+    pub scene_handle: Handle<ScenePatch>,
 }
 
 #[allow(dead_code)]

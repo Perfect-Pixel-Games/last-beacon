@@ -13,12 +13,15 @@ use super::{
 /// Marks a connection whose joint has already been spawned (or permanently
 /// failed to resolve), so it is not processed again every frame.
 ///
-/// `pub(crate)` (rather than private) because it appears in
-/// [`wire_last_beacon_vehicle_connections`]'s public signature (as a
-/// `Query` filter), and that system is registered from `mod.rs` outside this
-/// module.
+/// `pub` (not `pub(crate)`) because [`wire_last_beacon_vehicle_connections`]
+/// is itself `pub fn` and gets re-exported all the way to the crate root
+/// (`connection::wire_last_beacon_vehicle_connections` -> `pub mod vehicle`
+/// -> `pub mod shared`), so rustc treats it as reachable at full `pub`
+/// visibility. This type appears in that function's `Query` parameter type,
+/// so it must meet that same visibility bar — `pub(crate)` alone is not
+/// enough and trips clippy's `private_interfaces` lint under `-D warnings`.
 #[derive(Clone, Copy, Debug, Component)]
-pub(crate) struct LastBeaconVehicleConnectionResolved;
+pub struct LastBeaconVehicleConnectionResolved;
 
 /// The axis every hinge joint spins around, in the *wheel* module's own
 /// local space. Matches `Collider::cylinder`'s natural rotational symmetry
