@@ -875,6 +875,19 @@ mod tests {
         (positions, normals)
     }
 
+    /// Settings that pin `snow_height_start`/`snow_height_end` safely above
+    /// `1.0` (the highest any `height_fraction` can ever reach), so the snow
+    /// layer never contributes regardless of what `Default` tunes those --
+    /// or `snow_slope_bias` -- to elsewhere. Rock-blend tests use this so
+    /// they only ever isolate the rock/grass blend they're actually testing.
+    fn no_snow_settings() -> LandscapeGenerationSettings {
+        LandscapeGenerationSettings {
+            snow_height_start: 2.0,
+            snow_height_end: 2.5,
+            ..Default::default()
+        }
+    }
+
     #[test]
     fn color_blend_sharpness_leaves_a_perfectly_flat_vertex_pure_grass() {
         let (positions, normals) = rock_blend_test_positions_and_normals();
@@ -888,7 +901,7 @@ mod tests {
         for sharpness in [0.25, 1.0, 6.0, 16.0] {
             let settings = LandscapeGenerationSettings {
                 color_blend_sharpness: sharpness,
-                ..Default::default()
+                ..no_snow_settings()
             };
             let colors = compute_landscape_vertex_colors(&positions, &normals, &settings);
             assert_eq!(
@@ -903,11 +916,11 @@ mod tests {
         let (positions, normals) = rock_blend_test_positions_and_normals();
         let low_sharpness_settings = LandscapeGenerationSettings {
             color_blend_sharpness: 1.0,
-            ..Default::default()
+            ..no_snow_settings()
         };
         let high_sharpness_settings = LandscapeGenerationSettings {
             color_blend_sharpness: 16.0,
-            ..Default::default()
+            ..no_snow_settings()
         };
 
         let low_colors =
