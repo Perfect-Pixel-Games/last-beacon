@@ -12,7 +12,10 @@ pub fn materialize_last_beacon_vehicle_module_bodies(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    module_bodies: Query<(Entity, &LastBeaconVehicleModuleBody), Added<LastBeaconVehicleModuleBody>>,
+    module_bodies: Query<
+        (Entity, &LastBeaconVehicleModuleBody),
+        Added<LastBeaconVehicleModuleBody>,
+    >,
 ) {
     for (module_entity, module_body) in &module_bodies {
         let mesh = meshes.add(Cuboid::new(
@@ -87,7 +90,10 @@ mod tests {
         assert!(app.world().get::<Collider>(module_entity).is_some());
         assert!(app.world().get::<Mass>(module_entity).is_some());
         assert!(app.world().get::<Mesh3d>(module_entity).is_some());
-        assert!(app.world().get::<MeshMaterial3d<StandardMaterial>>(module_entity).is_some());
+        assert!(app
+            .world()
+            .get::<MeshMaterial3d<StandardMaterial>>(module_entity)
+            .is_some());
     }
 
     #[test]
