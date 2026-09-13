@@ -7,12 +7,51 @@
 //! itself; concrete gameplay modules (powered wheels, thrusters, weapons)
 //! are future work built on top of it.
 
+mod module_body;
+
+pub use module_body::materialize_last_beacon_vehicle_module_bodies;
+
 use bevy::prelude::*;
+
+/// Authored on a box-shaped module's root entity (Core, Beam, Plate). A
+/// reactive system turns this into the real mesh, material, rigid body,
+/// collider, and mass -- this project's `.bsn` grammar can construct plain
+/// structs like this one via reflection, but can never call a constructor
+/// function like `Collider::cuboid(...)` directly.
+#[derive(Clone, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconVehicleModuleBody {
+    /// Full box width along local X, in meters.
+    pub size_x: f32,
+    /// Full box height along local Y, in meters.
+    pub size_y: f32,
+    /// Full box depth along local Z, in meters.
+    pub size_z: f32,
+    /// Rigid body mass in kilograms.
+    pub mass: f32,
+    /// Named color, resolved by `module_body::last_beacon_vehicle_module_color`.
+    pub color: String,
+}
+
+impl Default for LastBeaconVehicleModuleBody {
+    fn default() -> Self {
+        Self {
+            size_x: 1.0,
+            size_y: 1.0,
+            size_z: 1.0,
+            mass: 10.0,
+            color: "steel_blue".to_string(),
+        }
+    }
+}
 
 /// Installs Last Beacon's modular-vehicle attachment system.
 #[derive(Default)]
 pub struct LastBeaconVehiclePlugin;
 
 impl Plugin for LastBeaconVehiclePlugin {
-    fn build(&self, _app: &mut App) {}
+    fn build(&self, app: &mut App) {
+        app.register_type::<LastBeaconVehicleModuleBody>()
+            .add_systems(Update, materialize_last_beacon_vehicle_module_bodies);
+    }
 }
