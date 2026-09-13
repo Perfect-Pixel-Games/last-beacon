@@ -1,0 +1,26 @@
+last_beacon::shared::vehicle::LastBeaconVehicleModuleBody { size_x: 1.0, size_y: 1.0, size_z: 1.0, mass: 40.0, color: "steel_blue" }
+bevy_ecs::hierarchy::Children [
+    #Front
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "front" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.5, y: 0.0, z: 0.0 } },
+
+    #Back
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "back" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -0.5, y: 0.0, z: 0.0 } },
+
+    #Left
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "left" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: -0.5 } },
+
+    #Right
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "right" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 0.5 } },
+
+    #Top
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "top" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.5, z: 0.0 } },
+
+    #Bottom
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "bottom" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: -0.5, z: 0.0 } }
+]

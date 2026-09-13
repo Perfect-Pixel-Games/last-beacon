@@ -1,0 +1,10 @@
+last_beacon::shared::vehicle::LastBeaconVehicleModuleBody { size_x: 2.0, size_y: 0.4, size_z: 0.4, mass: 15.0, color: "olive" }
+bevy_ecs::hierarchy::Children [
+    #Root
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "root" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.0, y: 0.0, z: 0.0 } },
+
+    #Tip
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "tip" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.0, y: 0.0, z: 0.0 } }
+]
