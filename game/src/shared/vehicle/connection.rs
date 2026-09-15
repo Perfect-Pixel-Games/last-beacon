@@ -641,7 +641,7 @@ mod tests {
         // `wire_last_beacon_vehicle_connections`) rather than through a
         // system, so it needs this resource to exist even though these
         // tests never load Avian3D's full physics plugin stack.
-        app.init_resource::<avian3d::dynamics::solver::joint_graph::JointGraph>();
+        app.init_resource::<avian3d::dynamics::joints::joint_graph::JointGraph>();
         app.add_systems(Update, wire_last_beacon_vehicle_connections);
         app
     }
