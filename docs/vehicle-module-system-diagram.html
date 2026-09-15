@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vehicle Module System — Last Beacon</title>
+<style>
+  :root {
+    --ink: #f4f1e8;
+    --ink-raised: #ffffff;
+    --line: rgba(20,25,32,0.14);
+    --line-strong: rgba(20,25,32,0.30);
+    --text: #1b2027;
+    --text-dim: #5a6472;
+    --accent: #8a6416;
+    --accent-soft: rgba(138,100,22,0.12);
+    --weld: #0f93b3;
+    --hinge: #b8620a;
+    --fail: #c93838;
+    --neutral: #6b7480;
+    --code-bg: #ffffff;
+    --code-border: rgba(20,25,32,0.18);
+    --shadow: 0 1px 0 rgba(20,25,32,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #10151b;
+      --ink-raised: #161d25;
+      --line: rgba(232,236,242,0.13);
+      --line-strong: rgba(232,236,242,0.28);
+      --text: #e7e9ee;
+      --text-dim: #98a2b1;
+      --accent: #d3a852;
+      --accent-soft: rgba(211,168,82,0.14);
+      --weld: #23d6ff;
+      --hinge: #ff9d1f;
+      --fail: #ff5c5c;
+      --neutral: #8a94a3;
+      --code-bg: #0c1117;
+      --code-border: rgba(232,236,242,0.14);
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #10151b; --ink-raised: #161d25; --line: rgba(232,236,242,0.13);
+    --line-strong: rgba(232,236,242,0.28); --text: #e7e9ee; --text-dim: #98a2b1;
+    --accent: #d3a852; --accent-soft: rgba(211,168,82,0.14); --weld: #23d6ff;
+    --hinge: #ff9d1f; --fail: #ff5c5c; --neutral: #8a94a3; --code-bg: #0c1117;
+    --code-border: rgba(232,236,242,0.14); --shadow: none;
+  }
+  :root[data-theme="light"] {
+    --ink: #f4f1e8; --ink-raised: #ffffff; --line: rgba(20,25,32,0.14);
+    --line-strong: rgba(20,25,32,0.30); --text: #1b2027; --text-dim: #5a6472;
+    --accent: #8a6416; --accent-soft: rgba(138,100,22,0.12); --weld: #0f93b3;
+    --hinge: #b8620a; --fail: #c93838; --neutral: #6b7480; --code-bg: #ffffff;
+    --code-border: rgba(20,25,32,0.18); --shadow: 0 1px 0 rgba(20,25,32,0.05);
+  }
+
+  * { box-sizing: border-box; }
+  html { text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-attachment: local;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  .sheet {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+
+  .mono {
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  }
+
+  .eyebrow {
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 22px;
+    height: 1px;
+    background: var(--line-strong);
+    display: inline-block;
+  }
+
+  h1 {
+    font-size: clamp(28px, 4vw, 38px);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    margin: 14px 0 10px;
+    text-wrap: balance;
+    font-weight: 700;
+  }
+  .lede {
+    color: var(--text-dim);
+    font-size: 17px;
+    max-width: 62ch;
+    margin: 0 0 8px;
+  }
+
+  header.top {
+    border-bottom: 1px solid var(--line-strong);
+    padding-bottom: 34px;
+    margin-bottom: 46px;
+  }
+
+  .file-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    border: 1px solid var(--line);
+    padding: 3px 8px;
+    margin-top: 18px;
+  }
+  .file-chip b { color: var(--accent); font-weight: 600; }
+
+  section { margin: 64px 0; }
+  section:first-of-type { margin-top: 0; }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .sec-num {
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  h2 {
+    font-size: 21px;
+    margin: 0;
+    letter-spacing: -0.005em;
+    font-weight: 700;
+  }
+  .sec-head::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+    align-self: center;
+  }
+
+  p { max-width: 68ch; }
+  p.note { color: var(--text-dim); font-size: 14.5px; }
+
+  code.inline {
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 0.88em;
+    background: var(--accent-soft);
+    padding: 0.1em 0.35em;
+    border-radius: 2px;
+  }
+
+  /* ---- panel (blueprint sheet) ---- */
+  .panel {
+    position: relative;
+    background: var(--ink-raised);
+    border: 1px solid var(--line-strong);
+    padding: 28px 26px 22px;
+    box-shadow: var(--shadow);
+  }
+  .panel .tick {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--line-strong);
+  }
+  .panel .tick.tl { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+  .panel .tick.tr { top: -1px; right: -1px; border-left: none; border-bottom: none; }
+  .panel .tick.bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
+  .panel .tick.br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+  .panel-label {
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+
+  .diagram-scroll { overflow-x: auto; }
+  .diagram-scroll svg { display: block; min-width: 640px; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .swatch { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+  /* ---- code blocks ---- */
+  .code-wrap {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    overflow-x: auto;
+    margin: 14px 0 6px;
+  }
+  .code-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 11.5px;
+    color: var(--text-dim);
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--code-border);
+    letter-spacing: 0.02em;
+  }
+  pre {
+    margin: 0;
+    padding: 16px 18px 18px;
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    white-space: pre;
+    tab-size: 4;
+  }
+  .tok-type { color: var(--text-dim); }
+  .tok-tag { color: var(--accent); font-weight: 600; }
+  .tok-str { color: var(--weld); }
+  .tok-field { color: var(--text); font-weight: 600; }
+  .tok-comment { color: var(--text-dim); font-style: italic; }
+  .tok-num { color: var(--hinge); }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  @media (min-width: 640px) {
+    .two-col.split { grid-template-columns: 1.3fr 1fr; align-items: start; }
+  }
+  .callout {
+    border-left: 2px solid var(--accent);
+    padding-left: 14px;
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+  .callout b { color: var(--text); font-weight: 600; }
+  .callout + .callout { margin-top: 14px; }
+
+  .formula {
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 14px;
+    background: var(--accent-soft);
+    border: 1px solid var(--line);
+    padding: 14px 16px;
+    margin: 16px 0;
+    color: var(--text);
+  }
+
+  .tag-note {
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 16px 18px;
+    margin: 22px 0 6px;
+    max-width: 68ch;
+  }
+  .tag-note-label {
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .tag-note p { margin: 0 0 10px; font-size: 14.5px; }
+  .tag-note p:last-child { margin-bottom: 0; }
+  .tag-note ol { margin: 8px 0 0; padding-left: 20px; font-size: 14px; }
+  .tag-note li { margin-bottom: 6px; }
+  .tag-note li:last-child { margin-bottom: 0; }
+
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding: 6px 0 14px;
+  }
+  .pipe-step {
+    flex: none;
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 12px;
+    border: 1px solid var(--line-strong);
+    padding: 10px 12px;
+    background: var(--ink-raised);
+    min-width: 128px;
+    text-align: center;
+  }
+  .pipe-arrow {
+    flex: none;
+    width: 26px;
+    height: 1px;
+    background: var(--line-strong);
+    position: relative;
+  }
+  .pipe-arrow::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: -3px;
+    width: 6px;
+    height: 6px;
+    border-top: 1px solid var(--line-strong);
+    border-right: 1px solid var(--line-strong);
+    transform: rotate(45deg);
+  }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line-strong);
+  }
+  .filemap {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 18px;
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 12.5px;
+  }
+  .filemap dt { color: var(--text); white-space: nowrap; }
+  .filemap dd { margin: 0; color: var(--text-dim); }
+
+  ::selection { background: var(--accent-soft); }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="top">
+    <div class="eyebrow">Engineering Reference — game/src/shared/vehicle</div>
+    <h1>Vehicle Module System</h1>
+    <p class="lede">How Last Beacon's modular vehicles are assembled entirely from <code class="inline">.bsn</code> data: author-chosen tags, author-chosen socket names, and a connection list that stitches them together — nothing in Rust knows what a specific vehicle looks like.</p>
+    <div class="file-chip">Worked example verified by <b>game/tests/vehicle_example_two_plate_coupling.rs</b></div>
+  </header>
+
+  <section id="concept">
+    <div class="sec-head"><span class="sec-num">01 / 06</span><h2>Concept</h2></div>
+    <p>A module is identified purely by its <code class="inline">.bsn</code> asset path. Placed in a vehicle, it gets a <b>tag</b> — just its Bevy <code class="inline">Name</code>, chosen by whoever authors the vehicle. Each module carries its own <b>sockets</b>, each with an author-chosen name. A <b>connection</b> is a small piece of data naming two tag+socket pairs to join. That's the entire vocabulary — there is no registry, no enum of known modules, no code path that special-cases a particular vehicle layout.</p>
+    <p class="note">Confirmed by grep: zero references to any concrete module or vehicle name (e.g. <code class="inline">"CoreBlock"</code>) anywhere in <code class="inline">game/src</code> outside test assertions.</p>
+
+    <div class="tag-note">
+      <div class="tag-note-label">"#" is not a comment</div>
+      <p>In most languages <code class="inline">#</code> starts a comment. In this project's <code class="inline">.bsn</code> grammar it's literal syntax for a Bevy <code class="inline">Name</code> component &mdash; <code class="inline">#PlateOne</code> means &ldquo;this entity's <code class="inline">Name</code> is <code class="inline">PlateOne</code>,&rdquo; nothing more.</p>
+      <p>Three similar-looking things exist here &mdash; easy to conflate:</p>
+      <ol>
+        <li><b>A module instance's tag</b> &mdash; <code class="inline">#PlateOne</code> on the module instance in the <i>vehicle</i> <code class="inline">.bsn</code>. Matched by <code class="inline">.module_a</code> / <code class="inline">.module_b</code>.</li>
+        <li><b>A socket's name</b> &mdash; the <code class="inline">socket_name: "a"</code> field, authored inside the <i>module's own</i> <code class="inline">.bsn</code>. Matched by <code class="inline">.socket_a</code> / <code class="inline">.socket_b</code>.</li>
+        <li><b>A socket entity's own <code class="inline">#Tag</code></b> &mdash; e.g. <code class="inline">#A</code> in <code class="inline">coupling_plate.bsn</code>. Just a label; <b>never read by the connection system.</b></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="diagram">
+    <div class="sec-head"><span class="sec-num">02 / 06</span><h2>Assembly Diagram</h2></div>
+    <p>The real worked example — two <code class="inline">coupling_plate.bsn</code> instances, tagged <code class="inline">PlateOne</code> / <code class="inline">PlateTwo</code>, welded through their <code class="inline">"a"</code> / <code class="inline">"b"</code> sockets:</p>
+
+    <div class="panel">
+      <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+      <div class="panel-label">two_plate_coupling.bsn — resolved</div>
+      <div class="diagram-scroll">
+        <svg viewBox="0 0 860 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of PlateOne and PlateTwo joined by a weld connection between socket a and socket b">
+          <defs>
+            <marker id="arrowAccent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"></path>
+            </marker>
+          </defs>
+
+          <rect x="18" y="18" width="824" height="224" fill="none" stroke="var(--line-strong)" stroke-width="1" stroke-dasharray="3 4"></rect>
+          <text x="30" y="38" class="mono" font-size="11" fill="var(--text-dim)" letter-spacing="0.08em">#TWOPLATECOUPLING</text>
+
+          <!-- PlateOne -->
+          <rect x="90" y="88" width="210" height="96" fill="none" stroke="var(--text)" stroke-width="1.4"></rect>
+          <text x="102" y="112" class="mono" font-size="13" font-weight="700" fill="var(--accent)">#PlateOne</text>
+          <text x="102" y="130" class="mono" font-size="10.5" fill="var(--text-dim)">coupling_plate.bsn</text>
+
+          <!-- PlateOne socket b (unused, left edge) -->
+          <circle cx="90" cy="164" r="6" fill="var(--ink-raised)" stroke="var(--weld)" stroke-width="2"></circle>
+          <line x1="90" y1="164" x2="64" y2="164" stroke="var(--weld)" stroke-width="1.4" opacity="0.55"></line>
+          <text x="60" y="150" text-anchor="end" class="mono" font-size="10.5" fill="var(--text-dim)">"b"</text>
+
+          <!-- PlateOne socket a (used, right edge) -->
+          <circle cx="300" cy="164" r="6" fill="var(--weld)" stroke="var(--weld)" stroke-width="2"></circle>
+          <text x="304" y="150" class="mono" font-size="10.5" fill="var(--weld)">"a"</text>
+
+          <!-- connection line -->
+          <line x1="300" y1="164" x2="560" y2="164" stroke="var(--weld)" stroke-width="2"></line>
+          <rect x="352" y="140" width="156" height="22" fill="var(--ink-raised)"></rect>
+          <text x="430" y="155" text-anchor="middle" class="mono" font-size="11" fill="var(--weld)" font-weight="600">weld · "a" ↔ "b"</text>
+
+          <line x1="430" y1="168" x2="430" y2="198" stroke="var(--line-strong)" stroke-width="1" marker-end="url(#arrowAccent)"></line>
+          <text x="430" y="214" text-anchor="middle" class="mono" font-size="10" fill="var(--text-dim)">sockets coincide on fuse</text>
+
+          <!-- PlateTwo socket b (used, left edge) -->
+          <circle cx="560" cy="164" r="6" fill="var(--weld)" stroke="var(--weld)" stroke-width="2"></circle>
+          <text x="556" y="150" text-anchor="end" class="mono" font-size="10.5" fill="var(--weld)">"b"</text>
+
+          <!-- PlateTwo -->
+          <rect x="560" y="88" width="210" height="96" fill="none" stroke="var(--text)" stroke-width="1.4"></rect>
+          <text x="572" y="112" class="mono" font-size="13" font-weight="700" fill="var(--accent)">#PlateTwo</text>
+          <text x="572" y="130" class="mono" font-size="10.5" fill="var(--text-dim)">coupling_plate.bsn</text>
+
+          <!-- PlateTwo socket a (unused, right edge) -->
+          <circle cx="770" cy="164" r="6" fill="var(--ink-raised)" stroke="var(--weld)" stroke-width="2"></circle>
+          <line x1="770" y1="164" x2="796" y2="164" stroke="var(--weld)" stroke-width="1.4" opacity="0.55"></line>
+          <text x="800" y="150" class="mono" font-size="10.5" fill="var(--text-dim)">"a"</text>
+
+          <text x="430" y="232" text-anchor="middle" class="mono" font-size="10.5" fill="var(--text-dim)">module_a: "PlateOne"  →  survives as fusion root · module_b: "PlateTwo"  →  absorbed</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><span class="swatch" style="background:var(--weld)"></span>weld — LastBeaconVehicleFixedJoint</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--hinge)"></span>hinge — LastBeaconVehicleHingeJoint</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--fail)"></span>connection failed to resolve</div>
+        <div class="legend-item"><span class="swatch" style="background:var(--neutral)"></span>socket missing a joint-type component (invalid)</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="module">
+    <div class="sec-head"><span class="sec-num">03 / 06</span><h2>Module Anatomy</h2></div>
+    <p>Every module authors its shape, physics body, mass, color, and sockets directly — Bevy's/Avian3D's own types, nothing Last-Beacon-specific to keep in sync.</p>
+    <div class="code-wrap">
+      <div class="code-title"><span>game/assets/vehicle/modules/coupling_plate.bsn</span><span>.bsn</span></div>
+      <pre><span class="tok-type">last_beacon::shared::vehicle::LastBeaconVehicleModuleCuboidShape</span>(<span class="tok-type">bevy_math::primitives::dim3::Cuboid</span> { half_size: <span class="tok-type">glam::Vec3</span> { x: <span class="tok-num">0.3</span>, y: <span class="tok-num">0.05</span>, z: <span class="tok-num">0.3</span> } })
+<span class="tok-type">avian3d::dynamics::rigid_body::RigidBody::Dynamic</span>
+<span class="tok-type">avian3d::dynamics::rigid_body::mass_properties::components::Mass</span>(<span class="tok-num">2.0</span>)
+<span class="tok-type">last_beacon::shared::vehicle::LastBeaconVehicleModuleColor</span>(<span class="tok-type">bevy_color::color::Color::Srgba</span>(…))
+<span class="tok-type">bevy_ecs::hierarchy::Children</span> [
+    <span class="tok-tag">#A</span>
+    <span class="tok-type">last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket</span> { socket_name: <span class="tok-str">"a"</span> }
+    <span class="tok-type">bevy_transform::components::transform::Transform</span> { translation: <span class="tok-type">glam::Vec3</span> { x: <span class="tok-num">0.3</span>, y: <span class="tok-num">0.0</span>, z: <span class="tok-num">0.0</span> } }
+    <span class="tok-type">last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint</span> { },
+
+    <span class="tok-comment">// Normal -X: rotation of PI about Y (local +X -&gt; world -X).</span>
+    <span class="tok-tag">#B</span>
+    <span class="tok-type">last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket</span> { socket_name: <span class="tok-str">"b"</span> }
+    <span class="tok-type">bevy_transform::components::transform::Transform</span> { translation: <span class="tok-type">glam::Vec3</span> { x: <span class="tok-num">-0.3</span>, y: <span class="tok-num">0.0</span>, z: <span class="tok-num">0.0</span> }, rotation: <span class="tok-type">glam::Quat</span> { x: <span class="tok-num">0.0</span>, y: <span class="tok-num">1.0</span>, z: <span class="tok-num">0.0</span>, w: <span class="tok-num">0.0</span> } }
+    <span class="tok-type">last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint</span> { }
+]</pre>
+    </div>
+    <p class="note"><code class="inline">#A</code> / <code class="inline">#B</code> are Bevy hierarchy tags on the socket entities themselves — unrelated to the module's own vehicle-level tag (<code class="inline">#PlateOne</code>, set by whoever places this module in a vehicle).</p>
+  </section>
+
+  <section id="convention">
+    <div class="sec-head"><span class="sec-num">04 / 06</span><h2>Socket-Normal Convention</h2></div>
+    <p>Every socket's <i>local</i> outward normal is local <b>+X</b>. Its <code class="inline">Transform.rotation</code> turns that +X to face wherever the socket should actually point. Connecting two sockets only auto-corrects <b>position</b> — the author is responsible for rotating each module so the two sockets' <i>world</i> normals end up opposing each other.</p>
+    <div class="formula">Quat {  x: v.x·sin(θ/2),  y: v.y·sin(θ/2),  z: v.z·sin(θ/2),  w: cos(θ/2)  }</div>
+    <div class="two-col split">
+      <div>
+        <div class="callout"><b>0° / 180°</b> — no rotation needed, or <code class="inline">Quat{x:0,y:1,z:0,w:0}</code> about Y (used by socket <code class="inline">"b"</code> above).</div>
+        <div class="callout"><b>90° about Z</b> — <code class="inline">core.bsn</code>'s <code class="inline">Top</code> socket: v=(0,0,1), θ=90°, sin(45°)=cos(45°)≈0.7071068 → <code class="inline">Quat{x:0,y:0,z:0.7071068,w:0.7071068}</code>, turning local +X to world +Y.</div>
+      </div>
+      <div class="code-wrap" style="margin-top:0">
+        <div class="code-title"><span>core.bsn — Top socket</span><span>.bsn</span></div>
+        <pre><span class="tok-tag">#Top</span>
+<span class="tok-type">…LastBeaconVehicleModuleSocket</span> { socket_name: <span class="tok-str">"top"</span> }
+<span class="tok-type">…Transform</span> {
+  translation: { x: <span class="tok-num">0.0</span>, y: <span class="tok-num">0.5</span>, z: <span class="tok-num">0.0</span> },
+  rotation: {
+    x: <span class="tok-num">0.0</span>, y: <span class="tok-num">0.0</span>,
+    z: <span class="tok-num">0.7071068</span>, w: <span class="tok-num">0.7071068</span>
+  }
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="connections">
+    <div class="sec-head"><span class="sec-num">05 / 06</span><h2>Connections &amp; Resolution</h2></div>
+    <p>A vehicle <code class="inline">.bsn</code> places module instances (each tagged with a <code class="inline">Name</code>) and lists connections naming two tag+socket pairs. <code class="inline">wire_last_beacon_vehicle_connections</code> resolves each one purely from these strings.</p>
+    <div class="two-col split">
+      <div class="code-wrap" style="margin-top:0">
+        <div class="code-title"><span>two_plate_coupling.bsn</span><span>.bsn</span></div>
+        <pre><span class="tok-tag">#PlateOneToPlateTwo</span>
+<span class="tok-type">last_beacon::shared::vehicle::LastBeaconVehicleConnection</span> {
+  module_a: <span class="tok-str">"PlateOne"</span>, socket_a: <span class="tok-str">"a"</span>,
+  module_b: <span class="tok-str">"PlateTwo"</span>, socket_b: <span class="tok-str">"b"</span>
+}</pre>
+      </div>
+      <div class="code-wrap" style="margin-top:0">
+        <div class="code-title"><span>mod.rs — the struct behind it</span><span>rust</span></div>
+        <pre><span class="tok-type">pub struct</span> <span class="tok-field">LastBeaconVehicleConnection</span> {
+    <span class="tok-field">module_a</span>: String,
+    <span class="tok-field">socket_a</span>: String,
+    <span class="tok-field">module_b</span>: String,
+    <span class="tok-field">socket_b</span>: String,
+}</pre>
+      </div>
+    </div>
+    <p>Resolution pipeline, once per frame, in <code class="inline">Update</code>:</p>
+    <div class="pipeline">
+      <div class="pipe-step">queue_*<br><span style="color:var(--text-dim)">start .bsn load</span></div>
+      <div class="pipe-arrow"></div>
+      <div class="pipe-step">apply_pending_*<br><span style="color:var(--text-dim)">materialize module</span></div>
+      <div class="pipe-arrow"></div>
+      <div class="pipe-step">materialize_*<br><span style="color:var(--text-dim)">mesh · collider</span></div>
+      <div class="pipe-arrow"></div>
+      <div class="pipe-step" style="border-color:var(--accent);color:var(--accent)">wire_connections<br><span style="color:var(--text-dim)">fuse or hinge</span></div>
+    </div>
+  </section>
+
+  <section id="diagnosing">
+    <div class="sec-head"><span class="sec-num">06 / 06</span><h2>Diagnosing A Bad Connection</h2></div>
+    <p>A typo'd tag or socket name doesn't fail silently. The connection is marked <code class="inline">LastBeaconVehicleConnectionFailed</code> (never <code class="inline">Resolved</code>), the warning lists every valid candidate, and — with <code class="inline">dev-tools</code> enabled — a red marker is drawn in-scene.</p>
+    <div class="panel">
+      <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+      <div class="panel-label">example: connection.socket_b = "z" (doesn't exist)</div>
+      <div class="diagram-scroll">
+        <svg viewBox="0 0 860 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagram of a failed connection, showing a red marker at the midpoint between two modules">
+          <rect x="90" y="30" width="200" height="80" fill="none" stroke="var(--text)" stroke-width="1.4"></rect>
+          <text x="102" y="54" class="mono" font-size="13" font-weight="700" fill="var(--accent)">#PlateOne</text>
+          <circle cx="290" cy="70" r="6" fill="var(--weld)" stroke="var(--weld)" stroke-width="2"></circle>
+
+          <line x1="290" y1="70" x2="570" y2="70" stroke="var(--fail)" stroke-width="1.6" stroke-dasharray="5 5"></line>
+          <circle cx="430" cy="70" r="7" fill="var(--fail)"></circle>
+
+          <rect x="580" y="30" width="200" height="80" fill="none" stroke="var(--text)" stroke-width="1.4"></rect>
+          <text x="592" y="54" class="mono" font-size="13" font-weight="700" fill="var(--accent)">#PlateTwo</text>
+          <circle cx="580" cy="70" r="6" fill="var(--ink-raised)" stroke="var(--neutral)" stroke-width="2" stroke-dasharray="2 2"></circle>
+
+          <text x="430" y="102" text-anchor="middle" class="mono" font-size="10.5" fill="var(--fail)">marker_position = midpoint(PlateOne, PlateTwo)</text>
+        </svg>
+      </div>
+    </div>
+    <div class="code-wrap">
+      <div class="code-title"><span>connection.rs — the failure marker</span><span>rust</span></div>
+      <pre><span class="tok-type">pub struct</span> <span class="tok-field">LastBeaconVehicleConnectionFailed</span> {
+    <span class="tok-field">pub reason</span>: String,
+    <span class="tok-field">pub marker_position</span>: Option&lt;Vec3&gt;,
+}
+
+<span class="tok-comment">// warn!("… socket `z` not found on module `PlateTwo` (available sockets: a, b); skipping.")</span></pre>
+    </div>
+  </section>
+
+  <footer>
+    <div class="eyebrow" style="margin-bottom:16px">Reference Files</div>
+    <dl class="filemap">
+      <dt>connection.rs</dt><dd>game/src/shared/vehicle/connection.rs — resolves tags/sockets, fuses welds, spawns hinges</dd>
+      <dt>debug.rs</dt><dd>game/src/shared/vehicle/debug.rs — socket + failure gizmos (dev-tools)</dd>
+      <dt>coupling_plate.bsn</dt><dd>game/assets/vehicle/modules/coupling_plate.bsn</dd>
+      <dt>two_plate_coupling.bsn</dt><dd>game/assets/vehicle/examples/two_plate_coupling.bsn</dd>
+      <dt>guide</dt><dd>docs/vehicle-authoring-guide.md — full authoring walkthrough</dd>
+    </dl>
+  </footer>
+
+</div>
+</body>
+</html>

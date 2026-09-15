@@ -1,0 +1,19 @@
+// Minimal 2-module worked example for docs/vehicle-authoring-guide.md: two
+// coupling_plate.bsn instances joined by a single weld connection,
+// referencing each other purely by author-chosen tag ("PlateOne"/"PlateTwo")
+// and socket name ("a"/"b") -- no code in game/src knows this vehicle
+// exists. Exercised by game/tests/vehicle_example_two_plate_coupling.rs.
+#TwoPlateCoupling // This vehicle root's own tag -- just a label, not read by anything.
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 5.0, z: 0.0 } } // Root spawn position; arbitrary here (just clear of the ground for the test).
+bevy_ecs::hierarchy::Children [ // Every module instance and connection in this vehicle lives here.
+    #PlateOne // This module instance's tag -- what LastBeaconVehicleConnection.module_a/module_b match against below.
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/coupling_plate.bsn" } // Which module .bsn to load onto this entity.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 0.0 } }, // Placement within the vehicle, before any weld position correction.
+
+    #PlateTwo // This module instance's tag -- also matched against module_a/module_b below.
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/coupling_plate.bsn" } // Same module .bsn, loaded again as an independent instance.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 2.0, y: 0.0, z: 0.0 } }, // Placed 2m away on X -- deliberately not pre-aligned, so the weld's automatic position correction visibly does real work.
+
+    #PlateOneToPlateTwo // This connection entity's own tag -- purely a label, not referenced anywhere.
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "PlateOne", socket_a: "a", module_b: "PlateTwo", socket_b: "b" } // Welds PlateOne's "a" socket to PlateTwo's "b" socket; PlateOne survives as the fusion root, PlateTwo is absorbed into it.
+]

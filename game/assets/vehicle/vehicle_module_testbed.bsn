@@ -16,39 +16,42 @@
 // anchor" rule described in `core.bsn`, and every anchor gap and normal
 // pairing was verified numerically before authoring these values (see the
 // design spec).
-#Vehicle
-bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 1450.0 } }
-bevy_ecs::hierarchy::Children [
+//
+// See docs/vehicle-authoring-guide.md's "#Tag Is Not A Comment" for what
+// every `#Something` line below actually means -- it is never a comment.
+#Vehicle // This vehicle root's own tag. `snap_vehicle_testbed_onto_the_landscape` (world/mod.rs) looks for an entity named exactly "Vehicle" -- the one place in game/src that reads a vehicle-level tag.
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 1450.0 } } // Root spawn position (Y is overwritten once the real terrain height is known -- see above).
+bevy_ecs::hierarchy::Children [ // Every module instance and connection in this vehicle lives here.
     // Welds to BeamCenter.top; no rotation needed (BeamCenter's own
     // rotation only turns it about Y, which leaves its "top" socket's
     // normal at world +Y unaffected, still opposing CoreBlock.bottom).
-    #CoreBlock
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/core.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.65, z: 0.0 } },
+    #CoreBlock // This module instance's tag -- what LastBeaconVehicleConnection.module_a/module_b match against below.
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/core.bsn" } // Which module .bsn to load onto this entity.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.65, z: 0.0 } }, // Placement within the vehicle, before any weld position correction.
 
     // The spine. Rotated +90 deg about Y so its long axis (front/back)
     // runs along world Z (the vehicle's length) instead of X -- this is
     // what connects the front and back axles fore-and-aft, matching the
     // reference layout's central beam running front-to-back.
-    #BeamCenter
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 0.0 }, rotation: glam::Quat { x: 0.0, y: 0.7071068, z: 0.0, w: 0.7071068 } },
+    #BeamCenter // Module instance tag -- matched against module_a/module_b below.
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" } // Loads the generic beam module.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 0.0 }, rotation: glam::Quat { x: 0.0, y: 0.7071068, z: 0.0, w: 0.7071068 } }, // Placement + the +90 deg-about-Y rotation described above.
 
     // The front axle. Unrotated: its own "front"/"back" (long-axis)
     // sockets already point along world +X/-X, spanning the vehicle's
     // width with a wheel hinge-mounted at each end. Its "right" socket
     // (world +Z, pointing back toward vehicle center) welds to
     // BeamCenter's "front" end.
-    #BeamFront
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: -1.35 } },
+    #BeamFront // Module instance tag -- matched against module_a/module_b below.
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" } // Loads the generic beam module.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: -1.35 } }, // Placement only -- no rotation needed (see above).
 
     // The back axle. Mirrors BeamFront: its "left" socket (world -Z,
     // pointing forward toward vehicle center) welds to BeamCenter's
     // "back" end instead.
-    #BeamBack
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 1.35 } },
+    #BeamBack // Module instance tag -- matched against module_a/module_b below.
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" } // Loads the generic beam module.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 1.35 } }, // Placement only -- no rotation needed (see above).
 
     // Every wheel shares this same rotation (-90 deg about Z): it turns the
     // axle socket's normal (local Y, the cylinder's spin axis -- see
@@ -58,44 +61,44 @@ bevy_ecs::hierarchy::Children [
     // regardless of which axle beam (front or back) it hinges to, since
     // both axle beams span world X the same way. `AngularVelocity` spins
     // about that same world-X axis to match.
-    #WheelFrontLeft
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: 0.0, z: -1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } }
-    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }),
+    #WheelFrontLeft // Module instance tag -- matched against module_a/module_b below.
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" } // Loads the wheel module.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: 0.0, z: -1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } } // Placement + the -90 deg-about-Z rotation described above.
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }), // Initial spin rate about world X, purely cosmetic (rolling starts pre-spun instead of from rest).
 
-    #WheelFrontRight
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: 0.0, z: -1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } }
-    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }),
+    #WheelFrontRight // Module instance tag -- matched against module_a/module_b below.
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" } // Loads the wheel module.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: 0.0, z: -1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } } // Placement + the same wheel rotation as every other wheel.
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }), // Initial spin rate about world X, purely cosmetic.
 
-    #WheelBackLeft
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: 0.0, z: 1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } }
-    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }),
+    #WheelBackLeft // Module instance tag -- matched against module_a/module_b below.
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" } // Loads the wheel module.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: 0.0, z: 1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } } // Placement + the same wheel rotation as every other wheel.
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }), // Initial spin rate about world X, purely cosmetic.
 
-    #WheelBackRight
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: 0.0, z: 1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } }
-    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }),
+    #WheelBackRight // Module instance tag -- matched against module_a/module_b below.
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" } // Loads the wheel module.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: 0.0, z: 1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } } // Placement + the same wheel rotation as every other wheel.
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }), // Initial spin rate about world X, purely cosmetic.
 
-    #ConnCenterToCoreBlock
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamCenter", socket_a: "top", module_b: "CoreBlock", socket_b: "bottom" },
+    #ConnCenterToCoreBlock // This connection entity's own tag -- purely a label, not referenced anywhere.
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamCenter", socket_a: "top", module_b: "CoreBlock", socket_b: "bottom" }, // Weld: BeamCenter survives as the fusion root, CoreBlock is absorbed into it.
 
-    #ConnCenterToBeamFront
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamCenter", socket_a: "front", module_b: "BeamFront", socket_b: "right" },
+    #ConnCenterToBeamFront // Connection entity tag -- not referenced anywhere.
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamCenter", socket_a: "front", module_b: "BeamFront", socket_b: "right" }, // Weld: BeamFront is absorbed into the (already-growing) BeamCenter compound body.
 
-    #ConnCenterToBeamBack
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamCenter", socket_a: "back", module_b: "BeamBack", socket_b: "left" },
+    #ConnCenterToBeamBack // Connection entity tag -- not referenced anywhere.
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamCenter", socket_a: "back", module_b: "BeamBack", socket_b: "left" }, // Weld: BeamBack is absorbed into the same compound body.
 
-    #ConnBeamFrontLeftWheel
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamFront", socket_a: "back", module_b: "WheelFrontLeft", socket_b: "axle" },
+    #ConnBeamFrontLeftWheel // Connection entity tag -- not referenced anywhere.
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamFront", socket_a: "back", module_b: "WheelFrontLeft", socket_b: "axle" }, // Hinge: WheelFrontLeft's axle socket carries LastBeaconVehicleHingeJoint, so this spawns a real RevoluteJoint instead of fusing.
 
-    #ConnBeamFrontRightWheel
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamFront", socket_a: "front", module_b: "WheelFrontRight", socket_b: "axle" },
+    #ConnBeamFrontRightWheel // Connection entity tag -- not referenced anywhere.
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamFront", socket_a: "front", module_b: "WheelFrontRight", socket_b: "axle" }, // Hinge, same as above.
 
-    #ConnBeamBackLeftWheel
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamBack", socket_a: "back", module_b: "WheelBackLeft", socket_b: "axle" },
+    #ConnBeamBackLeftWheel // Connection entity tag -- not referenced anywhere.
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamBack", socket_a: "back", module_b: "WheelBackLeft", socket_b: "axle" }, // Hinge, same as above.
 
-    #ConnBeamBackRightWheel
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamBack", socket_a: "front", module_b: "WheelBackRight", socket_b: "axle" }
+    #ConnBeamBackRightWheel // Connection entity tag -- not referenced anywhere.
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamBack", socket_a: "front", module_b: "WheelBackRight", socket_b: "axle" } // Hinge, same as above -- last entry in this Children list, so no trailing comma.
 ]

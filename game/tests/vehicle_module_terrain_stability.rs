@@ -20,20 +20,16 @@
 //! bounded and the fused chassis holds its shape, for both previously-fine
 //! and previously-explosive seeds.
 //!
-//! Currently `#[ignore]`d: the moment the vehicle makes real contact with
-//! *any* ground (flat or rough terrain -- not terrain-roughness-specific),
-//! Avian3D 0.7.0 itself panics inside its own island/contact bookkeeping
+//! Was `#[ignore]`d until the pinned `avian3d` commit (see `game/Cargo.toml`):
+//! Avian3D 0.7.0 panicked inside its own island/contact bookkeeping the
+//! moment the vehicle made real contact with *any* ground
 //! (`avian3d::dynamics::solver::islands::mod::link_contact_to_island`,
 //! `Option::unwrap()` on `None` at `islands/mod.rs:547` -- an internal
-//! linked-list of contacts belonging to a physics "island" ends up pointing
-//! at a contact ID the contact graph no longer has). This reproduces even
-//! on a flat static box, so it isn't the same class of bug fusion was built
-//! to fix (that one -- chassis resonance/explosion on rough terrain -- is
-//! confirmed fixed by `vehicle_module_physics.rs`'s passing tests, which do
-//! exercise real physics settling). It appears specific to a compound body
-//! (the fused chassis) with multiple attached hinge joints (the four wheels)
-//! making real contact, and has not yet been root-caused. Known follow-up
-//! work; un-ignore once fixed.
+//! linked-list of contacts belonging to a physics "island" ended up pointing
+//! at a contact ID the contact graph no longer had, because a stopped
+//! contact wasn't always unlinked from its island before its `ContactId` got
+//! recycled -- upstream avian issue #1025). Confirmed fixed on avian's main
+//! branch; this test is the regression check for that fix.
 
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -75,7 +71,6 @@ const RIGIDLY_CONNECTED_MODULE_PAIRS: [(&str, &str); 7] = [
 ];
 
 #[test]
-#[ignore = "blocked on an Avian3D 0.7.0 internal panic on real ground contact with a compound body -- see module doc comment"]
 fn vehicle_module_testbed_stays_bounded_on_rough_terrain_across_seeds() {
     for seed in SWEPT_TERRAIN_SEEDS {
         run_one_seed(seed);

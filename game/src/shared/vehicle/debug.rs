@@ -8,6 +8,7 @@
 
 use bevy::prelude::*;
 
+use super::connection::LastBeaconVehicleConnectionFailed;
 use super::{
     LastBeaconVehicleFixedJoint, LastBeaconVehicleHingeJoint, LastBeaconVehicleModuleSocket,
 };
@@ -50,6 +51,37 @@ pub fn draw_last_beacon_vehicle_socket_gizmos(
             position,
             position + normal * SOCKET_NORMAL_ARROW_LENGTH,
             color,
+        );
+    }
+}
+
+/// Radius of the marker drawn at a failed connection's best-known anchor
+/// position -- smaller than [`SOCKET_DOT_RADIUS`] so it doesn't visually
+/// compete with real socket markers when both happen to be near each other.
+const CONNECTION_FAILURE_MARKER_RADIUS: f32 = 0.15;
+/// Bright red -- deliberately outside the cyan/orange/grey palette
+/// [`draw_last_beacon_vehicle_socket_gizmos`] already uses, so a failure
+/// reads unambiguously as "wrong," not just "a different socket kind."
+const CONNECTION_FAILURE_COLOR: Color = Color::srgb(1.0, 0.0, 0.0);
+
+/// Draws a red marker at every `LastBeaconVehicleConnectionFailed`
+/// connection's best-known anchor position, so an author can spot a bad
+/// tag/socket reference in-scene, not just in logs. Draws nothing for a
+/// failed connection whose `marker_position` is `None` (neither named module
+/// resolved, so there's nothing spatial to anchor a marker to) -- the
+/// `warn!` logged when it failed is the only signal in that case.
+pub fn draw_last_beacon_vehicle_connection_failure_gizmos(
+    mut gizmos: Gizmos,
+    failed_connections: Query<&LastBeaconVehicleConnectionFailed>,
+) {
+    for failed in &failed_connections {
+        let Some(marker_position) = failed.marker_position else {
+            continue;
+        };
+        gizmos.sphere(
+            marker_position,
+            CONNECTION_FAILURE_MARKER_RADIUS,
+            CONNECTION_FAILURE_COLOR,
         );
     }
 }
