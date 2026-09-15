@@ -1,75 +1,101 @@
+// X/Z must stay in sync with `VEHICLE_TESTBED_X`/`VEHICLE_TESTBED_Z` in
+// `game/src/world/mod.rs`. Y is a placeholder only: the landscape's height
+// at this X/Z depends on that run's random terrain seed, so
+// `snap_vehicle_testbed_onto_the_landscape` (`world/mod.rs`) overwrites it
+// with the actual sampled ground height once this asset finishes loading.
+//
+// Frame layout (top-down "H", matching the reference layout): BeamFront and
+// BeamBack are axle beams, each spanning the vehicle's *width* (world X)
+// with a hinge-mounted wheel at both ends. BeamCenter is the spine, rotated
+// 90 degrees so it spans the vehicle's *length* (world Z) instead, welded
+// across the two axles' midpoints, with CoreBlock welded on top of it. This
+// is a tree (CoreBlock -> BeamCenter -> {BeamFront, BeamBack} -> wheels),
+// not a closed loop, so unlike the earlier diagonal-strut layout, no
+// connection needs a hand-tuned residual -- every instance below is placed
+// by the exact "oppose the other socket's world normal, coincide at the
+// anchor" rule described in `core.bsn`, and every anchor gap and normal
+// pairing was verified numerically before authoring these values (see the
+// design spec).
 #Vehicle
-bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 450.0, z: 1450.0 } }
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 1450.0 } }
 bevy_ecs::hierarchy::Children [
+    // Welds to BeamCenter.top; no rotation needed (BeamCenter's own
+    // rotation only turns it about Y, which leaves its "top" socket's
+    // normal at world +Y unaffected, still opposing CoreBlock.bottom).
     #CoreBlock
     last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/core.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 1.0, z: 0.0 } },
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.65, z: 0.0 } },
 
-    // Rotated (not just translated) so its root/tip axis actually points
-    // from CoreBlock's `left` socket toward ChassisPlate's `front_left`
-    // corner, instead of straddling the wrong side of both (see the
-    // Task 10 review fix: an un-rotated beam left both anchors ~2 units
-    // off). The beam's local root/tip span (2.0) is longer than the
-    // straight-line distance between those two targets (~1.436), so a
-    // rigid transform can't zero out both anchor gaps at once -- this
-    // rotation+translation splits the unavoidable residual evenly,
-    // leaving each anchor ~0.28 units off (see the throwaway
-    // verification test run for Task 10's fix).
-    #BeamLeft
+    // The spine. Rotated +90 deg about Y so its long axis (front/back)
+    // runs along world Z (the vehicle's length) instead of X -- this is
+    // what connects the front and back axles fore-and-aft, matching the
+    // reference layout's central beam running front-to-back.
+    #BeamCenter
     last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -0.5, y: 0.5, z: -0.625 }, rotation: glam::Quat { x: 0.0, y: 0.223364, z: -0.893456, w: 0.389673 } },
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 0.0 }, rotation: glam::Quat { x: 0.0, y: 0.7071068, z: 0.0, w: 0.7071068 } },
 
-    // Mirror of BeamLeft's rotation across z, aiming at CoreBlock's
-    // `right` socket and ChassisPlate's `front_right` corner instead.
-    #BeamRight
+    // The front axle. Unrotated: its own "front"/"back" (long-axis)
+    // sockets already point along world +X/-X, spanning the vehicle's
+    // width with a wheel hinge-mounted at each end. Its "right" socket
+    // (world +Z, pointing back toward vehicle center) welds to
+    // BeamCenter's "front" end.
+    #BeamFront
     last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -0.5, y: 0.5, z: 0.625 }, rotation: glam::Quat { x: 0.0, y: -0.223364, z: -0.893456, w: 0.389673 } },
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: -1.35 } },
 
-    #ChassisPlate
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/plate.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 0.0 } },
+    // The back axle. Mirrors BeamFront: its "left" socket (world -Z,
+    // pointing forward toward vehicle center) welds to BeamCenter's
+    // "back" end instead.
+    #BeamBack
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/beam.bsn" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 1.35 } },
 
+    // Every wheel shares this same rotation (-90 deg about Z): it turns the
+    // axle socket's normal (local Y, the cylinder's spin axis -- see
+    // wheel.bsn) to point along world +X, perpendicular to the vehicle's
+    // front-to-back direction of travel (Z) and to world-up -- so it rolls
+    // forward/backward instead of spinning flat like a coin. This holds
+    // regardless of which axle beam (front or back) it hinges to, since
+    // both axle beams span world X the same way. `AngularVelocity` spins
+    // about that same world-X axis to match.
     #WheelFrontLeft
     last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: -0.3, z: -0.9 } }
-    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 0.0, y: 4.0, z: 0.0 }),
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: 0.0, z: -1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } }
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }),
 
     #WheelFrontRight
     last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: -0.3, z: 0.9 } }
-    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 0.0, y: 4.0, z: 0.0 }),
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: 0.0, z: -1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } }
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }),
 
     #WheelBackLeft
     last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: -0.3, z: -0.9 } }
-    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 0.0, y: 4.0, z: 0.0 }),
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: 0.0, z: 1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } }
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }),
 
     #WheelBackRight
     last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/wheel.bsn" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: -0.3, z: 0.9 } }
-    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 0.0, y: 4.0, z: 0.0 }),
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: 0.0, z: 1.35 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } }
+    avian3d::dynamics::rigid_body::AngularVelocity(glam::Vec3 { x: 4.0, y: 0.0, z: 0.0 }),
 
-    #ConnCoreToBeamLeft
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "CoreBlock", socket_a: "left", module_b: "BeamLeft", socket_b: "root" },
+    #ConnCenterToCoreBlock
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamCenter", socket_a: "top", module_b: "CoreBlock", socket_b: "bottom" },
 
-    #ConnCoreToBeamRight
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "CoreBlock", socket_a: "right", module_b: "BeamRight", socket_b: "root" },
+    #ConnCenterToBeamFront
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamCenter", socket_a: "front", module_b: "BeamFront", socket_b: "right" },
 
-    #ConnBeamLeftToChassis
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamLeft", socket_a: "tip", module_b: "ChassisPlate", socket_b: "front_left" },
+    #ConnCenterToBeamBack
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamCenter", socket_a: "back", module_b: "BeamBack", socket_b: "left" },
 
-    #ConnBeamRightToChassis
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamRight", socket_a: "tip", module_b: "ChassisPlate", socket_b: "front_right" },
+    #ConnBeamFrontLeftWheel
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamFront", socket_a: "back", module_b: "WheelFrontLeft", socket_b: "axle" },
 
-    #ConnWheelFrontLeft
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "front_left", module_b: "WheelFrontLeft", socket_b: "axle" },
+    #ConnBeamFrontRightWheel
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamFront", socket_a: "front", module_b: "WheelFrontRight", socket_b: "axle" },
 
-    #ConnWheelFrontRight
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "front_right", module_b: "WheelFrontRight", socket_b: "axle" },
+    #ConnBeamBackLeftWheel
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamBack", socket_a: "back", module_b: "WheelBackLeft", socket_b: "axle" },
 
-    #ConnWheelBackLeft
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "back_left", module_b: "WheelBackLeft", socket_b: "axle" },
-
-    #ConnWheelBackRight
-    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "ChassisPlate", socket_a: "back_right", module_b: "WheelBackRight", socket_b: "axle" }
+    #ConnBeamBackRightWheel
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "BeamBack", socket_a: "front", module_b: "WheelBackRight", socket_b: "axle" }
 ]

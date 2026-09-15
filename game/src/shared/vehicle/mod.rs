@@ -1,86 +1,109 @@
 //! Foundational modular-vehicle attachment system.
 //!
 //! Modules (`.bsn`-authored blocks like a core, a beam, a plate, a wheel)
-//! attach to each other via Avian3D physics joints to form a larger,
-//! physically simulated structure -- the basis every playable vehicle will
-//! eventually be built from. This module owns the attachment mechanism
-//! itself; concrete gameplay modules (powered wheels, thrusters, weapons)
-//! are future work built on top of it.
+//! attach to each other to form a larger structure -- the basis every
+//! playable vehicle will eventually be built from. This module owns the
+//! attachment mechanism itself; concrete gameplay modules (powered wheels,
+//! thrusters, weapons) are future work built on top of it.
+//!
+//! Two attachment kinds exist, with deliberately different mechanisms.
+//! [`LastBeaconVehicleFixedJoint`] sockets ("welds") never become an Avian3D
+//! physics joint at all -- Avian3D's XPBD solver proved numerically unstable
+//! for rigid multi-way welds under real gameplay conditions (verified
+//! experimentally: a "hub" module welded to three or more neighbors could
+//! diverge into a runaway explosion on rough terrain, regardless of joint
+//! compliance tuning). Instead, [`wire_last_beacon_vehicle_connections`]
+//! fuses welded modules directly into one compound rigid body -- reparenting
+//! the absorbed module's collider(s) under the surviving module's entity, so
+//! Avian3D's native `ColliderOf` hierarchy treats them as a single physical
+//! body with zero relative degrees of freedom and no constraint solving
+//! involved. [`LastBeaconVehicleHingeJoint`] sockets (wheel axles) are
+//! unaffected by this and still produce a real `RevoluteJoint` -- hinges
+//! never showed this instability in any tested scenario, so there's no
+//! reason to reinvent that mechanism.
+//!
+//! A module's `.bsn` is meant to be a *complete* asset definition, not just
+//! data fed through bespoke Rust construction code: its shape (Bevy's own
+//! `Cuboid`/`Cylinder` primitives, just behind the thin
+//! [`LastBeaconVehicleModuleCuboidShape`]/[`LastBeaconVehicleModuleCylinderShape`]
+//! wrappers `Component` requires -- see their own doc comments for why),
+//! rigid body kind (`avian3d::dynamics::rigid_body::RigidBody`), and mass
+//! (`avian3d::dynamics::rigid_body::mass_properties::components::Mass`) are
+//! all authored directly, the same way `AngularVelocity` already is on a
+//! vehicle-level wheel instance -- no Last-Beacon-specific field reinvents
+//! what Bevy/Avian3D already provide. [`LastBeaconVehicleModuleColor`] is
+//! the one component that carries data of its own, for the same
+//! `Handle`-can't-be-static-data reason. [`module_body::materialize_last_beacon_vehicle_cuboid_modules`]/
+//! `_cylinder_modules` are correspondingly generic -- they react to the
+//! shape wrapper (scoped to vehicle modules via
+//! [`LastBeaconVehicleModuleInstance`]), not a module-specific one, so
+//! adding a new shape (e.g. `Sphere`) needs one more small wrapper +
+//! generic system, never a bespoke data type.
 
 mod connection;
+#[cfg(feature = "dev-tools")]
+mod debug;
 mod instance;
 mod module_body;
 
 pub use connection::wire_last_beacon_vehicle_connections;
+#[cfg(feature = "dev-tools")]
+pub use debug::draw_last_beacon_vehicle_socket_gizmos;
 pub use instance::{
     apply_pending_last_beacon_vehicle_module_instances, queue_last_beacon_vehicle_module_instances,
 };
 pub use module_body::{
-    materialize_last_beacon_vehicle_module_bodies,
-    materialize_last_beacon_vehicle_wheel_module_bodies,
+    materialize_last_beacon_vehicle_cuboid_modules,
+    materialize_last_beacon_vehicle_cylinder_modules,
 };
 
 use bevy::prelude::*;
 use foundation_runtime_library::prelude::apply_pending_bsn_instances;
 
-/// Authored on a box-shaped module's root entity (Core, Beam, Plate). A
-/// reactive system turns this into the real mesh, material, rigid body,
-/// collider, and mass -- this project's `.bsn` grammar can construct plain
-/// structs like this one via reflection, but can never call a constructor
-/// function like `Collider::cuboid(...)` directly.
-#[derive(Clone, Debug, Component, Reflect)]
+/// A module's rendered color -- the one piece of a module's visual/physical
+/// makeup that genuinely can't be authored directly in `.bsn` like its shape
+/// and mass can be (see the module's own doc comment): `MeshMaterial3d`
+/// needs a `Handle<StandardMaterial>`, and a `Handle` can't exist as static
+/// `.bsn` data, only as the result of `Assets::add` at runtime. This is that
+/// unavoidable minimum -- a plain, directly-reflectable
+/// [`bevy_color::Color`] -- bridged to a real material by
+/// [`module_body::materialize_last_beacon_vehicle_cuboid_modules`]/
+/// `_cylinder_modules`.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
 #[reflect(Component, Default)]
-pub struct LastBeaconVehicleModuleBody {
-    /// Full box width along local X, in meters.
-    pub size_x: f32,
-    /// Full box height along local Y, in meters.
-    pub size_y: f32,
-    /// Full box depth along local Z, in meters.
-    pub size_z: f32,
-    /// Rigid body mass in kilograms.
-    pub mass: f32,
-    /// Named color, resolved by `module_body::last_beacon_vehicle_module_color`.
-    pub color: String,
-}
+pub struct LastBeaconVehicleModuleColor(pub Color);
 
-impl Default for LastBeaconVehicleModuleBody {
-    fn default() -> Self {
-        Self {
-            size_x: 1.0,
-            size_y: 1.0,
-            size_z: 1.0,
-            mass: 10.0,
-            color: "steel_blue".to_string(),
-        }
-    }
-}
-
-/// Authored on a wheel module's root entity. Separate from
-/// [`LastBeaconVehicleModuleBody`] because a wheel is a cylinder, not a box,
-/// and needs its own collider/mesh construction.
-#[derive(Clone, Debug, Component, Reflect)]
+/// Thin `Component` wrapper around Bevy's own [`Cuboid`](bevy::math::primitives::Cuboid)
+/// shape primitive.
+///
+/// `Cuboid` itself lives in `bevy_math`, which has no dependency on
+/// `bevy_ecs` and so can't (and doesn't) implement `Component` -- being
+/// `Reflect` doesn't imply that. This wrapper adds nothing of its own; every
+/// field a `.bsn` author sets lives entirely on the wrapped `Cuboid`, so
+/// there's still no Last-Beacon-specific shape data to keep in sync with
+/// Bevy's own type.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
 #[reflect(Component, Default)]
-pub struct LastBeaconVehicleWheelModuleBody {
-    /// Wheel radius in meters.
-    pub radius: f32,
-    /// Full wheel width (the cylinder's height, along local Y) in meters.
-    pub width: f32,
-    /// Rigid body mass in kilograms.
-    pub mass: f32,
-    /// Named color, resolved by `module_body::last_beacon_vehicle_module_color`.
-    pub color: String,
-}
+pub struct LastBeaconVehicleModuleCuboidShape(pub Cuboid);
 
-impl Default for LastBeaconVehicleWheelModuleBody {
-    fn default() -> Self {
-        Self {
-            radius: 0.5,
-            width: 0.3,
-            mass: 5.0,
-            color: "charcoal".to_string(),
-        }
-    }
-}
+/// Thin `Component` wrapper around Bevy's own [`Cylinder`](bevy::math::primitives::Cylinder)
+/// shape primitive -- same rationale as [`LastBeaconVehicleModuleCuboidShape`].
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconVehicleModuleCylinderShape(pub Cylinder);
+
+/// Default [`LastBeaconVehicleHingeJoint::translation_compliance`]/
+/// [`LastBeaconVehicleHingeJoint::rotation_compliance`]: almost perfectly
+/// rigid, but not literally zero.
+///
+/// Only meaningful for hinges now -- [`LastBeaconVehicleFixedJoint`] welds
+/// are fused into one compound rigid body instead of becoming a compliant
+/// joint (see this module's doc comment for why). Hinges themselves never
+/// showed the multi-way-weld resonance instability that motivated fusion in
+/// the first place; this value is kept non-zero purely so a future breaking
+/// system has somewhere to introduce give, not because zero was found
+/// unstable for hinges specifically.
+pub const LAST_BEACON_VEHICLE_DEFAULT_JOINT_COMPLIANCE: f32 = 1.0e-5;
 
 /// Marks a child entity of a module's root as a named attachment point.
 ///
@@ -88,19 +111,69 @@ impl Default for LastBeaconVehicleWheelModuleBody {
 /// offset relative to the module's rigid body -- authored directly as a
 /// plain `Transform` in `.bsn`, no marker/system workaround needed since
 /// `Transform` is a plain public-field struct.
+///
+/// A socket only names and positions an attachment point; it says nothing
+/// about what *kind* of joint it produces. That's a separate, explicit
+/// choice: every socket's `.bsn` entry must also carry exactly one
+/// joint-type component -- [`LastBeaconVehicleFixedJoint`] or
+/// [`LastBeaconVehicleHingeJoint`] today, with more to come -- alongside
+/// this one. There's deliberately no implicit default (e.g. via
+/// `#[require(...)]`): Bevy's required-components mechanism only means
+/// "insert this if absent," which can't express "exactly one of these
+/// mutually exclusive types" -- a socket that explicitly authors
+/// `LastBeaconVehicleHingeJoint` but also `#[require]`d a default
+/// `LastBeaconVehicleFixedJoint` would silently end up with both. Requiring
+/// every socket to state its joint type outright avoids that footgun and
+/// keeps a module's `.bsn` the single, complete source of truth for its own
+/// attachment behavior -- see [`wire_last_beacon_vehicle_connections`] for
+/// how an unset socket is handled (warned and skipped, the same as a
+/// missing socket name).
 #[derive(Clone, Debug, Default, Component, Reflect)]
 #[reflect(Component, Default)]
 #[require(Transform)]
 pub struct LastBeaconVehicleModuleSocket {
     /// Name used by a [`LastBeaconVehicleConnection`] to reference this socket.
     pub socket_name: String,
-    /// The kind of joint any [`LastBeaconVehicleConnection`] using this
-    /// socket produces. `Fixed` (the default) welds rigidly; `Hinge` allows
-    /// free rotation about this socket's owning module's own local Y axis --
-    /// only meaningful for wheel-like modules. This is an intrinsic property
-    /// of the socket (and therefore the module), not something a vehicle
-    /// author chooses per-connection.
-    pub attachment_kind: LastBeaconVehicleJointKind,
+}
+
+/// Makes a socket a rigid weld -- zero relative motion, permanently, between
+/// the two sockets a [`LastBeaconVehicleConnection`] joins. The ordinary
+/// choice for structural connections between non-wheel modules.
+///
+/// Carries no fields: a weld has no compliance concept, since it never
+/// becomes a physics joint at all -- [`wire_last_beacon_vehicle_connections`]
+/// fuses the two modules into one compound rigid body instead (see this
+/// module's doc comment for why). A future breaking system detaches a weld
+/// by reversing the fusion (splitting the absorbed module back out into its
+/// own rigid body), not by loosening a compliance value.
+#[derive(Clone, Copy, Debug, Default, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconVehicleFixedJoint {}
+
+/// Makes a socket a free-spinning hinge -- only meaningful for wheel-like
+/// modules. Always rotates about the *wheel* module's own local Y axis,
+/// matching `Collider::cylinder`'s natural rotational symmetry axis -- see
+/// `connection::LAST_BEACON_VEHICLE_HINGE_AXIS`.
+#[derive(Clone, Copy, Debug, Component, Reflect)]
+#[reflect(Component, Default)]
+pub struct LastBeaconVehicleHingeJoint {
+    /// Same units and same "softer of the two sockets" combination rule as
+    /// [`LastBeaconVehicleFixedJoint::translation_compliance`].
+    pub translation_compliance: f32,
+    /// Compliance for the two rotational degrees of freedom the hinge
+    /// doesn't free up (`RevoluteJoint::align_compliance`). The hinge's own
+    /// spin axis has no compliance concept -- it's fully unconstrained by
+    /// design, not softened.
+    pub rotation_compliance: f32,
+}
+
+impl Default for LastBeaconVehicleHingeJoint {
+    fn default() -> Self {
+        Self {
+            translation_compliance: LAST_BEACON_VEHICLE_DEFAULT_JOINT_COMPLIANCE,
+            rotation_compliance: LAST_BEACON_VEHICLE_DEFAULT_JOINT_COMPLIANCE,
+        }
+    }
 }
 
 /// Authored in a *vehicle* `.bsn`, one per module placed in that vehicle.
@@ -118,34 +191,15 @@ pub struct LastBeaconVehicleModuleInstance {
     pub asset_path: String,
 }
 
-/// Which kind of Avian3D joint a socket produces when a
-/// [`LastBeaconVehicleConnection`] uses it.
-///
-/// Authored on [`LastBeaconVehicleModuleSocket`] as an intrinsic property of
-/// that socket -- a wheel's axle socket is always a hinge, every other
-/// module's sockets are always a rigid lock -- rather than chosen per
-/// [`LastBeaconVehicleConnection`], since a vehicle author (or, eventually,
-/// an in-game vehicle editor) should never have to decide this themselves.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Reflect)]
-#[reflect(Default)]
-pub enum LastBeaconVehicleJointKind {
-    /// A rigid weld -- zero relative motion between the two sockets. The
-    /// default for ordinary structural connections.
-    #[default]
-    Fixed,
-    /// A free-spinning hinge, for wheels. Always rotates about the *wheel*
-    /// module's own local Y axis, matching `Collider::cylinder`'s natural
-    /// rotational symmetry axis -- see `connection::LAST_BEACON_VEHICLE_HINGE_AXIS`.
-    Hinge,
-}
-
 /// A sibling entity under a vehicle root, naming two module instances (by
 /// `Name`) and a socket on each (by `socket_name`) to join together.
 ///
 /// [`wire_last_beacon_vehicle_connections`] resolves this once both named
-/// module instances have finished loading and spawns the corresponding
-/// Avian3D joint entity -- the joint kind is derived from the two named
-/// sockets' own [`LastBeaconVehicleJointKind`], not authored here.
+/// module instances have finished loading -- what "resolving" means depends
+/// on the two named sockets' own joint-type component
+/// ([`LastBeaconVehicleFixedJoint`] or [`LastBeaconVehicleHingeJoint`], not
+/// authored here): a weld fuses the two modules into one compound rigid
+/// body, while a hinge spawns a real `RevoluteJoint` between them.
 #[derive(Clone, Debug, Default, Component, Reflect)]
 #[reflect(Component, Default)]
 pub struct LastBeaconVehicleConnection {
@@ -165,23 +219,25 @@ pub struct LastBeaconVehiclePlugin;
 
 impl Plugin for LastBeaconVehiclePlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<LastBeaconVehicleModuleBody>()
-            .register_type::<LastBeaconVehicleWheelModuleBody>()
+        app.register_type::<LastBeaconVehicleModuleColor>()
+            .register_type::<LastBeaconVehicleModuleCuboidShape>()
+            .register_type::<LastBeaconVehicleModuleCylinderShape>()
             .register_type::<LastBeaconVehicleModuleSocket>()
+            .register_type::<LastBeaconVehicleFixedJoint>()
+            .register_type::<LastBeaconVehicleHingeJoint>()
             .register_type::<LastBeaconVehicleModuleInstance>()
             .register_type::<LastBeaconVehicleConnection>()
-            .register_type::<LastBeaconVehicleJointKind>()
             .add_systems(
                 Update,
                 (
                     // `queue_*`/`apply_pending_*` must run before the
                     // `materialize_*` systems: `apply_pending_*` is an
                     // exclusive system that synchronously inserts a module's
-                    // `LastBeaconVehicleModuleBody`/`WheelModuleBody` the
+                    // authored `Cuboid`/`Cylinder`/`RigidBody`/`Mass`/etc. the
                     // instant its `.bsn` resolves (no command buffering), so
                     // running it first makes that insertion visible to the
                     // `materialize_*` systems' `Added<>` queries in this same
-                    // `Update` pass. That in turn means `RigidBody`/`Collider`
+                    // `Update` pass. That in turn means `Mesh3d`/`Collider`
                     // insertion (deferred via `Commands`) and
                     // `wire_last_beacon_vehicle_connections`'s joint spawn
                     // (also deferred via `Commands`, and must run last since
@@ -196,8 +252,8 @@ impl Plugin for LastBeaconVehiclePlugin {
                     // island").
                     queue_last_beacon_vehicle_module_instances,
                     apply_pending_last_beacon_vehicle_module_instances,
-                    materialize_last_beacon_vehicle_module_bodies,
-                    materialize_last_beacon_vehicle_wheel_module_bodies,
+                    materialize_last_beacon_vehicle_cuboid_modules,
+                    materialize_last_beacon_vehicle_cylinder_modules,
                     wire_last_beacon_vehicle_connections,
                 )
                     .chain()
