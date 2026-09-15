@@ -54,6 +54,28 @@ use super::{
 #[derive(Clone, Copy, Debug, Component)]
 pub struct LastBeaconVehicleConnectionResolved;
 
+/// Marks a connection that permanently failed to resolve (a named module or
+/// socket doesn't exist, or a socket's joint-type authoring is invalid) --
+/// inserted *instead of* [`LastBeaconVehicleConnectionResolved`], so success
+/// and failure are distinguishable without parsing logs. `reason` duplicates
+/// (in a form a test can assert on directly) whatever was already logged via
+/// `warn!` when this was inserted.
+///
+/// `pub` for the same reason as [`LastBeaconVehicleConnectionResolved`] --
+/// `debug::draw_last_beacon_vehicle_connection_failure_gizmos` queries it
+/// directly, and that function is itself `pub`, re-exported to the crate
+/// root.
+#[derive(Clone, Debug, Component)]
+pub struct LastBeaconVehicleConnectionFailed {
+    pub reason: String,
+    /// Best-effort world position to draw a failure marker at -- the
+    /// midpoint of both named modules' roots if both were found (a
+    /// socket-level failure), the one module that *was* found if only one
+    /// was, or `None` if neither resolved (nothing spatial to anchor a
+    /// marker to).
+    pub marker_position: Option<Vec3>,
+}
+
 /// The axis every hinge joint spins around, in the *wheel* module's own
 /// local space. Matches `Collider::cylinder`'s natural rotational symmetry
 /// axis (its shape is defined with its height running along local Y).
@@ -142,26 +164,48 @@ pub fn wire_last_beacon_vehicle_connections(
     for (connection_entity, connection, parent_link) in &connections {
         let vehicle_root = parent_link.parent();
 
-        let module_a = find_named_module_instance(
+        let module_a_lookup = find_named_module_instance(
             vehicle_root,
             &children_query,
             &module_instances,
             &connection.module_a,
         );
-        let module_b = find_named_module_instance(
+        let module_b_lookup = find_named_module_instance(
             vehicle_root,
             &children_query,
             &module_instances,
             &connection.module_b,
         );
-        let (Some(module_a), Some(module_b)) = (module_a, module_b) else {
-            warn!(
-                "LastBeaconVehicleConnection on {connection_entity:?} names a module that does not exist in this vehicle (`{}` / `{}`); skipping.",
-                connection.module_a, connection.module_b
-            );
+        let (Some(module_a), Some(module_b)) = (module_a_lookup, module_b_lookup) else {
+            let available_tags =
+                collect_vehicle_module_tags(vehicle_root, &children_query, &module_instances);
+            let mut reasons = Vec::new();
+            if module_a_lookup.is_none() {
+                reasons.push(format!(
+                    "module `{}` not found (available modules: {})",
+                    connection.module_a,
+                    format_name_list(&available_tags)
+                ));
+            }
+            if module_b_lookup.is_none() {
+                reasons.push(format!(
+                    "module `{}` not found (available modules: {})",
+                    connection.module_b,
+                    format_name_list(&available_tags)
+                ));
+            }
+            let reason = reasons.join("; ");
+            warn!("LastBeaconVehicleConnection on {connection_entity:?}: {reason}; skipping.");
+            let marker_position = module_a_lookup
+                .or(module_b_lookup)
+                .and_then(|resolved| global_transforms.get(resolved.entity).ok())
+                .map(GlobalTransform::translation);
             commands
                 .entity(connection_entity)
-                .insert(LastBeaconVehicleConnectionResolved);
+                .insert(LastBeaconVehicleConnectionFailed {
+                    reason,
+                    marker_position,
+                });
             continue;
         };
 
@@ -169,39 +213,61 @@ pub fn wire_last_beacon_vehicle_connections(
             continue;
         }
 
-        let socket_a = match find_named_socket(
+        let socket_a_result = find_named_socket(
             module_a.entity,
             &children_query,
             &sockets,
             &connection.socket_a,
-        ) {
-            Ok(socket) => socket,
-            Err(lookup_error) => {
-                warn!(
-                    "LastBeaconVehicleConnection on {connection_entity:?} names socket `{}` on module `{}`, but {lookup_error}; skipping.",
-                    connection.socket_a, connection.module_a
-                );
-                commands
-                    .entity(connection_entity)
-                    .insert(LastBeaconVehicleConnectionResolved);
-                continue;
-            }
-        };
-        let socket_b = match find_named_socket(
+        );
+        let socket_b_result = find_named_socket(
             module_b.entity,
             &children_query,
             &sockets,
             &connection.socket_b,
-        ) {
-            Ok(socket) => socket,
-            Err(lookup_error) => {
-                warn!(
-                    "LastBeaconVehicleConnection on {connection_entity:?} names socket `{}` on module `{}`, but {lookup_error}; skipping.",
-                    connection.socket_b, connection.module_b
-                );
+        );
+        let (socket_a, socket_b) = match (socket_a_result, socket_b_result) {
+            (Ok(socket_a), Ok(socket_b)) => (socket_a, socket_b),
+            (socket_a_result, socket_b_result) => {
+                let mut reasons = Vec::new();
+                if let Err(lookup_error) = &socket_a_result {
+                    reasons.push(describe_socket_lookup_error(
+                        lookup_error,
+                        &connection.socket_a,
+                        &connection.module_a,
+                        module_a.entity,
+                        &children_query,
+                        &sockets,
+                    ));
+                }
+                if let Err(lookup_error) = &socket_b_result {
+                    reasons.push(describe_socket_lookup_error(
+                        lookup_error,
+                        &connection.socket_b,
+                        &connection.module_b,
+                        module_b.entity,
+                        &children_query,
+                        &sockets,
+                    ));
+                }
+                let reason = reasons.join("; ");
+                warn!("LastBeaconVehicleConnection on {connection_entity:?}: {reason}; skipping.");
+                let marker_position = effective_global_transform(
+                    module_a.entity,
+                    &pending_fusions,
+                    &global_transforms,
+                )
+                .zip(effective_global_transform(
+                    module_b.entity,
+                    &pending_fusions,
+                    &global_transforms,
+                ))
+                .map(|(a, b)| (a.translation() + b.translation()) * 0.5);
                 commands
                     .entity(connection_entity)
-                    .insert(LastBeaconVehicleConnectionResolved);
+                    .insert(LastBeaconVehicleConnectionFailed {
+                        reason,
+                        marker_position,
+                    });
                 continue;
             }
         };
@@ -509,6 +575,7 @@ fn effective_global_transform(
     }
 }
 
+#[derive(Clone, Copy)]
 struct ResolvedModuleInstance {
     entity: Entity,
     is_pending: bool,
@@ -536,6 +603,56 @@ fn find_named_module_instance(
                 is_pending: pending.is_some(),
             })
         })
+}
+
+/// Every module tag (`Name`) currently present in `vehicle_root`'s
+/// descendant subtree -- used to list valid candidates in a "module not
+/// found" warning. Same traversal as [`find_named_module_instance`].
+fn collect_vehicle_module_tags(
+    vehicle_root: Entity,
+    children_query: &Query<&Children>,
+    module_instances: &ModuleInstancesQuery,
+) -> Vec<String> {
+    children_query
+        .iter_descendants(vehicle_root)
+        .filter_map(|descendant_entity| {
+            module_instances
+                .get(descendant_entity)
+                .ok()
+                .map(|(_, name, _)| name.as_str().to_string())
+        })
+        .collect()
+}
+
+/// Every socket name present directly on `module_entity` -- used to list
+/// valid candidates in a "socket not found" warning.
+fn collect_module_socket_names(
+    module_entity: Entity,
+    children_query: &Query<&Children>,
+    sockets: &SocketsQuery,
+) -> Vec<String> {
+    let Ok(module_children) = children_query.get(module_entity) else {
+        return Vec::new();
+    };
+    module_children
+        .iter()
+        .filter_map(|child_entity| {
+            sockets
+                .get(child_entity)
+                .ok()
+                .map(|(_, socket, ..)| socket.socket_name.clone())
+        })
+        .collect()
+}
+
+/// Formats a candidate-name list for a warning message, e.g. `"front, back,
+/// left"`, or `"none"` if empty.
+fn format_name_list(names: &[String]) -> String {
+    if names.is_empty() {
+        "none".to_string()
+    } else {
+        names.join(", ")
+    }
 }
 
 /// Why [`find_named_socket`] couldn't resolve a named socket into a
@@ -568,6 +685,30 @@ impl std::fmt::Display for SocketLookupError {
                 "it carries both LastBeaconVehicleFixedJoint and LastBeaconVehicleHingeJoint"
             ),
         }
+    }
+}
+
+/// Describes why [`find_named_socket`] failed, including the module's actual
+/// available socket names when the socket simply wasn't found (the other two
+/// [`SocketLookupError`] variants already name the exact problem and don't
+/// need a candidate list).
+fn describe_socket_lookup_error(
+    lookup_error: &SocketLookupError,
+    socket_name: &str,
+    module_name: &str,
+    module_entity: Entity,
+    children_query: &Query<&Children>,
+    sockets: &SocketsQuery,
+) -> String {
+    match lookup_error {
+        SocketLookupError::NotFound => {
+            let available = collect_module_socket_names(module_entity, children_query, sockets);
+            format!(
+                "socket `{socket_name}` not found on module `{module_name}` (available sockets: {})",
+                format_name_list(&available)
+            )
+        }
+        other => format!("socket `{socket_name}` on module `{module_name}`: {other}"),
     }
 }
 
@@ -753,6 +894,12 @@ mod tests {
             .world()
             .get::<LastBeaconVehicleConnectionResolved>(connection_entity)
             .is_some());
+        assert!(
+            app.world()
+                .get::<LastBeaconVehicleConnectionFailed>(connection_entity)
+                .is_none(),
+            "a successfully-resolved connection must not also be marked Failed"
+        );
 
         // Socket coincidence: ModuleA.front (world +0.5) should now coincide
         // with ModuleB.root (originally local -1.0 within ModuleB).
@@ -910,6 +1057,122 @@ mod tests {
 
         let mut fixed_joints = app.world_mut().query::<&FixedJoint>();
         assert_eq!(fixed_joints.iter(app.world()).count(), 0);
+    }
+
+    #[test]
+    fn a_connection_naming_a_nonexistent_module_is_marked_failed_with_available_tags_listed() {
+        let mut app = test_app();
+        let world = app.world_mut();
+
+        let module_a = spawn_resolved_module(
+            world,
+            "ModuleA",
+            Transform::IDENTITY,
+            "front",
+            Vec3::ZERO,
+            false,
+        );
+        let vehicle_root = world.spawn(Transform::IDENTITY).id();
+        let connection_entity = world
+            .spawn(LastBeaconVehicleConnection {
+                module_a: "ModuleA".to_string(),
+                socket_a: "front".to_string(),
+                module_b: "Ghost".to_string(),
+                socket_b: "whatever".to_string(),
+            })
+            .id();
+        world
+            .entity_mut(vehicle_root)
+            .add_children(&[module_a, connection_entity]);
+
+        app.update();
+
+        let failed = app
+            .world()
+            .get::<LastBeaconVehicleConnectionFailed>(connection_entity)
+            .expect("connection naming a nonexistent module should be marked failed");
+        assert!(
+            failed.reason.contains("Ghost"),
+            "reason should name the missing tag, got: {}",
+            failed.reason
+        );
+        assert!(
+            failed.reason.contains("ModuleA"),
+            "reason should list the module tag that does exist, got: {}",
+            failed.reason
+        );
+        assert!(
+            app.world()
+                .get::<LastBeaconVehicleConnectionResolved>(connection_entity)
+                .is_none(),
+            "a failed connection must not also be marked Resolved"
+        );
+        assert_eq!(
+            failed.marker_position,
+            Some(Vec3::ZERO),
+            "marker position should anchor to the one module that was found (ModuleA, at the origin)"
+        );
+    }
+
+    #[test]
+    fn a_connection_naming_a_nonexistent_socket_is_marked_failed_with_available_sockets_listed() {
+        let mut app = test_app();
+        let world = app.world_mut();
+
+        let module_a = spawn_resolved_module(
+            world,
+            "ModuleA",
+            Transform::IDENTITY,
+            "front",
+            Vec3::ZERO,
+            false,
+        );
+        let module_b = spawn_resolved_module(
+            world,
+            "ModuleB",
+            Transform::IDENTITY,
+            "root",
+            Vec3::ZERO,
+            false,
+        );
+        let vehicle_root = world.spawn(Transform::IDENTITY).id();
+        let connection_entity = world
+            .spawn(LastBeaconVehicleConnection {
+                module_a: "ModuleA".to_string(),
+                socket_a: "nonexistent".to_string(),
+                module_b: "ModuleB".to_string(),
+                socket_b: "root".to_string(),
+            })
+            .id();
+        world
+            .entity_mut(vehicle_root)
+            .add_children(&[module_a, module_b, connection_entity]);
+
+        app.update();
+
+        let failed = app
+            .world()
+            .get::<LastBeaconVehicleConnectionFailed>(connection_entity)
+            .expect("connection naming a nonexistent socket should be marked failed");
+        assert!(
+            failed.reason.contains("nonexistent"),
+            "reason should name the missing socket, got: {}",
+            failed.reason
+        );
+        assert!(
+            failed.reason.contains("front"),
+            "reason should list the socket name that does exist on ModuleA, got: {}",
+            failed.reason
+        );
+        assert!(
+            app.world()
+                .get::<LastBeaconVehicleConnectionResolved>(connection_entity)
+                .is_none()
+        );
+        assert!(
+            failed.marker_position.is_some(),
+            "both modules resolved, so a midpoint marker position should be set"
+        );
     }
 
     #[test]
@@ -1155,9 +1418,16 @@ mod tests {
         );
         assert!(
             app.world()
-                .get::<LastBeaconVehicleConnectionResolved>(connection_entity)
+                .get::<LastBeaconVehicleConnectionFailed>(connection_entity)
                 .is_some(),
-            "the connection should still be marked resolved, so it isn't retried forever"
+            "the connection should be marked failed (not silently resolved), so it isn't retried \
+             forever and tooling can tell it apart from a real success"
+        );
+        assert!(
+            app.world()
+                .get::<LastBeaconVehicleConnectionResolved>(connection_entity)
+                .is_none(),
+            "a permanently-skipped connection must not also be marked Resolved"
         );
     }
 
