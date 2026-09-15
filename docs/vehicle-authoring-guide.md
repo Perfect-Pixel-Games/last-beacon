@@ -138,6 +138,9 @@ did).
 
 ## See Also
 
+- `docs/vehicle-module-system-diagram.html` -- a diagrammed companion to
+  this guide: the assembly diagram, socket-normal derivation, and code
+  walkthrough as a single visual reference. Open directly in a browser.
 - `docs/plans/vehicle-fixes/` -- the branch this guide's Phase 2 work landed
   on, including the Avian3D ground-contact-crash fix that was Phase 1.
 - `docs/superpowers/specs/2026-09-15-vehicle-authoring-clarity-design.md` --
