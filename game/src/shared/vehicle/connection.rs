@@ -155,7 +155,7 @@ pub fn wire_last_beacon_vehicle_connections(
     child_of_query: Query<&ChildOf>,
     sockets: SocketsQuery,
     rigid_bodies: Query<(), With<RigidBody>>,
-    global_transforms: Query<&GlobalTransform>,
+    transforms: Query<&Transform>,
     masses: Query<&Mass>,
 ) {
     let mut pending_fusions: PendingFusions = HashMap::new();
@@ -198,8 +198,10 @@ pub fn wire_last_beacon_vehicle_connections(
             warn!("LastBeaconVehicleConnection on {connection_entity:?}: {reason}; skipping.");
             let marker_position = module_a_lookup
                 .or(module_b_lookup)
-                .and_then(|resolved| global_transforms.get(resolved.entity).ok())
-                .map(GlobalTransform::translation);
+                .and_then(|resolved| {
+                    live_global_transform(resolved.entity, &transforms, &child_of_query)
+                })
+                .map(|global| global.translation());
             commands
                 .entity(connection_entity)
                 .insert(LastBeaconVehicleConnectionFailed {
@@ -254,12 +256,14 @@ pub fn wire_last_beacon_vehicle_connections(
                 let marker_position = effective_global_transform(
                     module_a.entity,
                     &pending_fusions,
-                    &global_transforms,
+                    &transforms,
+                    &child_of_query,
                 )
                 .zip(effective_global_transform(
                     module_b.entity,
                     &pending_fusions,
-                    &global_transforms,
+                    &transforms,
+                    &child_of_query,
                 ))
                 .map(|(a, b)| (a.translation() + b.translation()) * 0.5);
                 commands
@@ -314,10 +318,10 @@ pub fn wire_last_beacon_vehicle_connections(
             Some(root_a_global),
             Some(root_b_global),
         ) = (
-            effective_global_transform(socket_a.entity, &pending_fusions, &global_transforms),
-            effective_global_transform(socket_b.entity, &pending_fusions, &global_transforms),
-            effective_global_transform(root_a, &pending_fusions, &global_transforms),
-            effective_global_transform(root_b, &pending_fusions, &global_transforms),
+            effective_global_transform(socket_a.entity, &pending_fusions, &transforms, &child_of_query),
+            effective_global_transform(socket_b.entity, &pending_fusions, &transforms, &child_of_query),
+            effective_global_transform(root_a, &pending_fusions, &transforms, &child_of_query),
+            effective_global_transform(root_b, &pending_fusions, &transforms, &child_of_query),
         )
         else {
             continue;
@@ -451,8 +455,8 @@ pub fn wire_last_beacon_vehicle_connections(
         };
 
         let (Some(root_a_global), Some(root_b_global)) = (
-            effective_global_transform(root_a, &pending_fusions, &global_transforms),
-            effective_global_transform(root_b, &pending_fusions, &global_transforms),
+            effective_global_transform(root_a, &pending_fusions, &transforms, &child_of_query),
+            effective_global_transform(root_b, &pending_fusions, &transforms, &child_of_query),
         ) else {
             continue;
         };
@@ -469,9 +473,12 @@ pub fn wire_last_beacon_vehicle_connections(
             } else {
                 (socket_a, root_a, root_a_global, socket_b.local_anchor)
             };
-        let Some(chassis_socket_global) =
-            effective_global_transform(chassis_socket.entity, &pending_fusions, &global_transforms)
-        else {
+        let Some(chassis_socket_global) = effective_global_transform(
+            chassis_socket.entity,
+            &pending_fusions,
+            &transforms,
+            &child_of_query,
+        ) else {
             continue;
         };
         let chassis_local_anchor = chassis_socket_global
@@ -555,23 +562,52 @@ fn find_current_fusion_root(
     None
 }
 
+/// Computes `entity`'s current world-space [`GlobalTransform`] by walking up
+/// its `ChildOf` ancestor chain and composing each ancestor's live
+/// [`Transform`], rather than trusting Bevy's own [`GlobalTransform`]
+/// component. Bevy only recomputes `GlobalTransform` once per frame, in
+/// `PostUpdate` -- *after* this system (which runs in `Update`) has already
+/// run. An entity whose `Transform`/`ChildOf` were authored this exact frame
+/// (by `apply_pending_last_beacon_vehicle_module_instances`, which mutates
+/// the `World` directly with no command buffering, so a module and its
+/// sockets can go from not-existing to fully authored within a single
+/// frame) would still report a stale, just-inserted-default `GlobalTransform`
+/// if read directly -- even though its `Transform` is already correct.
+/// Recomputing from `Transform` instead is always correct regardless of
+/// propagation timing.
+fn live_global_transform(
+    entity: Entity,
+    transforms: &Query<&Transform>,
+    child_of_query: &Query<&ChildOf>,
+) -> Option<GlobalTransform> {
+    let transform = transforms.get(entity).ok()?;
+    match child_of_query.get(entity) {
+        Ok(child_of) => {
+            let parent_global =
+                live_global_transform(child_of.parent(), transforms, child_of_query)?;
+            Some(parent_global.mul_transform(*transform))
+        }
+        Err(_) => Some(GlobalTransform::from(*transform)),
+    }
+}
+
 /// Computes `entity`'s effective world-space [`GlobalTransform`], accounting
 /// for any `pending_fusions` decision this exact frame -- since a
-/// just-fused entity's live `Transform`/`GlobalTransform` won't reflect its
-/// new parent until this system's `Commands` flush and Bevy's transform
-/// propagation next runs. Falls back to the live, already-propagated
-/// `GlobalTransform` for anything not touched this frame.
+/// just-fused entity's live `Transform` won't reflect its new parent until
+/// this system's `Commands` flush. Falls back to [`live_global_transform`]
+/// for anything not touched this frame.
 fn effective_global_transform(
     entity: Entity,
     pending_fusions: &PendingFusions,
-    global_transforms: &Query<&GlobalTransform>,
+    transforms: &Query<&Transform>,
+    child_of_query: &Query<&ChildOf>,
 ) -> Option<GlobalTransform> {
     if let Some(&(new_parent, new_local_transform)) = pending_fusions.get(&entity) {
         let parent_global =
-            effective_global_transform(new_parent, pending_fusions, global_transforms)?;
+            effective_global_transform(new_parent, pending_fusions, transforms, child_of_query)?;
         Some(parent_global.mul_transform(new_local_transform))
     } else {
-        global_transforms.get(entity).ok().copied()
+        live_global_transform(entity, transforms, child_of_query)
     }
 }
 
