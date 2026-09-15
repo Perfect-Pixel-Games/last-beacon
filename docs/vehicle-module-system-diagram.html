@@ -288,6 +288,28 @@
     color: var(--text);
   }
 
+  .tag-note {
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 16px 18px;
+    margin: 22px 0 6px;
+    max-width: 68ch;
+  }
+  .tag-note-label {
+    font-family: "Cascadia Code", "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .tag-note p { margin: 0 0 10px; font-size: 14.5px; }
+  .tag-note p:last-child { margin-bottom: 0; }
+  .tag-note ol { margin: 8px 0 0; padding-left: 20px; font-size: 14px; }
+  .tag-note li { margin-bottom: 6px; }
+  .tag-note li:last-child { margin-bottom: 0; }
+
   .pipeline {
     display: flex;
     align-items: center;
@@ -356,6 +378,17 @@
     <div class="sec-head"><span class="sec-num">01 / 06</span><h2>Concept</h2></div>
     <p>A module is identified purely by its <code class="inline">.bsn</code> asset path. Placed in a vehicle, it gets a <b>tag</b> — just its Bevy <code class="inline">Name</code>, chosen by whoever authors the vehicle. Each module carries its own <b>sockets</b>, each with an author-chosen name. A <b>connection</b> is a small piece of data naming two tag+socket pairs to join. That's the entire vocabulary — there is no registry, no enum of known modules, no code path that special-cases a particular vehicle layout.</p>
     <p class="note">Confirmed by grep: zero references to any concrete module or vehicle name (e.g. <code class="inline">"CoreBlock"</code>) anywhere in <code class="inline">game/src</code> outside test assertions.</p>
+
+    <div class="tag-note">
+      <div class="tag-note-label">"#" is not a comment</div>
+      <p>In most languages <code class="inline">#</code> starts a comment. In this project's <code class="inline">.bsn</code> grammar it's literal syntax for a Bevy <code class="inline">Name</code> component &mdash; <code class="inline">#PlateOne</code> means &ldquo;this entity's <code class="inline">Name</code> is <code class="inline">PlateOne</code>,&rdquo; nothing more.</p>
+      <p>Three similar-looking things exist here &mdash; easy to conflate:</p>
+      <ol>
+        <li><b>A module instance's tag</b> &mdash; <code class="inline">#PlateOne</code> on the module instance in the <i>vehicle</i> <code class="inline">.bsn</code>. Matched by <code class="inline">.module_a</code> / <code class="inline">.module_b</code>.</li>
+        <li><b>A socket's name</b> &mdash; the <code class="inline">socket_name: "a"</code> field, authored inside the <i>module's own</i> <code class="inline">.bsn</code>. Matched by <code class="inline">.socket_a</code> / <code class="inline">.socket_b</code>.</li>
+        <li><b>A socket entity's own <code class="inline">#Tag</code></b> &mdash; e.g. <code class="inline">#A</code> in <code class="inline">coupling_plate.bsn</code>. Just a label; <b>never read by the connection system.</b></li>
+      </ol>
+    </div>
   </section>
 
   <section id="diagram">

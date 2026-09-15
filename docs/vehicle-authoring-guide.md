@@ -15,6 +15,35 @@ its author-chosen `socket_name` string. `game/src/shared/vehicle/connection.rs`
 resolves connections purely from these strings -- nothing in Rust
 special-cases any particular module or vehicle layout.
 
+## `#Tag` Is Not A Comment
+
+In most languages `#` starts a comment. In this project's `.bsn` grammar
+(`engine/crates/foundation-runtime-library/src/dynamic_bsn_grammar.lalrpop`'s
+`Name` rule) it is literal syntax for giving an entity a Bevy `Name`
+component: `#PlateOne` means "this entity's `Name` is `PlateOne`," nothing
+more. It has no other effect and is not stripped out or specially
+interpreted beyond that.
+
+Three different-but-similar-looking things exist in this system, and it is
+easy to conflate them:
+
+1. **A module instance's tag** -- the `#Tag` on the *module instance* entity
+   in the *vehicle* `.bsn` (e.g. `#PlateOne` in `two_plate_coupling.bsn`).
+   This is what `LastBeaconVehicleConnection.module_a`/`module_b` matches
+   against.
+2. **A socket's name** -- the `socket_name: "..."` *field value* on
+   `LastBeaconVehicleModuleSocket`, authored inside the *module's own*
+   `.bsn` (e.g. `socket_name: "a"` in `coupling_plate.bsn`). This is what
+   `LastBeaconVehicleConnection.socket_a`/`socket_b` matches against.
+3. **A socket entity's own `#Tag`** -- e.g. `#A` in `coupling_plate.bsn`.
+   This is just the `.bsn` author's label for the socket entity itself,
+   exactly like any other `#Tag`. **It is never read by the connection
+   system.** Renaming `#A` to `#Front` changes nothing about how
+   connections resolve; renaming `socket_name: "a"` to
+   `socket_name: "front"` does -- and any connection still referencing
+   `"a"` would then fail to resolve (see "Diagnosing A Bad Connection"
+   below).
+
 ## Module Anatomy
 
 A module `.bsn` (see `game/assets/vehicle/modules/core.bsn`, `beam.bsn`,
