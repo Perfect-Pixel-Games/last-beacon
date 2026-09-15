@@ -3,19 +3,19 @@
 // its "a"/"b" sockets (both welds). Uses the same "local +X = outward
 // normal" convention as core.bsn/beam.bsn (see core.bsn's header comment
 // for the full derivation) -- just with two sockets instead of six.
-last_beacon::shared::vehicle::LastBeaconVehicleModuleCuboidShape(bevy_math::primitives::dim3::Cuboid { half_size: glam::Vec3 { x: 0.3, y: 0.05, z: 0.3 } })
-avian3d::dynamics::rigid_body::RigidBody::Dynamic
-avian3d::dynamics::rigid_body::mass_properties::components::Mass(2.0)
-last_beacon::shared::vehicle::LastBeaconVehicleModuleColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.55, green: 0.45, blue: 0.3, alpha: 1.0 }))
-bevy_ecs::hierarchy::Children [
-    #A
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "a" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.3, y: 0.0, z: 0.0 } }
-    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { },
+last_beacon::shared::vehicle::LastBeaconVehicleModuleCuboidShape(bevy_math::primitives::dim3::Cuboid { half_size: glam::Vec3 { x: 0.3, y: 0.05, z: 0.3 } }) // Shape: a thin 0.6 x 0.1 x 0.6 box (half_size is half the full box extent).
+avian3d::dynamics::rigid_body::RigidBody::Dynamic // Physics body kind: a real simulated body, not static/kinematic.
+avian3d::dynamics::rigid_body::mass_properties::components::Mass(2.0) // Mass in kilograms.
+last_beacon::shared::vehicle::LastBeaconVehicleModuleColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.55, green: 0.45, blue: 0.3, alpha: 1.0 })) // Render color -- a warm tan, purely visual.
+bevy_ecs::hierarchy::Children [ // This module's sockets live here, as child entities.
+    #A // This SOCKET entity's own tag -- never read by the connection system (see docs/vehicle-authoring-guide.md's "#Tag Is Not A Comment").
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "a" } // The id LastBeaconVehicleConnection.socket_a/socket_b actually match against.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.3, y: 0.0, z: 0.0 } } // Anchor point: local +X face. No rotation needed -- the default local +X normal already points outward here.
+    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { }, // Joint type: a weld (fuses into one compound body on connect; never becomes a physics joint).
 
     // Normal -X: rotation of PI about Y (local +X -> world -X).
-    #B
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "b" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -0.3, y: 0.0, z: 0.0 }, rotation: glam::Quat { x: 0.0, y: 1.0, z: 0.0, w: 0.0 } }
-    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { }
+    #B // This socket entity's own tag -- again, unrelated to any module-instance tag and never read by the connection system.
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "b" } // The id a connection matches against.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -0.3, y: 0.0, z: 0.0 }, rotation: glam::Quat { x: 0.0, y: 1.0, z: 0.0, w: 0.0 } } // Anchor point: local -X face, rotated 180 deg about Y so local +X now points outward on this side too.
+    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { } // Joint type: a weld, same as socket "a".
 ]

@@ -2,11 +2,11 @@
 // directly, same as `core.bsn`/`beam.bsn` -- `Cylinder.half_height` is half
 // the wheel's full 0.3 width (its height along local Y, matching
 // `Collider::cylinder`'s own axis convention).
-last_beacon::shared::vehicle::LastBeaconVehicleModuleCylinderShape(bevy_math::primitives::dim3::Cylinder { radius: 0.5, half_height: 0.15 })
-avian3d::dynamics::rigid_body::RigidBody::Dynamic
-avian3d::dynamics::rigid_body::mass_properties::components::Mass(5.0)
-last_beacon::shared::vehicle::LastBeaconVehicleModuleColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.16, green: 0.16, blue: 0.18, alpha: 1.0 }))
-bevy_ecs::hierarchy::Children [
+last_beacon::shared::vehicle::LastBeaconVehicleModuleCylinderShape(bevy_math::primitives::dim3::Cylinder { radius: 0.5, half_height: 0.15 }) // Shape: radius 0.5, 0.3 wide.
+avian3d::dynamics::rigid_body::RigidBody::Dynamic // Physics body kind: a real simulated body, not static/kinematic.
+avian3d::dynamics::rigid_body::mass_properties::components::Mass(5.0) // Mass in kilograms.
+last_beacon::shared::vehicle::LastBeaconVehicleModuleColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.16, green: 0.16, blue: 0.18, alpha: 1.0 })) // Render color -- near-black tire rubber, purely visual.
+bevy_ecs::hierarchy::Children [ // This module's one socket (its axle), as a child entity.
     // Unlike `core.bsn`/`beam.bsn`'s face-centered sockets, `axle` sits at
     // this module's own origin (there's no "outward" position to derive a
     // normal from) -- its normal is instead defined directly as the
@@ -15,8 +15,8 @@ bevy_ecs::hierarchy::Children [
     // the same "local +X = normal" convention as every other socket (local
     // +X -> local Y is a +90 deg rotation about Z), so a generic reader of
     // socket normals doesn't need a wheel-specific special case.
-    #Axle
-    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "axle" }
-    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 0.0 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: 0.7071068, w: 0.7071068 } }
-    last_beacon::shared::vehicle::LastBeaconVehicleHingeJoint { }
+    #Axle // This socket entity's own tag -- never read by the connection system (see docs/vehicle-authoring-guide.md's "#Tag Is Not A Comment").
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "axle" } // The id LastBeaconVehicleConnection actually matches against.
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 0.0 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: 0.7071068, w: 0.7071068 } } // Anchor point: this module's own center, rotated +90 deg about Z so local +X (the normal convention) becomes local Y (the cylinder's spin axis).
+    last_beacon::shared::vehicle::LastBeaconVehicleHingeJoint { } // Joint type: a hinge (free-spinning wheel axle), not a weld.
 ]
