@@ -22,12 +22,12 @@
 - Phase complete only after required validation passes, documentation generation is recorded, required commits/pushes are complete, and required user confirmation is recorded.
 
 ## Repository State
-- Root commit/push state: `Pending`
+- Root commit/push state: `Committed 18dc384, pushed to origin/feature/vehicle-fixes`
 - Engine commit/push state: `Committed aed8ad2a66da95746339912d9346cc96c1c359bc, pushed to origin/feature/vehicle-fixes`
-- Root submodule pointer update: `Pending (staged for next root commit)`
+- Root submodule pointer update: `Done (root now points at aed8ad2, committed and pushed)`
 
 ## Phase 1: Fix the vehicle ground-contact crash
-**Status:** In Progress
+**Status:** Done
 **Goal:** The vehicle no longer panics on real ground contact; regression test proves it.
 
 ### Tasks
@@ -83,4 +83,4 @@
 - Revisit the `avian3d` git-commit pin once avian ships an official stable release at or after commit `47d5948b2a8ee829848fbc3d4ce5e44ad0fd863f`, and move back to a normal crates.io version requirement.
 
 ## Progress Log
-- `2026-09-15`: Plan and tracker created. Root-cause investigation, upstream research, and fix verification completed before this doc existed (see plan.md for findings). Branches created, avian3d pinned in both manifests, `JointGraph` import fixed, terrain stability test un-ignored. Full validation run in progress.
+- `2026-09-15`: Plan and tracker created. Root-cause investigation, upstream research, and fix verification completed before this doc existed (see plan.md for findings). Branches created, avian3d pinned in both manifests, `JointGraph` import fixed, terrain stability test un-ignored. Full validation passed. Engine committed (`aed8ad2`) and pushed; root committed (`18dc384`) with updated submodule pointer and pushed. Phase 1 complete.
