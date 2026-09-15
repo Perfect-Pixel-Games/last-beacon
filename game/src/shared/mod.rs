@@ -30,7 +30,13 @@ impl Plugin for LastBeaconSharedGameplayPlugin {
         // would panic there. `LastBeaconSharedGameplayPlugin` is only ever added
         // to the real game (`lib.rs`), which always has `DefaultPlugins`.
         #[cfg(feature = "dev-tools")]
-        app.add_systems(Update, vehicle::draw_last_beacon_vehicle_socket_gizmos);
+        app.add_systems(
+            Update,
+            (
+                vehicle::draw_last_beacon_vehicle_socket_gizmos,
+                vehicle::draw_last_beacon_vehicle_connection_failure_gizmos,
+            ),
+        );
 
         app.init_resource::<LastBeaconSharedGameplayState>()
             .init_resource::<LastBeaconGameplaySpace>()

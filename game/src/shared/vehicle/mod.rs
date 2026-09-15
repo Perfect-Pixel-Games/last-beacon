@@ -48,7 +48,9 @@ mod module_body;
 
 pub use connection::wire_last_beacon_vehicle_connections;
 #[cfg(feature = "dev-tools")]
-pub use debug::draw_last_beacon_vehicle_socket_gizmos;
+pub use debug::{
+    draw_last_beacon_vehicle_connection_failure_gizmos, draw_last_beacon_vehicle_socket_gizmos,
+};
 pub use instance::{
     apply_pending_last_beacon_vehicle_module_instances, queue_last_beacon_vehicle_module_instances,
 };
