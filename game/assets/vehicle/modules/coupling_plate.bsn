@@ -1,0 +1,21 @@
+// A minimal two-socket module, used as the worked example in
+// docs/vehicle-authoring-guide.md. Couples two other modules together via
+// its "a"/"b" sockets (both welds). Uses the same "local +X = outward
+// normal" convention as core.bsn/beam.bsn (see core.bsn's header comment
+// for the full derivation) -- just with two sockets instead of six.
+last_beacon::shared::vehicle::LastBeaconVehicleModuleCuboidShape(bevy_math::primitives::dim3::Cuboid { half_size: glam::Vec3 { x: 0.3, y: 0.05, z: 0.3 } })
+avian3d::dynamics::rigid_body::RigidBody::Dynamic
+avian3d::dynamics::rigid_body::mass_properties::components::Mass(2.0)
+last_beacon::shared::vehicle::LastBeaconVehicleModuleColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.55, green: 0.45, blue: 0.3, alpha: 1.0 }))
+bevy_ecs::hierarchy::Children [
+    #A
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "a" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.3, y: 0.0, z: 0.0 } }
+    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { },
+
+    // Normal -X: rotation of PI about Y (local +X -> world -X).
+    #B
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "b" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -0.3, y: 0.0, z: 0.0 }, rotation: glam::Quat { x: 0.0, y: 1.0, z: 0.0, w: 0.0 } }
+    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { }
+]

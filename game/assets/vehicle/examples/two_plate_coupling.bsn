@@ -1,0 +1,19 @@
+// Minimal 2-module worked example for docs/vehicle-authoring-guide.md: two
+// coupling_plate.bsn instances joined by a single weld connection,
+// referencing each other purely by author-chosen tag ("PlateOne"/"PlateTwo")
+// and socket name ("a"/"b") -- no code in game/src knows this vehicle
+// exists. Exercised by game/tests/vehicle_example_two_plate_coupling.rs.
+#TwoPlateCoupling
+bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 5.0, z: 0.0 } }
+bevy_ecs::hierarchy::Children [
+    #PlateOne
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/coupling_plate.bsn" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 0.0 } },
+
+    #PlateTwo
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleInstance { asset_path: "vehicle/modules/coupling_plate.bsn" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 2.0, y: 0.0, z: 0.0 } },
+
+    #PlateOneToPlateTwo
+    last_beacon::shared::vehicle::LastBeaconVehicleConnection { module_a: "PlateOne", socket_a: "a", module_b: "PlateTwo", socket_b: "b" }
+]
