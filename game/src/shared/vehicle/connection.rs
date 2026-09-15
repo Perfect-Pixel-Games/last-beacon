@@ -318,8 +318,18 @@ pub fn wire_last_beacon_vehicle_connections(
             Some(root_a_global),
             Some(root_b_global),
         ) = (
-            effective_global_transform(socket_a.entity, &pending_fusions, &transforms, &child_of_query),
-            effective_global_transform(socket_b.entity, &pending_fusions, &transforms, &child_of_query),
+            effective_global_transform(
+                socket_a.entity,
+                &pending_fusions,
+                &transforms,
+                &child_of_query,
+            ),
+            effective_global_transform(
+                socket_b.entity,
+                &pending_fusions,
+                &transforms,
+                &child_of_query,
+            ),
             effective_global_transform(root_a, &pending_fusions, &transforms, &child_of_query),
             effective_global_transform(root_b, &pending_fusions, &transforms, &child_of_query),
         )
@@ -1200,11 +1210,10 @@ mod tests {
             "reason should list the socket name that does exist on ModuleA, got: {}",
             failed.reason
         );
-        assert!(
-            app.world()
-                .get::<LastBeaconVehicleConnectionResolved>(connection_entity)
-                .is_none()
-        );
+        assert!(app
+            .world()
+            .get::<LastBeaconVehicleConnectionResolved>(connection_entity)
+            .is_none());
         assert!(
             failed.marker_position.is_some(),
             "both modules resolved, so a midpoint marker position should be set"

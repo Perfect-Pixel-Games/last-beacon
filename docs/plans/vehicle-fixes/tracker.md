@@ -9,7 +9,7 @@
 - Root branch base verification: `Verified (branched from dev at origin/dev, clean working tree)`
 - Engine branch base verification: `Verified (branched from engine dev at 3f33dafa64262de52940b2407f02d1bab963ca45, matching origin/dev)`
 - Engine submodule pointer: `aed8ad2a66da95746339912d9346cc96c1c359bc` (engine commit bound as of this update)
-- Overall status: `In Progress`
+- Overall status: `Done`
 - Planning model: Claude Sonnet 5 (standing in for `gpt-5.5`)
 - Preferred implementation model: Claude Sonnet 5 (standing in for `gpt-5.4`)
 - Optional final review model: Claude Sonnet 5 (standing in for `gpt-5.5`)
@@ -66,15 +66,57 @@
 - Documentation generation: `Done (cargo doc succeeded with 8 pre-existing warnings, none new)`
 - User confirmation: Not required yet (approved approach in conversation prior to implementation)
 
-## Phase 2: Vehicle definition tidy-ups (not yet scoped)
-**Status:** Planned
-**Goal:** TBD -- user has not yet specified which vehicle-definition items to tidy.
+## Phase 2: Vehicle authoring clarity
+**Status:** Done
+**Goal:** Bad `.bsn` tag/socket references are loud (rich warnings, a
+distinguishable `LastBeaconVehicleConnectionFailed` marker, a red in-scene
+gizmo) instead of silent, and a standalone authoring guide with a real
+worked example exists. See
+`docs/superpowers/specs/2026-09-15-vehicle-authoring-clarity-design.md` and
+`docs/superpowers/plans/2026-09-15-vehicle-authoring-clarity.md`.
 
 ### Tasks
-- [ ] Get scope from user
-  - Status: Planned
-  - Repository: `TBD`
-  - Notes: Deferred by user during Phase 1 ("we'll get to that in a bit").
+- [x] Richer lookup-failure diagnostics + `LastBeaconVehicleConnectionFailed` (`connection.rs`)
+  - Status: Done
+  - Repository: `root`
+- [x] Red gizmo marker for failed connections (`debug.rs`, `mod.rs`, `shared/mod.rs`)
+  - Status: Done
+  - Repository: `root`
+- [x] Worked-example module/vehicle assets + regression test
+  - Status: Done
+  - Repository: `root`
+- [x] `docs/vehicle-authoring-guide.md`
+  - Status: Done
+  - Repository: `root`
+- [x] Fix vehicle fusion using stale `GlobalTransform` for same-frame modules
+  - Status: Done
+  - Repository: `root`
+  - Notes: Not in the original Phase 2 scope -- discovered while writing the
+    worked-example integration test. `wire_last_beacon_vehicle_connections`
+    read `Query<&GlobalTransform>`, which Bevy only recomputes once per
+    frame in `PostUpdate`, *after* this system (which runs in `Update`).
+    A module whose `Transform`/sockets were authored that exact frame
+    (`apply_pending_last_beacon_vehicle_module_instances` mutates the
+    `World` directly, no command buffering) still reported a stale,
+    just-inserted-default `GlobalTransform`, so a weld's position
+    correction could be wrong or zero. Invisible in the existing
+    `vehicle_module_testbed.bsn` only because its author pre-positioned
+    every module so the needed correction is already near zero -- the new
+    worked example used a deliberately large, uncorrected gap and caught
+    it immediately. Fixed by replacing the query with a new
+    `live_global_transform` helper that recomputes an entity's world
+    transform by walking its `ChildOf` ancestor chain and composing live
+    `Transform` values directly, independent of propagation timing. Full
+    existing vehicle test suite (unit tests, `vehicle_module_physics.rs`,
+    `vehicle_module_terrain_stability.rs`) re-verified with zero
+    regressions. User explicitly approved fixing this on this branch when
+    flagged.
+
+### Validation
+- Game validation: `Passed (scripts/validate.cmd)`
+- Engine validation: `N/A (no engine changes in Phase 2)`
+- Documentation generation: `Done`
+- User confirmation: Not required yet
 
 ## Implementation / Review Handoff Notes
 - None yet.
@@ -84,3 +126,4 @@
 
 ## Progress Log
 - `2026-09-15`: Plan and tracker created. Root-cause investigation, upstream research, and fix verification completed before this doc existed (see plan.md for findings). Branches created, avian3d pinned in both manifests, `JointGraph` import fixed, terrain stability test un-ignored. Full validation passed. Engine committed (`aed8ad2`) and pushed; root committed (`18dc384`) with updated submodule pointer and pushed. Phase 1 complete.
+- `2026-09-15`: Phase 2 scoped (vehicle authoring clarity: richer connection diagnostics, failure gizmo, worked-example assets, authoring guide) via brainstorming/writing-plans, spec and plan committed. Implemented inline: `LastBeaconVehicleConnectionFailed` + candidate-listing diagnostics, red failure gizmo, `coupling_plate.bsn`/`two_plate_coupling.bsn` worked example + regression test, `docs/vehicle-authoring-guide.md`. Discovered and fixed an out-of-scope but real bug (stale `GlobalTransform` read for same-frame-materialized modules) while building the worked example. Phase 2 complete.

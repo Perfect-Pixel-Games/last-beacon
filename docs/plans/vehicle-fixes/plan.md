@@ -7,7 +7,7 @@
 - Root branch: `feature/vehicle-fixes`
 - Engine branch: `feature/vehicle-fixes`
 - Engine submodule pointer: `aed8ad2a66da95746339912d9346cc96c1c359bc` (engine commit bound as of this update)
-- Status: `In Progress`
+- Status: `Done`
 - Planning model: Claude Sonnet 5 (standing in for `gpt-5.5` per durable user direction; see repo AGENTS.md model-policy note)
 - Implementation model: Claude Sonnet 5 (standing in for `gpt-5.4`)
 - Review model: Claude Sonnet 5 (standing in for `gpt-5.5`)
@@ -15,7 +15,7 @@
 - Last updated: `2026-09-15`
 
 ## User Request
-General bug-fixing and cleanup branch for the vehicle module system. Immediate driver: an intermittent (~50% of the time) crash when the vehicle wagon collides with the ground. A second phase of "small tidy-ups" to the vehicle definitions was requested but not yet scoped by the user as of this writing -- it will be appended to this plan/tracker once specified, rather than blocking the crash fix.
+General bug-fixing and cleanup branch for the vehicle module system. Phase 1 driver: an intermittent (~50% of the time) crash when the vehicle wagon collides with the ground (see Phase 1 above). Phase 2, scoped after Phase 1 landed: make the existing tag/socket-based vehicle wiring system easier to author against -- richer diagnostics for bad `.bsn` references, a visible in-scene failure marker, and a standalone authoring guide with a real worked example. Full design in `docs/superpowers/specs/2026-09-15-vehicle-authoring-clarity-design.md`.
 
 ## Feature Area Classification
 - Area: `multi-area`
