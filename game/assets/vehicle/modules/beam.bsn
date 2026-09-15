@@ -1,0 +1,54 @@
+// Same six-socket, radially-outward-normal convention as `core.bsn` (see
+// that file's header comment for the full derivation): `front`/`back` are
+// this beam's long-axis ends (`size_x`), `left`/`right`/`top`/`bottom` are
+// its four side faces. Reusing the identical convention means a beam and
+// a box (like `CoreBlock`) can weld to each other -- or to another beam --
+// through the same "oppose the other socket's world normal" rule, with no
+// beam-specific special-casing.
+//
+// Every socket also carries exactly one joint-type component (see
+// `core.bsn`'s header comment for why there's no implicit default).
+//
+// Shape/rigid-body/mass/color are Bevy's/Avian3D's own types authored
+// directly, same as `core.bsn` -- `half_size` here is (1.2, 0.15, 0.15),
+// half of the beam's full 2.4 x 0.3 x 0.3 size.
+last_beacon::shared::vehicle::LastBeaconVehicleModuleCuboidShape(bevy_math::primitives::dim3::Cuboid { half_size: glam::Vec3 { x: 1.2, y: 0.15, z: 0.15 } })
+avian3d::dynamics::rigid_body::RigidBody::Dynamic
+avian3d::dynamics::rigid_body::mass_properties::components::Mass(10.0)
+last_beacon::shared::vehicle::LastBeaconVehicleModuleColor(bevy_color::color::Color::Srgba(bevy_color::srgba::Srgba { red: 0.36, green: 0.38, blue: 0.21, alpha: 1.0 }))
+bevy_ecs::hierarchy::Children [
+    #Front
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "front" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 1.2, y: 0.0, z: 0.0 } }
+    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { },
+
+    // Normal -X: rotation of PI about Y (local +X -> world -X).
+    #Back
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "back" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: -1.2, y: 0.0, z: 0.0 }, rotation: glam::Quat { x: 0.0, y: 1.0, z: 0.0, w: 0.0 } }
+    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { },
+
+    // Normal -Z: rotation of +90 deg about Y (local +X -> world -Z).
+    #Left
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "left" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: -0.15 }, rotation: glam::Quat { x: 0.0, y: 0.7071068, z: 0.0, w: 0.7071068 } }
+    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { },
+
+    // Normal +Z: rotation of -90 deg about Y (local +X -> world +Z).
+    #Right
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "right" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.0, z: 0.15 }, rotation: glam::Quat { x: 0.0, y: -0.7071068, z: 0.0, w: 0.7071068 } }
+    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { },
+
+    // Normal +Y: rotation of +90 deg about Z (local +X -> world +Y).
+    #Top
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "top" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: 0.15, z: 0.0 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: 0.7071068, w: 0.7071068 } }
+    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { },
+
+    // Normal -Y: rotation of -90 deg about Z (local +X -> world -Y).
+    #Bottom
+    last_beacon::shared::vehicle::LastBeaconVehicleModuleSocket { socket_name: "bottom" }
+    bevy_transform::components::transform::Transform { translation: glam::Vec3 { x: 0.0, y: -0.15, z: 0.0 }, rotation: glam::Quat { x: 0.0, y: 0.0, z: -0.7071068, w: 0.7071068 } }
+    last_beacon::shared::vehicle::LastBeaconVehicleFixedJoint { }
+]

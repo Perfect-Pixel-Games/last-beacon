@@ -11,12 +11,27 @@ use foundation_runtime_library::prelude::*;
 
 use crate::scenes::{BEACON_SCENE, GAMEPLAY_LEVEL_SCENE};
 
+pub mod vehicle;
+
 /// Installs Last Beacon's shared cross-space gameplay state and messaging.
 #[derive(Default)]
 pub struct LastBeaconSharedGameplayPlugin;
 
 impl Plugin for LastBeaconSharedGameplayPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(vehicle::LastBeaconVehiclePlugin);
+
+        // Registered here rather than inside `LastBeaconVehiclePlugin` itself:
+        // `Gizmos` needs `GizmoConfigStore`, which only exists once `DefaultPlugins`
+        // (specifically `GizmoPlugin`) has been added. `LastBeaconVehiclePlugin` is
+        // exercised directly by integration tests (e.g. `vehicle_module_physics.rs`)
+        // that only add `MinimalPlugins` plus what they specifically need, with no
+        // rendering stack -- putting a `Gizmos`-using system inside that plugin
+        // would panic there. `LastBeaconSharedGameplayPlugin` is only ever added
+        // to the real game (`lib.rs`), which always has `DefaultPlugins`.
+        #[cfg(feature = "dev-tools")]
+        app.add_systems(Update, vehicle::draw_last_beacon_vehicle_socket_gizmos);
+
         app.init_resource::<LastBeaconSharedGameplayState>()
             .init_resource::<LastBeaconGameplaySpace>()
             .register_type::<LastBeaconSharedGameplayState>()
