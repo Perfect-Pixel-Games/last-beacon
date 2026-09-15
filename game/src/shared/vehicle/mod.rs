@@ -39,6 +39,12 @@
 //! [`LastBeaconVehicleModuleInstance`]), not a module-specific one, so
 //! adding a new shape (e.g. `Sphere`) needs one more small wrapper +
 //! generic system, never a bespoke data type.
+//!
+//! See `docs/vehicle-authoring-guide.md` for a full walkthrough of building
+//! a new module and wiring it into a vehicle, including a real worked
+//! example (`game/assets/vehicle/modules/coupling_plate.bsn` +
+//! `game/assets/vehicle/examples/two_plate_coupling.bsn`) and how to
+//! diagnose a bad tag/socket reference.
 
 mod connection;
 #[cfg(feature = "dev-tools")]

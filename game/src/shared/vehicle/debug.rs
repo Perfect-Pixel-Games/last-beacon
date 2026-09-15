@@ -64,7 +64,7 @@ const CONNECTION_FAILURE_MARKER_RADIUS: f32 = 0.15;
 /// reads unambiguously as "wrong," not just "a different socket kind."
 const CONNECTION_FAILURE_COLOR: Color = Color::srgb(1.0, 0.0, 0.0);
 
-/// Draws a red marker at every [`LastBeaconVehicleConnectionFailed`]
+/// Draws a red marker at every `LastBeaconVehicleConnectionFailed`
 /// connection's best-known anchor position, so an author can spot a bad
 /// tag/socket reference in-scene, not just in logs. Draws nothing for a
 /// failed connection whose `marker_position` is `None` (neither named module
